@@ -6,10 +6,12 @@ import HeroAdmin from "@/components/admin/HeroAdmin";
 import ConsultAdmin from "@/components/admin/ConsultAdmin";
 import ManagerAdmin from "@/components/admin/ManagerAdmin";
 import PostAdmin from "@/components/admin/PostAdmin";
+import ProductAdmin from "@/components/admin/ProductAdmin";
 import { adminStore } from "@/lib/adminStore";
 
 const NAV = [
   { id: "dashboard", label: "대시보드", icon: "⊞" },
+  { id: "products", label: "상품 관리", icon: "📦" },
   { id: "hero", label: "히어로 슬라이드", icon: "🖼" },
   { id: "consult", label: "상담 신청 현황", icon: "📋" },
   { id: "managers", label: "매니저 관리", icon: "👤" },
@@ -254,6 +256,7 @@ export default function AdminPage() {
             </div>
           )}
 
+          {tab === "products" && <ProductAdmin />}
           {tab === "hero" && <HeroAdmin />}
           {tab === "consult" && <ConsultAdmin />}
           {tab === "managers" && <ManagerAdmin />}

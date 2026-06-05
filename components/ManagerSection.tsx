@@ -24,8 +24,13 @@ export default function ManagerSection() {
 
         <div className="flex flex-col items-center justify-center gap-6 md:flex-row">
           {managers.map((m) => (
-            <a key={m.id} href={m.href} target={m.href.startsWith("http") ? "_blank" : undefined} rel={m.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              className="group flex w-full max-w-90 flex-col items-center rounded-2xl bg-[#fdf3f5] px-10 py-10 transition-shadow hover:shadow-md">
+            <a
+              key={m.id}
+              href={m.href}
+              target={m.href.startsWith("http") ? "_blank" : undefined}
+              rel={m.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              className="group flex w-full max-w-90 flex-col items-center rounded-2xl bg-[#fdf3f5] px-10 py-10 transition-shadow hover:shadow-md"
+            >
               <div className="mb-5 h-[140px] w-[140px] overflow-hidden rounded-full bg-[#f0dde2]">
                 <Image src={m.img} alt={m.name} width={140} height={140} className="h-full w-full object-cover object-top" />
               </div>
@@ -39,9 +44,7 @@ export default function ManagerSection() {
                 ))}
               </div>
               <p className="mb-6 text-[13px] text-[#666]">{m.desc}</p>
-              <span className="flex h-10 w-full items-center justify-center rounded-full bg-[#c90f45] text-[13px] font-bold text-white transition-opacity group-hover:opacity-90">
-                예약 상담 신청
-              </span>
+              <span className="flex h-10 w-full items-center justify-center rounded-full bg-[#c90f45] text-[13px] font-bold text-white transition-opacity group-hover:opacity-90">예약 상담 신청</span>
             </a>
           ))}
         </div>
