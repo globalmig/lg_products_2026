@@ -1,44 +1,30 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { slides as defaultSlides } from "@/data/slides";
-import { adminStore, type Slide } from "@/lib/adminStore";
+import { useEffect, useState } from "react";
+import { slides } from "@/data/slides";
 
 export default function HeroSlider() {
-  const [slides, setSlides] = useState<Slide[]>(defaultSlides);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = slides.length;
 
   useEffect(() => {
-    setSlides(adminStore.slides.get());
-  }, []);
-
-  const startTimer = () => {
-    timerRef.current = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % total);
+    if (paused) return;
+    const id = setInterval(() => {
+      setCurrent((c) => (c + 1) % total);
     }, 4000);
-  };
-
-  useEffect(() => {
-    if (!paused) startTimer();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [paused]);
+    return () => clearInterval(id);
+  }, [paused, total]);
 
   const go = (index: number) => {
-    if (timerRef.current) clearInterval(timerRef.current);
     setCurrent((index + total) % total);
-    if (!paused) startTimer();
   };
 
   const slide = slides[current];
 
   return (
-    <section className="relative h-[580px] overflow-hidden">
+    <section className="relative mx-auto h-175 w-full max-w-360 overflow-hidden">
       {slides.map((s, i) => (
         <div
           key={s.id}
@@ -72,9 +58,9 @@ export default function HeroSlider() {
         ›
       </button>
 
-      <div className="relative z-10 mx-auto flex h-full max-w-[1080px] items-center px-5">
+      <div className="relative z-10 mx-auto flex h-full max-w-270 items-center px-5">
         <div className="mb-10">
-          <p className="mb-4 text-[31px] font-medium tracking-[-0.05em]">
+          <p className="mb-4 text-[31px] font-medium tracking-tighter">
             {slide.subtitle}
           </p>
           <h1 className="whitespace-pre-line text-[56px] font-black leading-[1.12] tracking-[-0.07em]">
