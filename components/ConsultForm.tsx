@@ -4,24 +4,7 @@ import { useState, useRef } from "react";
 import { adminStore } from "@/lib/adminStore";
 import Link from "next/link";
 
-const PRIVACY_CONTENT = `1. 수집하는 개인정보 항목
-· 필수항목: 이름, 연락처(휴대폰 번호)
-· 선택항목: 배송 지역, 거주 아파트명, 구매 희망 제품 모델명
-
-2. 개인정보 수집 및 이용 목적
-· 상담 신청 접수 및 예약 확인
-· 담당 매니저 배정 및 상담 진행
-· 견적 안내 및 구매 정보 제공
-
-3. 개인정보 보유 및 이용 기간
-상담 완료 후 3개월간 보유 후 즉시 파기합니다.
-
-4. 개인정보의 제3자 제공
-원칙적으로 외부에 제공하지 않습니다.
-단, 법령의 규정에 의거하거나 수사 목적으로 기관의 요청이 있는 경우는 예외로 합니다.
-
-5. 개인정보 파기
-보유 기간이 경과한 개인정보는 복구 불가능한 방법으로 즉시 파기합니다.`;
+// PRIVACY_CONTENT는 모달 내부에서 JSX 테이블로 렌더링하므로 제거
 
 const estimateChannels = ["LG베스트샵 타지점", "이마트(일렉트로마트)/홈플러스", "하이마트/전자랜드", "온라인", "삼성스토어"];
 
@@ -257,7 +240,7 @@ export default function ConsultForm() {
             전문 보기
           </button>
         </div>
-        <p className="mb-3 text-[12px] leading-relaxed text-[#888]">수집 항목: 이름, 연락처 · 수집 목적: 상담 신청 및 예약 확인 · 보유 기간: 상담 완료 후 3개월</p>
+        <p className="mb-3 text-[12px] leading-relaxed text-[#888]">수집 항목: 이름, 연락처 · 수집 목적: 구독 상담 예약 및 진행 · 보유 기간: 신청일로부터 6개월</p>
         <div className="flex items-center gap-2">
           <input type="checkbox" required checked={agreed} onChange={() => {}} className="accent-[#c90f45]" />
           <span className="text-[13px] text-[#555]">개인정보 수집 및 이용에 동의합니다</span>
@@ -278,13 +261,39 @@ export default function ConsultForm() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setPrivacyOpen(false)} />
           <div className="relative z-10 flex max-h-[80vh] w-full max-w-150 flex-col rounded-t-2xl bg-white sm:rounded-2xl">
             <div className="flex items-center justify-between border-b border-[#f1f1f1] px-6 py-4">
-              <h2 className="text-[16px] font-black tracking-tighter text-[#1a1a1a]">개인정보 수집 및 이용 동의</h2>
+              <h2 className="text-[16px] font-black tracking-tighter text-[#1a1a1a]">구독상담 개인정보 수집·이용 동의서</h2>
               <button type="button" onClick={() => setPrivacyOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] text-[#888] hover:bg-[#f5f5f5]">
                 ✕
               </button>
             </div>
-            <div className="overflow-y-auto px-6 py-5">
-              <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-[#555]">{PRIVACY_CONTENT}</pre>
+            <div className="overflow-y-auto px-6 py-5 text-[13px] leading-relaxed text-[#444]">
+              <p className="mb-4">
+                (주)와이케이지 이하 ("당사")는 구독상담을 이용하는 귀하의 개인정보를 아래와 같이 수집·이용합니다. 상세한 내용은 개인정보 처리방침에서 확인하실 수 있습니다.
+              </p>
+              <table className="mb-4 w-full border-collapse text-[12px]">
+                <thead>
+                  <tr className="bg-[#f5f5f5]">
+                    <th className="border border-[#ddd] px-3 py-2 text-left font-semibold text-[#333]">수집 항목</th>
+                    <th className="border border-[#ddd] px-3 py-2 text-left font-semibold text-[#333]">수집 목적</th>
+                    <th className="border border-[#ddd] px-3 py-2 text-left font-semibold text-[#333]">보유기간</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-[#ddd] px-3 py-3 align-top">이름, 연락처</td>
+                    <td className="border border-[#ddd] px-3 py-3 align-top">구독 상담 예약, 구독 상담 진행</td>
+                    <td className="border border-[#ddd] px-3 py-3 align-top">
+                      <strong>신청일로부터 6개월까지 보관 후 파기</strong>
+                      <span className="mt-1 block text-[11px] text-[#777]">
+                        (다만, 관계법령의 규정이나 회사 내부 방침에 의하여 보존할 필요가 있는 경우 당사는 해당 법령 및 당사 개인정보처리방침에서 정한 바에 따라 개인정보를 보관할 수 있습니다.)
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="text-[12px] text-[#555]">
+                귀하는 위 정보에 대한 수집·이용 동의를 거부할 수 있는 권리가 있으나, 이에 동의하지 않을 경우 구독상담이 제한될 수 있습니다.
+              </p>
             </div>
             <div className="border-t border-[#f1f1f1] px-6 py-4">
               <button
