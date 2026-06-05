@@ -31,7 +31,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 23900,
     benefitPrice: 0,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h72/hfa/26232614707230/T21MX9B-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -42,7 +42,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 63900,
     benefitPrice: 21900,
     tags: [{ label: "네이버페이 20만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hba/hee/26232614641694/W20WHN-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -56,7 +56,7 @@ export const livingProducts: LivingProduct[] = [
       { label: "MD 추천", type: "md" },
       { label: "네이버페이 30만원", type: "naver" },
     ],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h2e/h43/26232614576158/FH25WA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -70,7 +70,7 @@ export const livingProducts: LivingProduct[] = [
       { label: "NEW", type: "new" },
       { label: "네이버페이 1만원", type: "naver" },
     ],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h1a/hb7/26232614510622/SC5MBR42S-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -81,7 +81,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 29900,
     benefitPrice: 0,
     tags: [{ label: "NEW", type: "new" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h88/h8d/26232614445086/SC3GTE5E-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -95,7 +95,7 @@ export const livingProducts: LivingProduct[] = [
       { label: "판매", type: "sale" },
       { label: "네이버페이 2만원", type: "naver" },
     ],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h80/h33/26232614379550/RG18WNST-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -106,7 +106,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 34900,
     benefitPrice: 8900,
     tags: [{ label: "네이버페이 10만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h58/h4a/26232614314014/FX25WNA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -117,7 +117,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 58900,
     benefitPrice: 24900,
     tags: [{ label: "네이버페이 25만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h46/hf5/26232614248478/FX25WNA+RG18WNST-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -128,7 +128,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 14900,
     benefitPrice: 2900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h2c/hf9/26232614182942/S3MFBN-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -139,7 +139,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 19900,
     benefitPrice: 3900,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h14/h8d/26232614117406/A959KBMS-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -150,7 +150,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 42900,
     benefitPrice: 9900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h94/hd0/26232614051870/UR8C03W-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -161,7 +161,7 @@ export const livingProducts: LivingProduct[] = [
     monthlyPrice: 31900,
     benefitPrice: 5900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hb6/h54/26232613986334/RH22WNST-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
 ];

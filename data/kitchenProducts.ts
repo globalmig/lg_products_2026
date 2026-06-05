@@ -29,7 +29,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 17900,
     benefitPrice: 0,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h87/h9e/26208018022430/D463MHH33-D463MCW33-D463MGW33-MF-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 2,
@@ -42,7 +42,7 @@ export const kitchenProducts: KitchenProduct[] = [
       { label: "HOT TREND", type: "hot" },
       { label: "네이버페이 35만원", type: "naver" },
     ],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h4f/hb2/26208018284574/Z495MQQ212-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 3,
@@ -55,7 +55,7 @@ export const kitchenProducts: KitchenProduct[] = [
       { label: "HOT TREND", type: "hot" },
       { label: "네이버페이 40만원", type: "naver" },
     ],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hf2/h98/26124867035166/T875MEE111-MF-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 4,
@@ -65,7 +65,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 49900,
     benefitPrice: 7900,
     tags: [{ label: "네이버페이 10만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h42/hbd/26232614576158/T875MHR111-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 5,
@@ -75,7 +75,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 23900,
     benefitPrice: 5900,
     tags: [{ label: "네이버페이 5만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h12/h2a/26124873588766/DFB22WQAP-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 6,
@@ -85,7 +85,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 18900,
     benefitPrice: 3900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h85/h3d/26124873719838/BEI3MT1-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 7,
@@ -95,7 +95,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 19900,
     benefitPrice: 4900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h8a/h38/26124873785374/MH7295QDS-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 8,
@@ -105,7 +105,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 34900,
     benefitPrice: 12900,
     tags: [{ label: "네이버페이 8만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h28/h57/26124873588766/F328S75-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 9,
@@ -115,7 +115,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 62900,
     benefitPrice: 22900,
     tags: [{ label: "HOT TREND", type: "hot" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h22/h19/26207933628446/M874SSS042-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 10,
@@ -125,7 +125,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 42900,
     benefitPrice: 12900,
     tags: [{ label: "네이버페이 12만원", type: "naver" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h2a/hd6/26124868640798/T873MEE111-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 11,
@@ -135,7 +135,7 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 28900,
     benefitPrice: 8900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h91/h91/26124868574750/Z402MEE153-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
   {
     id: 12,
@@ -145,6 +145,6 @@ export const kitchenProducts: KitchenProduct[] = [
     monthlyPrice: 29900,
     benefitPrice: 9900,
     tags: [{ label: "HOT TREND", type: "hot" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h5d/h9c/26124873654302/DFB512FP-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
   },
 ];

@@ -21,7 +21,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 47900,
     benefitPrice: 5900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h8b/h6c/26232613265438/FQ17GC3EC1-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -32,7 +32,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 53900,
     benefitPrice: 11900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h4a/hbc/26232613199902/FQ17FV3EC1-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -43,7 +43,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 64900,
     benefitPrice: 22900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hce/h29/26232613134366/FQ17FV3EC2-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -54,7 +54,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 58900,
     benefitPrice: 16900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h16/h5b/26232613068830/FQ17GC3EC2-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -65,7 +65,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 39900,
     benefitPrice: 7900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h28/h8c/26232613003294/FQ18HDKMA2-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -76,7 +76,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 43900,
     benefitPrice: 9900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h3a/h54/26232612937758/FQ18HBKWA1-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -87,7 +87,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 18900,
     benefitPrice: 3900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h58/hb0/26232612872222/AS204XKNA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -98,7 +98,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 21900,
     benefitPrice: 5900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hbc/h96/26232612806686/AS201XKNA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -109,7 +109,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 24900,
     benefitPrice: 6900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h6e/h0d/26232612741150/FA15FPKNA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -120,7 +120,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 16900,
     benefitPrice: 2900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h72/hb3/26232612675614/DQ180HBNSA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -131,7 +131,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 13900,
     benefitPrice: 1900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h6c/h61/26232612610078/DQ180HSNA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -142,7 +142,7 @@ export const airProducts: AirProduct[] = [
     monthlyPrice: 29900,
     benefitPrice: 4900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h90/h0e/26232612544542/FQ06JDKPA1-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
 ];

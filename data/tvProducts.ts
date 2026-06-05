@@ -21,7 +21,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 25900,
     benefitPrice: 0,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h8a/h37/26124867428382/27LX6TEGA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -32,7 +32,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 29900,
     benefitPrice: 0,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h46/h82/26124867428382/27LX6TEGA-Ecom-02.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -43,7 +43,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 20800,
     benefitPrice: 0,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h2c/h77/26124867526686/OLED42C4ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -54,7 +54,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 34900,
     benefitPrice: 0,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h48/hf3/26124867362846/32LX6BPGA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: true,
   },
   {
@@ -65,7 +65,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 22300,
     benefitPrice: 0,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h55/h49/26124867297310/55UT8300ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -76,7 +76,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 31900,
     benefitPrice: 8900,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h56/h6f/26124867231774/65QNED75ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -87,7 +87,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 42900,
     benefitPrice: 12900,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h0e/hfa/26124867166238/OLED55G4ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -98,7 +98,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 38900,
     benefitPrice: 9900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h3a/h04/26124867100702/75UT9300ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -109,7 +109,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 48900,
     benefitPrice: 15900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/h16/h60/26124867035166/75QNED91ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -120,7 +120,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 19900,
     benefitPrice: 0,
     tags: [{ label: "MD 추천", type: "md" }],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hd6/h62/26124866969630/27LX6QPCA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -131,7 +131,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 28900,
     benefitPrice: 6900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hf6/h13/26124866904094/OLED55C4ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
   {
@@ -142,7 +142,7 @@ export const tvProducts: TVProduct[] = [
     monthlyPrice: 24900,
     benefitPrice: 4900,
     tags: [],
-    image: "https://www.lge.co.kr/medias/sys_master/images/hbe/h3e/26124866838558/65NANO75ENA-Ecom-01.jpg",
+    image: "/images/icon/3D/box.png",
     isBest: false,
   },
 ];
