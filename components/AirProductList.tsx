@@ -173,31 +173,33 @@ export default function AirProductList() {
       <div className="mx-auto max-w-270 px-5 py-10">
         <h2 className="mb-6 text-[20px] font-black tracking-[-0.04em] text-[#1a1a1a]">에어컨/에어케어</h2>
 
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div className="flex gap-2 overflow-x-auto pb-1 flex-1 min-w-0">
-            {["전체", ...categories].map((cat) => {
-              const isActive = cat === activeCategory;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveCategory(cat)}
-                  className={`shrink-0 rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors whitespace-nowrap ${
-                    isActive
-                      ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                      : "border-[#d8d8d8] bg-white text-[#555] hover:border-[#555]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
+        {/* 필터 */}
+        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {["전체", ...categories].map((cat) => {
+            const isActive = cat === activeCategory;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                    : "border-[#d8d8d8] bg-white text-[#555] hover:border-[#555]"
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
 
+        {/* 정렬 */}
+        <div className="mb-8 flex justify-end">
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="shrink-0 rounded-full border border-[#d8d8d8] bg-white px-4 py-1.5 text-[13px] text-[#555] outline-none cursor-pointer hover:border-[#555]"
+            className="rounded-full border border-[#d8d8d8] bg-white px-4 py-1.5 text-[13px] text-[#555] outline-none cursor-pointer hover:border-[#555]"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
