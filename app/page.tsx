@@ -1,5 +1,8 @@
 import Image from "next/image";
 import HeroSlider from "@/components/HeroSlider";
+import CategorySection from "@/components/CategorySection";
+import ProductTabSection from "@/components/ProductTabSection";
+import EventBanner from "@/components/EventBanner";
 import Benefit from "@/components/Benefit";
 import BlogSection from "@/components/BlogSection";
 import { getNaverBlogPosts } from "@/lib/naverBlog";
@@ -33,50 +36,59 @@ const quickLinks = [
   },
 ];
 
-
 export default async function Home() {
   const blogPosts = await getNaverBlogPosts("lg_yongsan");
 
   return (
-    <>
-      <main className="min-h-[calc(100vh-44px)] bg-white text-black">
-        <HeroSlider />
+    <main className="min-h-[calc(100vh-44px)] bg-white text-black">
+      {/* 1. 히어로 */}
+      <HeroSlider />
 
-        {/* 퀵메뉴 */}
-        <section className="border-t border-[#f1f1f1] bg-white">
-          <div className="mx-auto grid max-w-360 grid-cols-2 lg:grid-cols-4">
-            {quickLinks.map((link, index) => (
-              <a
-                href={link.href}
-                key={link.title}
-                {...(link.blank && { target: "_blank", rel: "noopener noreferrer" })}
-                className={[
-                  "flex items-center gap-3 px-5 py-4 sm:gap-5 sm:px-8 lg:h-21.5 lg:py-0 border-[#eeeeee]",
-                  index % 2 !== 0 ? "border-l" : "",
-                  index >= 2 ? "border-t lg:border-t-0" : "",
-                  index > 0 ? "lg:border-l" : "",
-                ].join(" ")}
-              >
-                <Image src={link.icon} alt="" width={32} height={32} className="shrink-0" />
-                <span>
-                  <span className="mb-0.5 block text-[12px] sm:text-[13px] font-bold tracking-[-0.04em] text-[#171717]">
-                    {link.title}
-                    <span className="pl-2 text-[#9b9b9b]">›</span>
-                  </span>
-                  <span className="block text-[10px] sm:text-[11px] tracking-[-0.03em] text-[#999]">{link.description}</span>
+      {/* 2. 퀵메뉴 */}
+      <section className="border-b border-[#f1f1f1] bg-white">
+        <div className="mx-auto grid max-w-360 grid-cols-2 lg:grid-cols-4">
+          {quickLinks.map((link, index) => (
+            <a
+              href={link.href}
+              key={link.title}
+              {...(link.blank && { target: "_blank", rel: "noopener noreferrer" })}
+              className={[
+                "flex items-center gap-3 px-5 py-4 sm:gap-5 sm:px-8 lg:h-21.5 lg:py-0 border-[#eeeeee]",
+                index % 2 !== 0 ? "border-l" : "",
+                index >= 2 ? "border-t lg:border-t-0" : "",
+                index > 0 ? "lg:border-l" : "",
+              ].join(" ")}
+            >
+              <Image src={link.icon} alt="" width={32} height={32} className="shrink-0" />
+              <span>
+                <span className="mb-0.5 block text-[12px] sm:text-[13px] font-bold tracking-[-0.04em] text-[#171717]">
+                  {link.title}
+                  <span className="pl-2 text-[#9b9b9b]">›</span>
                 </span>
-              </a>
-            ))}
-          </div>
-        </section>
+                <span className="block text-[10px] sm:text-[11px] tracking-[-0.03em] text-[#999]">{link.description}</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
 
-        {/* 혜택 소개 */}
-        <Benefit bg="/images/main/bg_benefit.png" />
+      {/* 3. 카테고리 */}
+      <CategorySection />
 
-        <ManagerSection />
+      {/* 4. 상품 탭 (주방가전 / TV) */}
+      <ProductTabSection />
 
-        <BlogSection posts={blogPosts} moreHref="https://blog.naver.com/lg_yongsan" />
-      </main>
-    </>
+      {/* 5. 6월 행사 배너 */}
+      <EventBanner />
+
+      {/* 6. 혜택 소개 */}
+      <Benefit bg="/images/main/bg_benefit.png" />
+
+      {/* 7. 매니저 */}
+      <ManagerSection />
+
+      {/* 8. 블로그 */}
+      <BlogSection posts={blogPosts} moreHref="https://blog.naver.com/lg_yongsan" />
+    </main>
   );
 }
