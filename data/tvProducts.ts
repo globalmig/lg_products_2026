@@ -1,0 +1,148 @@
+export type TVProduct = {
+  id: number;
+  category: string;
+  name: string;
+  model: string;
+  monthlyPrice: number;
+  benefitPrice: number | null;
+  tags: { label: string; type: "md" | "hot" | "naver" }[];
+  image: string;
+  isBest?: boolean;
+};
+
+export const tvCategories = ["스탠바이미", "UHD", "QNED", "OLED"];
+
+export const tvProducts: TVProduct[] = [
+  {
+    id: 1,
+    category: "스탠바이미",
+    name: "LG 스탠바이미 2 렌탈 가전 구독",
+    model: "27LX6TEGA",
+    monthlyPrice: 25900,
+    benefitPrice: 0,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h8a/h37/26124867428382/27LX6TEGA-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 2,
+    category: "스탠바이미",
+    name: "LG 스탠바이미 2 + LG 스탠바이미 스피커",
+    model: "27LX6TEGA,AKXT75C",
+    monthlyPrice: 29900,
+    benefitPrice: 0,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h46/h82/26124867428382/27LX6TEGA-Ecom-02.jpg",
+    isBest: true,
+  },
+  {
+    id: 3,
+    category: "OLED",
+    name: "LG 올레드 evo 렌탈 가전 구독",
+    model: "OLED42C4ENA",
+    monthlyPrice: 20800,
+    benefitPrice: 0,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h2c/h77/26124867526686/OLED42C4ENA-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 4,
+    category: "스탠바이미",
+    name: "LG 스탠바이미 2 Max",
+    model: "32LX6BPGA",
+    monthlyPrice: 34900,
+    benefitPrice: 0,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h48/hf3/26124867362846/32LX6BPGA-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 5,
+    category: "UHD",
+    name: "LG 원더라 HD TV 렌탈 가전 구독",
+    model: "55UT8300ENA",
+    monthlyPrice: 22300,
+    benefitPrice: 0,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h55/h49/26124867297310/55UT8300ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 6,
+    category: "QNED",
+    name: "LG QNED TV 렌탈 가전 구독",
+    model: "65QNED75ENA",
+    monthlyPrice: 31900,
+    benefitPrice: 8900,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h56/h6f/26124867231774/65QNED75ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 7,
+    category: "OLED",
+    name: "LG 올레드 evo 갤러리에디션 렌탈 가전 구독",
+    model: "OLED55G4ENA",
+    monthlyPrice: 42900,
+    benefitPrice: 12900,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h0e/hfa/26124867166238/OLED55G4ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 8,
+    category: "UHD",
+    name: "LG UHD TV 렌탈 가전 구독",
+    model: "75UT9300ENA",
+    monthlyPrice: 38900,
+    benefitPrice: 9900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h3a/h04/26124867100702/75UT9300ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 9,
+    category: "QNED",
+    name: "LG QNED MiniLED TV 렌탈 가전 구독",
+    model: "75QNED91ENA",
+    monthlyPrice: 48900,
+    benefitPrice: 15900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h16/h60/26124867035166/75QNED91ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 10,
+    category: "스탠바이미",
+    name: "LG 스탠바이미 Go 렌탈 가전 구독",
+    model: "27LX6QPCA",
+    monthlyPrice: 19900,
+    benefitPrice: 0,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hd6/h62/26124866969630/27LX6QPCA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 11,
+    category: "OLED",
+    name: "LG 올레드 evo 렌탈 가전 구독",
+    model: "OLED55C4ENA",
+    monthlyPrice: 28900,
+    benefitPrice: 6900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hf6/h13/26124866904094/OLED55C4ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 12,
+    category: "UHD",
+    name: "LG 나노셀 UHD TV 렌탈 가전 구독",
+    model: "65NANO75ENA",
+    monthlyPrice: 24900,
+    benefitPrice: 4900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hbe/h3e/26124866838558/65NANO75ENA-Ecom-01.jpg",
+    isBest: false,
+  },
+];

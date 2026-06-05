@@ -1,0 +1,167 @@
+export type LivingProduct = {
+  id: number;
+  category: string;
+  name: string;
+  model: string;
+  monthlyPrice: number;
+  benefitPrice: number | null;
+  tags: { label: string; type: "md" | "new" | "naver" | "sale" }[];
+  image: string;
+  isBest?: boolean;
+};
+
+export const livingCategories = [
+  "세탁기",
+  "세탁기+건조기 세트",
+  "워시타워",
+  "워시콤보",
+  "의류건조기",
+  "스타일러",
+  "슈케어",
+  "청소기",
+  "안마의자",
+];
+
+export const livingProducts: LivingProduct[] = [
+  {
+    id: 1,
+    category: "세탁기",
+    name: "LG 통돌이 세탁기 렌탈 가전 구독",
+    model: "T21MX9B",
+    monthlyPrice: 23900,
+    benefitPrice: 0,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h72/hfa/26232614707230/T21MX9B-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 2,
+    category: "워시타워",
+    name: "LG 드롬 오브제컬렉션 워시타워 렌탈 가전 구독",
+    model: "W20WHN",
+    monthlyPrice: 63900,
+    benefitPrice: 21900,
+    tags: [{ label: "네이버페이 20만원", type: "naver" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hba/hee/26232614641694/W20WHN-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 3,
+    category: "워시콤보",
+    name: "LG 드롬 오브제컬렉션 워시콤보 렌탈 가전 구독",
+    model: "FH25WA",
+    monthlyPrice: 76900,
+    benefitPrice: 46900,
+    tags: [
+      { label: "MD 추천", type: "md" },
+      { label: "네이버페이 30만원", type: "naver" },
+    ],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h2e/h43/26232614576158/FH25WA-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 4,
+    category: "스타일러",
+    name: "LG 스타일러 오브제컬렉션 구독 (ALL NEW) 렌탈 가전 구독",
+    model: "SC5MBR42S",
+    monthlyPrice: 31900,
+    benefitPrice: 0,
+    tags: [
+      { label: "NEW", type: "new" },
+      { label: "네이버페이 1만원", type: "naver" },
+    ],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h1a/hb7/26232614510622/SC5MBR42S-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 5,
+    category: "스타일러",
+    name: "LG 스타일러 오브제컬렉션 (2026 NEW) 렌탈 가전 구독",
+    model: "SC3GTE5E",
+    monthlyPrice: 29900,
+    benefitPrice: 0,
+    tags: [{ label: "NEW", type: "new" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h88/h8d/26232614445086/SC3GTE5E-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 6,
+    category: "의류건조기",
+    name: "LG 드롬 오브제컬렉션 건조기 렌탈 가전 구독",
+    model: "RG18WNST",
+    monthlyPrice: 27900,
+    benefitPrice: 0,
+    tags: [
+      { label: "판매", type: "sale" },
+      { label: "네이버페이 2만원", type: "naver" },
+    ],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h80/h33/26232614379550/RG18WNST-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 7,
+    category: "세탁기",
+    name: "LG 드롬 오브제컬렉션 세탁기 렌탈 가전 구독",
+    model: "FX25WNA",
+    monthlyPrice: 34900,
+    benefitPrice: 8900,
+    tags: [{ label: "네이버페이 10만원", type: "naver" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h58/h4a/26232614314014/FX25WNA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 8,
+    category: "세탁기+건조기 세트",
+    name: "LG 드롬 오브제컬렉션 세탁기+건조기 세트 렌탈 가전 구독",
+    model: "FX25WNA+RG18WNST",
+    monthlyPrice: 58900,
+    benefitPrice: 24900,
+    tags: [{ label: "네이버페이 25만원", type: "naver" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h46/hf5/26232614248478/FX25WNA+RG18WNST-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 9,
+    category: "슈케어",
+    name: "LG 스타일러 슈케어 렌탈 가전 구독",
+    model: "S3MFBN",
+    monthlyPrice: 14900,
+    benefitPrice: 2900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h2c/hf9/26232614182942/S3MFBN-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 10,
+    category: "청소기",
+    name: "LG 코드제로 A9S 올인원타워 렌탈 가전 구독",
+    model: "A959KBMS",
+    monthlyPrice: 19900,
+    benefitPrice: 3900,
+    tags: [{ label: "MD 추천", type: "md" }],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h14/h8d/26232614117406/A959KBMS-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 11,
+    category: "안마의자",
+    name: "LG 안마의자 렌탈 가전 구독",
+    model: "UR8C03W",
+    monthlyPrice: 42900,
+    benefitPrice: 9900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h94/hd0/26232614051870/UR8C03W-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 12,
+    category: "의류건조기",
+    name: "LG 드롬 오브제컬렉션 건조기 (대용량) 렌탈 가전 구독",
+    model: "RH22WNST",
+    monthlyPrice: 31900,
+    benefitPrice: 5900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hb6/h54/26232613986334/RH22WNST-Ecom-01.jpg",
+    isBest: false,
+  },
+];

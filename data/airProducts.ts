@@ -1,0 +1,148 @@
+export type AirProduct = {
+  id: number;
+  category: string;
+  name: string;
+  model: string;
+  monthlyPrice: number;
+  benefitPrice: number | null;
+  tags: { label: string; type: "md" | "hot" | "naver" }[];
+  image: string;
+  isBest?: boolean;
+};
+
+export const airCategories = ["에어컨", "공기청정기", "제습기"];
+
+export const airProducts: AirProduct[] = [
+  {
+    id: 1,
+    category: "에어컨",
+    name: "LG 휘센 AI 오브제컬렉션 월 프로 에어컨 상급 (3시리즈) 렌탈 가전 구독",
+    model: "FQ17GC3EC1",
+    monthlyPrice: 47900,
+    benefitPrice: 5900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h8b/h6c/26232613265438/FQ17GC3EC1-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 2,
+    category: "에어컨",
+    name: "LG 휘센 오브제컬렉션 뷰I 에어컨 상급 (3시리즈) 렌탈 가전 구독",
+    model: "FQ17FV3EC1",
+    monthlyPrice: 53900,
+    benefitPrice: 11900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h4a/hbc/26232613199902/FQ17FV3EC1-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 3,
+    category: "에어컨",
+    name: "LG 휘센 오브제컬렉션 뷰I 에어컨 2in1 (3시리즈) 렌탈 가전 구독",
+    model: "FQ17FV3EC2",
+    monthlyPrice: 64900,
+    benefitPrice: 22900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hce/h29/26232613134366/FQ17FV3EC2-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 4,
+    category: "에어컨",
+    name: "LG 휘센 AI 오브제컬렉션 월 프로 에어컨 2in1 (3시리즈) 렌탈 가전 구독",
+    model: "FQ17GC3EC2",
+    monthlyPrice: 58900,
+    benefitPrice: 16900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h16/h5b/26232613068830/FQ17GC3EC2-Ecom-01.jpg",
+    isBest: true,
+  },
+  {
+    id: 5,
+    category: "에어컨",
+    name: "LG 휘센 AI 듀얼 에어컨 (3시리즈) 렌탈 가전 구독",
+    model: "FQ18HDKMA2",
+    monthlyPrice: 39900,
+    benefitPrice: 7900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h28/h8c/26232613003294/FQ18HDKMA2-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 6,
+    category: "에어컨",
+    name: "LG 휘센 타워 에어컨 렌탈 가전 구독",
+    model: "FQ18HBKWA1",
+    monthlyPrice: 43900,
+    benefitPrice: 9900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h3a/h54/26232612937758/FQ18HBKWA1-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 7,
+    category: "공기청정기",
+    name: "LG 퓨리케어 360° 공기청정기 알파 렌탈 가전 구독",
+    model: "AS204XKNA",
+    monthlyPrice: 18900,
+    benefitPrice: 3900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h58/hb0/26232612872222/AS204XKNA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 8,
+    category: "공기청정기",
+    name: "LG 퓨리케어 오브제컬렉션 공기청정기 렌탈 가전 구독",
+    model: "AS201XKNA",
+    monthlyPrice: 21900,
+    benefitPrice: 5900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/hbc/h96/26232612806686/AS201XKNA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 9,
+    category: "공기청정기",
+    name: "LG 퓨리케어 에어로타워 렌탈 가전 구독",
+    model: "FA15FPKNA",
+    monthlyPrice: 24900,
+    benefitPrice: 6900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h6e/h0d/26232612741150/FA15FPKNA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 10,
+    category: "제습기",
+    name: "LG 휘센 오브제컬렉션 제습기 렌탈 가전 구독",
+    model: "DQ180HBNSA",
+    monthlyPrice: 16900,
+    benefitPrice: 2900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h72/hb3/26232612675614/DQ180HBNSA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 11,
+    category: "제습기",
+    name: "LG 휘센 제습기 렌탈 가전 구독",
+    model: "DQ180HSNA",
+    monthlyPrice: 13900,
+    benefitPrice: 1900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h6c/h61/26232612610078/DQ180HSNA-Ecom-01.jpg",
+    isBest: false,
+  },
+  {
+    id: 12,
+    category: "에어컨",
+    name: "LG 휘센 벽걸이 에어컨 렌탈 가전 구독",
+    model: "FQ06JDKPA1",
+    monthlyPrice: 29900,
+    benefitPrice: 4900,
+    tags: [],
+    image: "https://www.lge.co.kr/medias/sys_master/images/h90/h0e/26232612544542/FQ06JDKPA1-Ecom-01.jpg",
+    isBest: false,
+  },
+];
