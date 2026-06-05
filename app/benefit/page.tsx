@@ -1,42 +1,6 @@
 import Image from "next/image";
-
-const posts = [
-  {
-    category: "이달의 혜택",
-    date: "2026.06",
-    title: "6월 LG전자 베스트샵 용산점 특별 구매 혜택",
-    summary: "인기 가전 구매 고객을 위한 카드 청구 할인과 매장 전용 사은 혜택을 안내드립니다.",
-    tags: ["매장혜택", "카드할인"],
-  },
-  {
-    category: "프로모션",
-    date: "2026.06",
-    title: "가전구독 결합 고객 추가 할인 안내",
-    summary: "정수기, 공기청정기, 안마의자 등 주요 구독 품목을 함께 이용하는 고객에게 적용 가능한 결합 혜택입니다.",
-    tags: ["가전구독", "결합할인"],
-  },
-  {
-    category: "이벤트",
-    date: "2026.06",
-    title: "신혼·입주 고객 패키지 상담 이벤트",
-    summary: "혼수와 입주 가전을 한 번에 상담받는 고객을 위한 패키지 구성과 사은 혜택을 준비했습니다.",
-    tags: ["신혼가전", "입주가전"],
-  },
-  {
-    category: "소식",
-    date: "2026.05",
-    title: "용산점 전문 매니저 1:1 맞춤 상담 운영",
-    summary: "제품 비교부터 설치 환경 확인까지 전문 매니저가 고객 상황에 맞춰 상담을 도와드립니다.",
-    tags: ["상담", "매장소식"],
-  },
-  {
-    category: "안내",
-    date: "2026.05",
-    title: "네이버 예약 방문 상담 이용 안내",
-    summary: "대기 시간을 줄이고 원하는 시간에 상담받을 수 있도록 네이버 예약 방문 상담을 운영합니다.",
-    tags: ["예약", "방문상담"],
-  },
-];
+import Link from "next/link";
+import { benefitPosts } from "@/data/benefitPosts";
 
 export default function BenefitNewsPage() {
   return (
@@ -66,25 +30,32 @@ export default function BenefitNewsPage() {
           </div>
 
           <ul className="divide-y divide-[#ececec]">
-            {posts.map((post) => (
-              <li key={post.title} className="group py-7">
-                <article className="grid gap-4 sm:grid-cols-[140px_1fr] sm:gap-8">
-                  <div className="flex items-center gap-3 sm:block">
-                    <span className="inline-flex h-8 items-center rounded-full bg-[#f8eef2] px-3 text-[12px] font-bold text-[#c90f45]">{post.category}</span>
-                    <time className="text-[13px] font-semibold text-[#999] sm:mt-3 sm:block">{post.date}</time>
-                  </div>
-                  <div>
-                    <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a]">{post.title}</h3>
-                    <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666]">{post.summary}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
-                        <span key={tag} className="text-[12px] font-semibold text-[#999]">
-                          #{tag}
-                        </span>
-                      ))}
+            {benefitPosts.map((post) => (
+              <li key={post.slug}>
+                <Link href={`/benefit/${post.slug}`} className="group block py-7">
+                  <article className="grid gap-4 sm:grid-cols-[140px_1fr] sm:gap-8">
+                    <div className="flex items-center gap-3 sm:block">
+                      <span className="inline-flex h-8 items-center rounded-full bg-[#f8eef2] px-3 text-[12px] font-bold text-[#c90f45]">{post.category}</span>
+                      <time className="text-[13px] font-semibold text-[#999] sm:mt-3 sm:block">{post.date}</time>
                     </div>
-                  </div>
-                </article>
+                    <div>
+                      <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors">
+                        {post.title}
+                      </h3>
+                      <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666]">{post.summary}</p>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        <div className="flex gap-2">
+                          {post.tags.map((tag) => (
+                            <span key={tag} className="text-[12px] font-semibold text-[#999]">#{tag}</span>
+                          ))}
+                        </div>
+                        <span className="ml-auto text-[13px] font-semibold text-[#c90f45] opacity-0 group-hover:opacity-100 transition-opacity">
+                          자세히 보기 →
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
               </li>
             ))}
           </ul>
