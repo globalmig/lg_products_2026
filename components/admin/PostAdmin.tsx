@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { adminStore, type Post } from "@/lib/adminStore";
 
 interface Props {
@@ -9,28 +9,34 @@ interface Props {
 }
 
 export default function PostAdmin({ storeKey, title }: Props) {
-  const [posts, setPosts] = useState<Post[]>(() => adminStore[storeKey].get());
+  const [posts, setPosts] = useState<Post[]>([]);
   const [editing, setEditing] = useState<Post | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ title: "", content: "" });
 
-  const persist = (updated: Post[]) => { setPosts(updated); adminStore[storeKey].set(updated); };
+  useEffect(() => {
+    adminStore.posts.get(storeKey).then(setPosts);
+  }, [storeKey]);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editing) return;
-    persist(posts.map((p) => (p.id === editing.id ? editing : p)));
+    await adminStore.posts.update(editing.id, { title: editing.title, content: editing.content });
+    setPosts((prev) => prev.map((p) => (p.id === editing.id ? editing : p)));
     setEditing(null);
   };
 
-  const handleAdd = () => {
-    persist([{ id: Date.now().toString(), ...form, createdAt: new Date().toISOString() }, ...posts]);
+  const handleAdd = async () => {
+    await adminStore.posts.add(storeKey, form);
+    const updated = await adminStore.posts.get(storeKey);
+    setPosts(updated);
     setForm({ title: "", content: "" });
     setAdding(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
-    persist(posts.filter((p) => p.id !== id));
+    await adminStore.posts.delete(id);
+    setPosts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
@@ -64,7 +70,7 @@ export default function PostAdmin({ storeKey, title }: Props) {
                   <div className="min-w-0">
                     <p className="font-bold text-[#1a1a1a]">{post.title}</p>
                     <p className="mt-1 line-clamp-2 text-[13px] text-[#888]">{post.content}</p>
-                    <p className="mt-1 text-[11px] text-[#bbb]">{new Date(post.createdAt).toLocaleDateString("ko-KR")}</p>
+                    <p className="mt-1 text-[11px] text-[#bbb]">{new Date(post.created_at).toLocaleDateString("ko-KR")}</p>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <button onClick={() => setEditing({ ...post })} className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]">수정</button>

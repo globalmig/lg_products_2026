@@ -4,19 +4,20 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import HeroAdmin from "@/components/admin/HeroAdmin";
 import ConsultAdmin from "@/components/admin/ConsultAdmin";
-import ManagerAdmin from "@/components/admin/ManagerAdmin";
-import PostAdmin from "@/components/admin/PostAdmin";
 import ProductAdmin from "@/components/admin/ProductAdmin";
+import FeatureBannerAdmin from "@/components/admin/FeatureBannerAdmin";
+import MainCategoryAdmin from "@/components/admin/MainCategoryAdmin";
+import EventProductAdmin from "@/components/admin/EventProductAdmin";
 import { adminStore } from "@/lib/adminStore";
 
 const NAV = [
   { id: "dashboard", label: "대시보드", icon: "⊞" },
   { id: "products", label: "상품 관리", icon: "📦" },
   { id: "hero", label: "히어로 슬라이드", icon: "🖼" },
+  { id: "featureBanner", label: "피처 배너", icon: "🏷" },
+  { id: "mainCategory", label: "메인 카테고리", icon: "🗂" },
+  { id: "eventProducts", label: "이달의 행사 제품", icon: "🎯" },
   { id: "consult", label: "상담 신청 현황", icon: "📋" },
-  { id: "managers", label: "매니저 관리", icon: "👤" },
-  { id: "benefit", label: "혜택 & 이달의 소식", icon: "🎁" },
-  { id: "smallbiz", label: "소상공인 소식", icon: "🏢" },
 ] as const;
 
 type TabId = (typeof NAV)[number]["id"];
@@ -30,7 +31,8 @@ export default function AdminPage() {
   const [collapsed, setCollapsed] = useState(false);
 
   // 대시보드 통계
-  const [stats, setStats] = useState({ consult: 0, newConsult: 0, slides: 0, managers: 0 });
+  const [stats, setStats] = useState({ consult: 0, newConsult: 0, slides: 0 });
+  const [monthly, setMonthly] = useState<{ key: string; label: string; count: number }[]>([]);
 
   useEffect(() => {
     if (sessionStorage.getItem("admin_auth") === "true") {
@@ -39,14 +41,27 @@ export default function AdminPage() {
     }
   }, []);
 
-  const loadStats = () => {
-    const consult = adminStore.consult.get();
+  const loadStats = async () => {
+    const [consult, slides] = await Promise.all([
+      adminStore.consult.get(),
+      adminStore.slides.get(),
+    ]);
     setStats({
       consult: consult.length,
       newConsult: consult.filter((c) => c.status === "new").length,
-      slides: adminStore.slides.get().length,
-      managers: adminStore.managers.get().length,
+      slides: slides.length,
     });
+    const now = new Date();
+    const m = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: `${d.getMonth() + 1}월`, count: 0 };
+    });
+    consult.forEach((c) => {
+      const key = c.submitted_at.slice(0, 7);
+      const found = m.find((x) => x.key === key);
+      if (found) found.count++;
+    });
+    setMonthly(m);
   };
 
   const login = async () => {
@@ -193,7 +208,6 @@ export default function AdminPage() {
                   { label: "전체 상담 신청", value: stats.consult, unit: "건", color: "bg-blue-50 text-blue-600", onClick: () => setTab("consult") },
                   { label: "신규 미확인", value: stats.newConsult, unit: "건", color: "bg-red-50 text-[#c90f45]", onClick: () => setTab("consult") },
                   { label: "히어로 슬라이드", value: stats.slides, unit: "개", color: "bg-purple-50 text-purple-600", onClick: () => setTab("hero") },
-                  { label: "등록 매니저", value: stats.managers, unit: "명", color: "bg-green-50 text-green-600", onClick: () => setTab("managers") },
                 ].map((card) => (
                   <button key={card.label} onClick={card.onClick}
                     className="rounded-2xl bg-white p-5 text-left shadow-sm transition-shadow hover:shadow-md">
@@ -205,21 +219,7 @@ export default function AdminPage() {
               </div>
 
               {(() => {
-                const consult = adminStore.consult.get();
                 const now = new Date();
-                const monthly = Array.from({ length: 12 }, (_, i) => {
-                  const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
-                  return {
-                    key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-                    label: `${d.getMonth() + 1}월`,
-                    count: 0,
-                  };
-                });
-                consult.forEach((c) => {
-                  const key = c.submittedAt.slice(0, 7);
-                  const m = monthly.find((x) => x.key === key);
-                  if (m) m.count++;
-                });
                 const maxVal = Math.max(...monthly.map((m) => m.count), 1);
 
                 return (
@@ -258,10 +258,10 @@ export default function AdminPage() {
 
           {tab === "products" && <ProductAdmin />}
           {tab === "hero" && <HeroAdmin />}
+          {tab === "featureBanner" && <FeatureBannerAdmin />}
+          {tab === "mainCategory" && <MainCategoryAdmin />}
+          {tab === "eventProducts" && <EventProductAdmin />}
           {tab === "consult" && <ConsultAdmin />}
-          {tab === "managers" && <ManagerAdmin />}
-          {tab === "benefit" && <PostAdmin storeKey="benefit" title="혜택 & 이달의 소식" />}
-          {tab === "smallbiz" && <PostAdmin storeKey="smallbiz" title="소상공인 소식" />}
         </main>
       </div>
     </div>

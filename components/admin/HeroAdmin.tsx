@@ -1,34 +1,76 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { adminStore, type Slide } from "@/lib/adminStore";
+import { useEffect, useRef, useState } from "react";
+import { adminStore, uploadImage, imageUrl } from "@/lib/adminStore";
+import type { Slide } from "@/lib/adminStore";
 
-const EMPTY = { image: "", subtitle: "", title: "" };
+type SlideWithKey = Slide & { image_key: string };
+
+const EMPTY = { image: "", image_key: "", subtitle: "", title: "" };
 
 export default function HeroAdmin() {
-  const [slides, setSlides] = useState<Slide[]>(() => adminStore.slides.get());
-  const [editing, setEditing] = useState<Slide | null>(null);
+  const [slides, setSlides] = useState<SlideWithKey[]>([]);
+  const [editing, setEditing] = useState<SlideWithKey | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(EMPTY);
 
-  const persist = (updated: Slide[]) => { setSlides(updated); adminStore.slides.set(updated); };
+  useEffect(() => {
+    adminStore.slides.get().then(async (data) => {
+      if (data.length > 0) {
+        setSlides(data);
+      } else {
+        const defaults = [
+          { image_key: "/images/main/hero.jpg",  subtitle: "", title: "", sort_order: 0 },
+          { image_key: "/images/main/hero2.jpg", subtitle: "", title: "", sort_order: 1 },
+        ];
+        await Promise.all(defaults.map((s) => adminStore.slides.add(s)));
+        const fresh = await adminStore.slides.get();
+        setSlides(fresh);
+      }
+    });
+  }, []);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editing) return;
-    persist(slides.map((s) => (s.id === editing.id ? editing : s)));
+    await adminStore.slides.update(editing.id, {
+      image_key: editing.image_key,
+      subtitle: editing.subtitle,
+      title: editing.title,
+      sort_order: slides.findIndex((s) => s.id === editing.id),
+    });
+    setSlides((prev) => prev.map((s) => (s.id === editing.id ? editing : s)));
     setEditing(null);
   };
 
-  const handleAdd = () => {
-    const id = Math.max(0, ...slides.map((s) => s.id)) + 1;
-    persist([...slides, { id, ...form }]);
+  const handleAdd = async () => {
+    const result = await adminStore.slides.add({
+      image_key: form.image_key,
+      subtitle: form.subtitle,
+      title: form.title,
+      sort_order: slides.length,
+    });
+    const { id } = result as { id: number };
+    setSlides((prev) => [...prev, { id, image: form.image, image_key: form.image_key, subtitle: form.subtitle, title: form.title }]);
     setForm(EMPTY);
     setAdding(false);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("삭제하시겠습니까?")) return;
-    persist(slides.filter((s) => s.id !== id));
+    await adminStore.slides.delete(id);
+    setSlides((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleMove = async (idx: number, dir: -1 | 1) => {
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= slides.length) return;
+    const next = [...slides];
+    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+    setSlides(next);
+    await Promise.all([
+      adminStore.slides.update(next[idx].id, { image_key: next[idx].image_key, subtitle: next[idx].subtitle, title: next[idx].title, sort_order: idx }),
+      adminStore.slides.update(next[swapIdx].id, { image_key: next[swapIdx].image_key, subtitle: next[swapIdx].subtitle, title: next[swapIdx].title, sort_order: swapIdx }),
+    ]);
   };
 
   return (
@@ -41,13 +83,17 @@ export default function HeroAdmin() {
       </div>
 
       <div className="space-y-4">
-        {slides.map((slide) => (
+        {slides.map((slide, idx) => (
           <div key={slide.id} className="rounded-2xl bg-white p-5 shadow-sm">
             {editing?.id === slide.id ? (
               <SlideForm data={editing} onChange={setEditing as (v: typeof editing) => void} onSave={handleSaveEdit} onCancel={() => setEditing(null)} />
             ) : (
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 min-w-0">
+                <div className="flex flex-col gap-0.5 shrink-0">
+                  <button type="button" onClick={() => handleMove(idx, -1)} disabled={idx === 0} className="h-4 text-[10px] text-[#bbb] hover:text-[#555] disabled:opacity-30">▲</button>
+                  <button type="button" onClick={() => handleMove(idx, 1)} disabled={idx === slides.length - 1} className="h-4 text-[10px] text-[#bbb] hover:text-[#555] disabled:opacity-30">▼</button>
+                </div>
+                <div className="flex items-center gap-4 min-w-0 flex-1">
                   {slide.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={slide.image} alt="" className="h-14 w-24 shrink-0 rounded-lg object-contain bg-[#f5f5f5]" />
@@ -72,7 +118,7 @@ export default function HeroAdmin() {
 
       {adding && (
         <Modal title="슬라이드 추가" onClose={() => setAdding(false)}>
-          <SlideForm data={{ id: 0, ...form }} onChange={(v) => setForm({ image: v.image, subtitle: v.subtitle, title: v.title })} onSave={handleAdd} onCancel={() => setAdding(false)} saveLabel="추가" />
+          <SlideForm data={{ id: 0, ...form }} onChange={(v) => setForm({ image: v.image, image_key: v.image_key, subtitle: v.subtitle, title: v.title })} onSave={handleAdd} onCancel={() => setAdding(false)} saveLabel="추가" />
         </Modal>
       )}
     </div>
@@ -80,20 +126,25 @@ export default function HeroAdmin() {
 }
 
 function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
-  data: Slide;
-  onChange: (v: Slide) => void;
+  data: SlideWithKey;
+  onChange: (v: SlideWithKey) => void;
   onSave: () => void;
   onCancel: () => void;
   saveLabel?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => onChange({ ...data, image: ev.target?.result as string });
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const key = await uploadImage(file, "slides");
+      onChange({ ...data, image_key: key, image: imageUrl(key) });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -103,19 +154,23 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
           onClick={() => fileRef.current?.click()}
           className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-5 hover:border-[#c90f45] transition-colors"
         >
-          {data.image ? (
+          {uploading ? (
+            <p className="text-[13px] text-[#aaa]">업로드 중...</p>
+          ) : data.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={data.image} alt="" className="max-h-32 w-full rounded-lg object-contain" />
           ) : (
             <>
-              <span className="text-[24px]">🖼</span>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
               <p className="text-[12px] text-[#aaa]">클릭해서 이미지 업로드</p>
             </>
           )}
-          {data.image && <p className="text-[11px] text-[#aaa]">클릭해서 이미지 변경</p>}
+          {data.image && !uploading && <p className="text-[11px] text-[#aaa]">클릭해서 이미지 변경</p>}
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-        <p className="mt-1.5 text-[11px] text-[#bbb]">권장 크기: 1920×1080px 이상 · 최대 1MB (JPG, PNG, WebP)</p>
+        <p className="mt-1.5 text-[11px] text-[#bbb]">권장 크기: 1920×1080px 이상 · 최대 5MB (JPG, PNG, WebP)</p>
       </Field>
       <Field label="부제목">
         <input value={data.subtitle} onChange={(e) => onChange({ ...data, subtitle: e.target.value })}
@@ -126,7 +181,7 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
           className="w-full resize-none rounded-lg border border-[#e8e8e8] px-3 py-2 text-[13px] outline-none focus:border-[#c90f45]" />
       </Field>
       <div className="flex gap-2">
-        <button onClick={onSave} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white">{saveLabel}</button>
+        <button onClick={onSave} disabled={uploading} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white disabled:opacity-50">{saveLabel}</button>
         <button onClick={onCancel} className="flex h-9 items-center rounded-full border border-[#e8e8e8] px-5 text-[13px] text-[#666]">취소</button>
       </div>
     </div>

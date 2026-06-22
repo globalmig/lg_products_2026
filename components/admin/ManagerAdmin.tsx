@@ -1,34 +1,40 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
-import { adminStore, type Manager } from "@/lib/adminStore";
+import { useEffect, useRef, useState } from "react";
+import { adminStore, uploadImage, imageUrl, type Manager } from "@/lib/adminStore";
 
-const EMPTY: Omit<Manager, "id"> = { img: "", name: "", store: "용산전자상가점", tags: [], desc: "", href: "#" };
+const EMPTY: Omit<Manager, "id"> = { img_key: "", name: "", store: "용산전자상가점", tags: [], desc: "", href: "#" };
 
 export default function ManagerAdmin() {
-  const [managers, setManagers] = useState<Manager[]>(() => adminStore.managers.get());
+  const [managers, setManagers] = useState<Manager[]>([]);
   const [editing, setEditing] = useState<Manager | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<Omit<Manager, "id">>(EMPTY);
 
-  const persist = (updated: Manager[]) => { setManagers(updated); adminStore.managers.set(updated); };
+  useEffect(() => {
+    adminStore.managers.get().then(setManagers);
+  }, []);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editing) return;
-    persist(managers.map((m) => (m.id === editing.id ? editing : m)));
+    await adminStore.managers.update(editing.id, editing);
+    setManagers((prev) => prev.map((m) => (m.id === editing.id ? editing : m)));
     setEditing(null);
   };
 
-  const handleAdd = () => {
-    persist([...managers, { id: Date.now().toString(), ...form }]);
+  const handleAdd = async () => {
+    const newManager: Manager = { id: Date.now().toString(), ...form };
+    await adminStore.managers.add(newManager);
+    setManagers((prev) => [...prev, newManager]);
     setForm(EMPTY);
     setAdding(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
-    persist(managers.filter((m) => m.id !== id));
+    await adminStore.managers.delete(id);
+    setManagers((prev) => prev.filter((m) => m.id !== id));
   };
 
   return (
@@ -55,7 +61,7 @@ export default function ManagerAdmin() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-[#f0dde2]">
-                    {m.img && <Image src={m.img} alt={m.name} width={48} height={48} className="h-full w-full object-cover object-top" />}
+                    {m.img_key && <Image src={imageUrl(m.img_key)} alt={m.name} width={48} height={48} className="h-full w-full object-cover object-top" unoptimized />}
                   </div>
                   <div>
                     <p className="font-bold text-[#1a1a1a]">{m.name} <span className="text-[13px] font-normal text-[#888]">{m.store}</span></p>
@@ -102,7 +108,7 @@ function ManagerForm({ data, onChange }: { data: Omit<Manager, "id">; onChange: 
         <Field label="지점"><input value={data.store} onChange={(e) => f("store", e.target.value)} className={inp} /></Field>
       </div>
       <Field label="프로필 이미지">
-        <ImgUpload value={data.img} onChange={(v) => onChange({ ...data, img: v })} />
+        <ImgUpload value={data.img_key} onChange={(v) => onChange({ ...data, img_key: v })} />
       </Field>
       <Field label="태그">
         <TagInput tags={data.tags} onChange={(tags) => onChange({ ...data, tags })} />
@@ -115,27 +121,36 @@ function ManagerForm({ data, onChange }: { data: Omit<Manager, "id">; onChange: 
 
 function ImgUpload({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => onChange(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const key = await uploadImage(file, "managers");
+      onChange(key);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div className="flex items-center gap-4">
       <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[#f5f5f5]">
         {value
-          ? <img src={value} alt="" className="h-full w-full object-cover object-top" />
-          : <span className="flex h-full w-full items-center justify-center text-[22px]">👤</span>
+          ? <img src={imageUrl(value)} alt="" className="h-full w-full object-cover object-top" />
+          : <span className="flex h-full w-full items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
         }
       </div>
       <div>
-        <button type="button" onClick={() => fileRef.current?.click()}
-          className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]">
-          {value ? "이미지 변경" : "이미지 업로드"}
+        <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+          className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45] disabled:opacity-50">
+          {uploading ? "업로드 중..." : value ? "이미지 변경" : "이미지 업로드"}
         </button>
         {value && (
           <button type="button" onClick={() => onChange("")} className="mt-1 text-[11px] text-[#bbb] hover:text-red-400">삭제</button>
@@ -181,13 +196,9 @@ function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[
           <button type="button" onClick={() => onChange(tags.filter((t) => t !== tag))} className="leading-none text-[#c90f45]/50 hover:text-[#c90f45]">×</button>
         </span>
       ))}
-      <input
-        value={input}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
+      <input value={input} onChange={handleChange} onKeyDown={handleKeyDown}
         placeholder={tags.length === 0 ? "태그 입력 후 Enter·쉼표·스페이스" : ""}
-        className="min-w-30 flex-1 text-[13px] outline-none"
-      />
+        className="min-w-30 flex-1 text-[13px] outline-none" />
     </div>
   );
 }
