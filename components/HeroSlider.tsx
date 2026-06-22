@@ -32,7 +32,7 @@ export default function HeroSlider() {
   const slide = slides[current];
 
   return (
-    <section className="relative h-175 w-full overflow-hidden">
+    <section className="relative w-full overflow-hidden aspect-[3/2] sm:aspect-[16/9] md:[aspect-ratio:16/7]">
       {slides.map((s, i) => (
         <div
           key={s.id}
@@ -52,7 +52,7 @@ export default function HeroSlider() {
       <button
         type="button"
         onClick={() => go(current - 1)}
-        className="absolute left-8 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[24px] font-light text-[#888] shadow-sm"
+        className="absolute left-8 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[24px] font-light text-[#888] shadow-sm md:flex"
         aria-label="이전 배너"
       >
         ‹
@@ -60,29 +60,29 @@ export default function HeroSlider() {
       <button
         type="button"
         onClick={() => go(current + 1)}
-        className="absolute right-8 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[24px] font-light text-[#888] shadow-sm"
+        className="absolute right-8 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[24px] font-light text-[#888] shadow-sm md:flex"
         aria-label="다음 배너"
       >
         ›
       </button>
 
       <div className="relative z-10 mx-auto flex h-full max-w-270 items-center px-5">
-        <div className="mb-10">
-          <p className="mb-4 text-[31px] font-medium tracking-tighter">
+        <div className="mb-4 sm:mb-6 md:mb-10">
+          <p className="mb-2 sm:mb-4 text-[16px] sm:text-[22px] md:text-[31px] font-medium tracking-tighter">
             {slide.subtitle}
           </p>
-          <h1 className="whitespace-pre-line text-[56px] font-black leading-[1.12] tracking-[-0.07em]">
+          <h1 className="whitespace-pre-line text-[28px] sm:text-[40px] md:text-[56px] font-black leading-[1.12] tracking-[-0.07em]">
             {slide.title}
           </h1>
           {slide.description && (
-            <p className="mt-5 whitespace-pre-line text-[18px] font-medium leading-relaxed tracking-[-0.03em] opacity-80">
+            <p className="mt-3 sm:mt-5 whitespace-pre-line text-[13px] sm:text-[15px] md:text-[18px] font-medium leading-relaxed tracking-[-0.03em] opacity-80">
               {slide.description}
             </p>
           )}
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
         <span className="text-[10px] font-medium text-[#f1b7a1]">
           {String(current + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>

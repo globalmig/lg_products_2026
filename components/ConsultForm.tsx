@@ -26,14 +26,17 @@ export default function ConsultForm({ initialIds }: Props) {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    productStore.products.get().then((products) => {
-      setAllProducts(products);
+    Promise.all([
+      productStore.products.getBySection("kitchen"),
+      productStore.products.getBySection("tv"),
+      productStore.products.getBySection("air"),
+      productStore.products.getBySection("living"),
+    ]).then(([kitchen, tv, air, living]) => {
+      const all = [...kitchen, ...tv, ...air, ...living];
+      setAllProducts(all);
       if (initialIds) {
-        const ids = initialIds
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const pre = ids.map((id) => products.find((p) => p.id === id)).filter(Boolean) as ManagedProduct[];
+        const ids = initialIds.split(",").map((s) => s.trim()).filter(Boolean);
+        const pre = ids.map((id) => all.find((p) => p.id === id)).filter(Boolean) as ManagedProduct[];
         setSelected(pre);
       }
     });
@@ -87,8 +90,8 @@ export default function ConsultForm({ initialIds }: Props) {
       <form onSubmit={handleSubmit}>
         {/* 선택한 제품 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-start gap-4">
-            <span className="w-24 shrink-0 pt-1 text-[14px] font-semibold text-[#555]">선택한 제품</span>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+            <span className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28 sm:pt-1">선택한 제품</span>
             <div className="min-w-0 flex-1">
               {selected.length === 0 ? (
                 <button
@@ -127,8 +130,8 @@ export default function ConsultForm({ initialIds }: Props) {
 
         {/* 관할타임 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-start gap-4">
-            <span className="w-24 shrink-0 pt-1 text-[14px] font-semibold text-[#555]">관할타임</span>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+            <span className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28 sm:pt-1">관할타임</span>
             <div className="flex gap-5">
               {["방문관리", "자가관리"].map((opt) => (
                 <label key={opt} className="flex cursor-pointer items-center gap-2">
@@ -142,16 +145,16 @@ export default function ConsultForm({ initialIds }: Props) {
 
         {/* 사용기간 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-center gap-4">
-            <span className="w-24 shrink-0 text-[14px] font-semibold text-[#555]">사용기간</span>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+            <span className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">사용기간</span>
             <span className="text-[14px] text-[#333]">{careType === "방문관리" ? "의무사용 6년 / 계약기간 6년" : "의무사용 3년 / 계약기간 3년"}</span>
           </div>
         </div>
 
         {/* 고객명 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-center gap-4">
-            <label htmlFor="name" className="w-24 shrink-0 text-[14px] font-semibold text-[#555]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <label htmlFor="name" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">
               고객명
             </label>
             <input
@@ -167,8 +170,8 @@ export default function ConsultForm({ initialIds }: Props) {
 
         {/* 연락처 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-center gap-4">
-            <label htmlFor="phone" className="w-24 shrink-0 text-[14px] font-semibold text-[#555]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <label htmlFor="phone" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">
               연락처
             </label>
             <input
@@ -184,8 +187,8 @@ export default function ConsultForm({ initialIds }: Props) {
 
         {/* 상담가능시간 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-center gap-4">
-            <label htmlFor="availableTime" className="w-24 shrink-0 text-[14px] font-semibold text-[#555]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <label htmlFor="availableTime" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">
               상담가능시간
             </label>
             <input
@@ -201,8 +204,8 @@ export default function ConsultForm({ initialIds }: Props) {
 
         {/* 추가내용 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex items-start gap-4">
-            <label htmlFor="extra" className="w-24 shrink-0 pt-2 text-[14px] font-semibold text-[#555]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+            <label htmlFor="extra" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28 sm:pt-2">
               추가내용
             </label>
             <textarea

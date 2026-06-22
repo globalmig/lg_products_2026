@@ -74,7 +74,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
         <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
 
           {/* 좌측: 메인 이미지 */}
-          <div className="lg:w-[460px] lg:shrink-0">
+          <div className="lg:w-[45%] lg:max-w-120 lg:shrink-0">
             <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f7f7f7]">
               {!imgError ? (
                 <Image
@@ -94,7 +94,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 </div>
               )}
               <div
-                className="absolute right-4 top-4 flex h-16 w-16 items-center justify-center rounded-full text-center text-[10px] font-bold leading-[1.3] text-white"
+                className="absolute right-3 top-3 sm:right-4 sm:top-4 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full text-center text-[9px] sm:text-[10px] font-bold leading-[1.3] text-white"
                 style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
               >
                 LG전자<br />온라인<br />인증점

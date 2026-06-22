@@ -35,7 +35,7 @@ function ProductCard({ product }: { product: ManagedProduct }) {
             </div>
           )}
           <div
-            className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full text-center text-[9px] font-bold leading-[1.3] text-white"
+            className="absolute right-2 top-2 sm:right-3 sm:top-3 flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full text-center text-[8px] sm:text-[9px] font-bold leading-[1.3] text-white"
             style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
           >
             LG전자
@@ -93,37 +93,16 @@ function ProductCard({ product }: { product: ManagedProduct }) {
 
 /* ────── 베스트 캐러셀 ────── */
 function BestCarousel({ bestProducts }: { bestProducts: ManagedProduct[] }) {
-  const [index, setIndex] = useState(0);
-  const maxIndex = Math.max(bestProducts.length - 4, 0);
-
-  const prev = () => setIndex((i) => Math.max(i - 1, 0));
-  const next = () => setIndex((i) => Math.min(i + 1, maxIndex));
-
   if (bestProducts.length === 0) return null;
 
   return (
     <section className="bg-[#f5f5f5] py-10">
-      <div className="mx-auto max-w-270 px-5">
+      <div className="mx-auto max-w-300 px-5">
         <h2 className="mb-6 text-[20px] font-black tracking-[-0.04em] text-[#1a1a1a]">TV 베스트</h2>
-
-        <div className="relative">
-          <button type="button" onClick={prev} disabled={index === 0}
-            className="absolute -left-5 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#ddd] bg-white shadow-sm transition-opacity disabled:opacity-30" aria-label="이전">
-            <svg className="h-4 w-4 text-[#555]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-
-          <div className="overflow-hidden">
-            <div className="flex gap-4 transition-transform duration-300" style={{ transform: `translateX(calc(-${index} * (25% + 4px)))` }}>
-              {bestProducts.map((product) => (
-                <div key={product.id} className="w-[calc(25%-12px)] shrink-0"><ProductCard product={product} /></div>
-              ))}
-            </div>
-          </div>
-
-          <button type="button" onClick={next} disabled={index >= maxIndex}
-            className="absolute -right-5 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#ddd] bg-white shadow-sm transition-opacity disabled:opacity-30" aria-label="다음">
-            <svg className="h-4 w-4 text-[#555]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          </button>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+          {bestProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
         </div>
       </div>
     </section>
@@ -167,7 +146,7 @@ export default function TVProductList() {
     <>
       <BestCarousel bestProducts={products.filter((p) => p.isBest)} />
 
-      <div className="mx-auto max-w-270 px-5 py-10">
+      <div className="mx-auto max-w-300 px-5 py-10">
         <h2 className="mb-6 text-[20px] font-black tracking-[-0.04em] text-[#1a1a1a]">TV</h2>
 
         {/* 필터 */}

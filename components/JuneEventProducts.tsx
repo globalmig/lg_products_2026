@@ -29,12 +29,12 @@ export default function JuneEventProducts() {
   return (
     <section className="py-16">
       <div className="mx-auto max-w-360 px-5">
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 text-[13px] font-semibold tracking-widest text-[#c90f45]">
               6월 한정 특가
             </p>
-            <h2 className="text-[28px] font-black tracking-tighter text-[#1a1a1a]">
+            <h2 className="text-[24px] sm:text-[28px] font-black tracking-tighter text-[#1a1a1a]">
               이달의 행사 제품
             </h2>
             <p className="mt-1.5 text-[14px] text-[#777]">
@@ -43,7 +43,7 @@ export default function JuneEventProducts() {
           </div>
           <Link
             href="/benefit"
-            className="shrink-0 rounded-full border border-[#e0e0e0] px-5 py-2 text-[13px] font-medium text-[#444] transition-colors hover:border-[#c90f45] hover:text-[#c90f45]"
+            className="self-start sm:self-auto shrink-0 rounded-full border border-[#e0e0e0] px-5 py-2 text-[13px] font-medium text-[#444] transition-colors hover:border-[#c90f45] hover:text-[#c90f45]"
           >
             전체 혜택 보기 →
           </Link>
@@ -70,7 +70,7 @@ export default function JuneEventProducts() {
                     <div className="flex h-full items-center justify-center text-[12px] text-[#bbb]">이미지 준비중</div>
                   )}
                   <div
-                    className="absolute right-2.5 top-2.5 flex h-12 w-12 items-center justify-center rounded-full text-center text-[8px] font-bold leading-[1.3] text-white"
+                    className="absolute right-2 top-2 sm:right-2.5 sm:top-2.5 flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-full text-center text-[7px] sm:text-[8px] font-bold leading-[1.3] text-white"
                     style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
                   >
                     LG전자<br />온라인<br />인증점

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.lge.co.kr)",
-      "Bash(findstr -i \"chart\\\\|recharts\\\\|victory\\\\|d3\\\\|nivo\")"
+      "Bash(findstr -i \"chart\\\\|recharts\\\\|victory\\\\|d3\\\\|nivo\")",
+      "Bash(npm list *)",
+      "PowerShell(cd \"d:\\\\file_hyebinkim\\\\development\\\\lg_product26\"; npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"ConsultForm|ConsultAdmin|adminStore|consult/page|ProductDetailPage|KitchenProduct|TVProduct|AirProduct|LivingProduct\" })"
     ]
   }
 }

@@ -32,7 +32,7 @@ function ProductCard({ product, category }: { product: ManagedProduct; category:
           </div>
         )}
         <div
-          className="absolute right-3 top-3 flex h-12 w-12 items-center justify-center rounded-full text-center text-[8px] font-bold leading-[1.3] text-white"
+          className="absolute right-2 top-2 sm:right-3 sm:top-3 flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-full text-center text-[7px] sm:text-[8px] font-bold leading-[1.3] text-white"
           style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
         >
           LG전자<br />온라인<br />인증점
