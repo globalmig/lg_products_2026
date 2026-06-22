@@ -2,12 +2,20 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { slides } from "@/data/slides";
+import { slides as defaultSlides, type Slide } from "@/data/slides";
+import { adminStore } from "@/lib/adminStore";
 
 export default function HeroSlider() {
+  const [slides, setSlides] = useState<Slide[]>(defaultSlides);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const total = slides.length;
+
+  useEffect(() => {
+    adminStore.slides.get().then((data) => {
+      if (data.length > 0) setSlides(data);
+    });
+  }, []);
 
   useEffect(() => {
     if (paused) return;
@@ -24,7 +32,7 @@ export default function HeroSlider() {
   const slide = slides[current];
 
   return (
-    <section className="relative mx-auto h-175 w-full max-w-360 overflow-hidden">
+    <section className="relative h-175 w-full overflow-hidden">
       {slides.map((s, i) => (
         <div
           key={s.id}

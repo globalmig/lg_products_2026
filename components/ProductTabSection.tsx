@@ -1,26 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { kitchenProducts } from "@/data/kitchenProducts";
-import { tvProducts } from "@/data/tvProducts";
+import { productStore, type ManagedProduct } from "@/lib/productStore";
 
-const tabs = [
-  { label: "주방가전", key: "kitchen", href: "/products/kitchen", products: kitchenProducts },
-  { label: "TV", key: "tv", href: "/products/tv", products: tvProducts },
+const TABS = [
+  { label: "주방가전", key: "kitchen" as const, href: "/products/kitchen" },
+  { label: "TV",      key: "tv"      as const, href: "/products/tv" },
 ];
 
-function ProductCard({ product, category }: {
-  product: { id: number; name: string; model: string; monthlyPrice: number; benefitPrice: number | null; image: string; tags: { label: string; type: string }[] }
-  category: string
-}) {
+function ProductCard({ product, category }: { product: ManagedProduct; category: string }) {
   const [imgError, setImgError] = useState(false);
 
   return (
     <a href={`/products/${category}/${product.id}`} className="group block">
       <div className="relative mb-3 aspect-square overflow-hidden rounded-2xl bg-[#f7f7f7]">
-        {!imgError ? (
+        {!imgError && product.image ? (
           <Image
             src={product.image}
             alt={product.name}
@@ -75,46 +71,40 @@ function ProductCard({ product, category }: {
 }
 
 export default function ProductTabSection() {
-  const [activeTab, setActiveTab] = useState("kitchen");
-  const current = tabs.find((t) => t.key === activeTab)!;
+  const [activeTab, setActiveTab] = useState<"kitchen" | "tv">("kitchen");
+  const [products, setProducts] = useState<ManagedProduct[]>([]);
+
+  useEffect(() => {
+    productStore.products.getBySection(activeTab).then(setProducts);
+  }, [activeTab]);
+
+  const current = TABS.find((t) => t.key === activeTab)!;
 
   return (
     <section className="border-b border-[#f1f1f1] bg-white py-12">
       <div className="mx-auto max-w-300 px-5">
-        {/* 탭 헤더 */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex gap-1">
-            {tabs.map((tab) => (
+            {TABS.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className={`rounded-full px-5 py-2 text-[14px] font-bold transition-colors ${
-                  activeTab === tab.key
-                    ? "bg-[#1a1a1a] text-white"
-                    : "text-[#888] hover:text-[#1a1a1a]"
+                  activeTab === tab.key ? "bg-[#1a1a1a] text-white" : "text-[#888] hover:text-[#1a1a1a]"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <Link
-            href={current.href}
-            className="text-[13px] font-medium text-[#888] transition-colors hover:text-[#c90f45]"
-          >
+          <Link href={current.href} className="text-[13px] font-medium text-[#888] transition-colors hover:text-[#c90f45]">
             전체보기 →
           </Link>
         </div>
-
-        {/* 상품 그리드 */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-          {current.products.slice(0, 8).map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product as { id: number; name: string; model: string; monthlyPrice: number; benefitPrice: number | null; image: string; tags: { label: string; type: string }[] }}
-              category={current.key}
-            />
+          {products.slice(0, 8).map((product) => (
+            <ProductCard key={product.id} product={product} category={activeTab} />
           ))}
         </div>
       </div>

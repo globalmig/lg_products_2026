@@ -1,44 +1,21 @@
-import Image from "next/image";
+"use client";
 
-const posts = [
-  {
-    category: "사업자 혜택",
-    date: "상시 운영",
-    title: "소상공인·사업자 전용 가전 구매 상담",
-    summary: "매장, 사무실, 숙박업, 병원 등 업종별 공간에 필요한 가전을 예산과 설치 환경에 맞춰 제안합니다.",
-    tags: ["사업자상담", "업종별제안"],
-  },
-  {
-    category: "구독 안내",
-    date: "상시 운영",
-    title: "초기 비용 부담을 줄이는 가전구독 구성",
-    summary: "정수기, 공기청정기, 냉난방 제품 등 관리가 필요한 품목은 구독 방식으로 운영 부담을 줄일 수 있습니다.",
-    tags: ["가전구독", "관리서비스"],
-  },
-  {
-    category: "패키지",
-    date: "2026.06",
-    title: "매장 오픈·리뉴얼 가전 패키지 제안",
-    summary: "오픈 준비 일정에 맞춰 냉장고, 세탁기, TV, 공조 제품 등 필수 품목을 패키지로 상담합니다.",
-    tags: ["오픈준비", "패키지"],
-  },
-  {
-    category: "상담",
-    date: "2026.06",
-    title: "법인·사업자 구매 증빙 상담",
-    summary: "사업자 구매 시 필요한 견적, 품목 구성, 결제 방식 등 기본 절차를 매장 담당자가 안내합니다.",
-    tags: ["견적", "구매상담"],
-  },
-  {
-    category: "설치",
-    date: "상시 운영",
-    title: "공간 조건에 맞춘 설치 가능 여부 확인",
-    summary: "제품 선택 전 전기 용량, 배수, 배관, 동선 등 설치 조건을 함께 점검해 불필요한 시행착오를 줄입니다.",
-    tags: ["설치상담", "공간점검"],
-  },
-];
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { adminStore, type Post } from "@/lib/adminStore";
 
 export default function SmePage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    adminStore.posts.get("smallbiz").then((data) => {
+      setPosts(data);
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <main className="bg-white text-[#171717]">
       <section className="relative isolate min-h-[430px] overflow-hidden bg-[#171717] px-5 py-24 sm:min-h-[520px] sm:py-32">
@@ -65,29 +42,31 @@ export default function SmePage() {
             <p className="text-[14px] text-[#777]">게시물 상세 화면 없이 리스트만 제공합니다.</p>
           </div>
 
-          <ul className="divide-y divide-[#ececec]">
-            {posts.map((post) => (
-              <li key={post.title} className="py-7">
-                <article className="grid gap-4 sm:grid-cols-[140px_1fr] sm:gap-8">
-                  <div className="flex items-center gap-3 sm:block">
-                    <span className="inline-flex h-8 items-center rounded-full bg-[#f8eef2] px-3 text-[12px] font-bold text-[#c90f45]">{post.category}</span>
-                    <time className="text-[13px] font-semibold text-[#999] sm:mt-3 sm:block">{post.date}</time>
-                  </div>
-                  <div>
-                    <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a]">{post.title}</h3>
-                    <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666]">{post.summary}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
-                        <span key={tag} className="text-[12px] font-semibold text-[#999]">
-                          #{tag}
-                        </span>
-                      ))}
+          {loading ? (
+            <div className="py-20 text-center text-[14px] text-[#bbb]">불러오는 중...</div>
+          ) : posts.length === 0 ? (
+            <div className="py-20 text-center text-[14px] text-[#bbb]">등록된 소식이 없습니다.</div>
+          ) : (
+            <ul className="divide-y divide-[#ececec]">
+              {posts.map((post) => (
+                <li key={post.id} className="py-7">
+                  <article className="grid gap-4 sm:grid-cols-[140px_1fr] sm:gap-8">
+                    <div className="flex items-center gap-3 sm:block">
+                      <time className="text-[13px] font-semibold text-[#999] sm:mt-3 sm:block">
+                        {new Date(post.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
+                      </time>
                     </div>
-                  </div>
-                </article>
-              </li>
-            ))}
-          </ul>
+                    <div>
+                      <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a]">{post.title}</h3>
+                      <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666] line-clamp-2">
+                        {post.content.replace(/[#*>\-|]/g, "").trim().slice(0, 120)}
+                      </p>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </section>
     </main>

@@ -3,10 +3,12 @@ import HeroSlider from "@/components/HeroSlider";
 import CategorySection from "@/components/CategorySection";
 import ProductTabSection from "@/components/ProductTabSection";
 import EventBanner from "@/components/EventBanner";
+import JuneEventProducts from "@/components/JuneEventProducts";
 import Benefit from "@/components/Benefit";
 import BlogSection from "@/components/BlogSection";
+import ReviewSection from "@/components/ReviewSection";
+import FeatureBannerSection from "@/components/FeatureBannerSection";
 import { getNaverBlogPosts } from "@/lib/naverBlog";
-import ManagerSection from "@/components/ManagerSection";
 
 const quickLinks = [
   {
@@ -75,20 +77,23 @@ export default async function Home() {
       {/* 3. 카테고리 */}
       <CategorySection />
 
+      {/* 3-1. 피처 배너 */}
+      <FeatureBannerSection />
+
       {/* 4. 상품 탭 (주방가전 / TV) */}
       <ProductTabSection />
 
       {/* 5. 6월 행사 배너 */}
       <EventBanner />
 
-      {/* 6. 혜택 소개 */}
+      {/* 6. 6월 행사 특가 제품 */}
+      <JuneEventProducts />
+
+      {/* 7. 혜택 소개 */}
       <Benefit bg="/images/main/bg_benefit.png" />
 
-      {/* 7. 매니저 */}
-      <ManagerSection />
-
-      {/* 8. 블로그 */}
-      <BlogSection posts={blogPosts} moreHref="https://blog.naver.com/lg_yongsan" />
+      {/* 8. 고객 생생 후기 */}
+      <ReviewSection />
     </main>
   );
 }

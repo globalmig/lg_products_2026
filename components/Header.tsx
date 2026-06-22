@@ -60,7 +60,7 @@ const navItems: NavItem[] = [
       { label: "바스에어", href: "/products/air?category=바스에어" },
     ],
   },
-  { label: "제휴카드", href: "/benefit" },
+  { label: "제휴카드", href: "/subscription?tab=card" },
   { label: "리뷰 이벤트", href: "/news" },
 ];
 
