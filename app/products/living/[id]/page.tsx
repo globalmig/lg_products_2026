@@ -2,12 +2,13 @@
 
 export const runtime = "edge";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
 import ProductDetailPage from "@/components/ProductDetailPage";
 
-export default function LivingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function LivingDetailPage() {
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<ManagedProduct | null | undefined>(undefined);
 
   useEffect(() => {
