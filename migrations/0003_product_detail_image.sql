@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN detail_image TEXT NOT NULL DEFAULT '';

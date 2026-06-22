@@ -1,0 +1,20 @@
+{
+  "name": "lg-product26",
+  "compatibility_date": "2024-09-23",
+  "pages_build_output_dir": ".vercel/output/static",
+
+  "d1_databases": [
+    {
+      "binding": "lg_product_db",
+      "database_name": "lg-product-db",
+      "database_id": "7dbc7a79-8c22-4b17-9429-9210cea01332"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "lg_product_images",
+      "bucket_name": "lg-product-images"
+    }
+  ]
+}
