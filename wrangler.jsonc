@@ -1,7 +1,11 @@
 {
   "name": "lgproducts2026",
   "compatibility_date": "2024-09-23",
-  "pages_build_output_dir": ".vercel/output/static",
+  "main": ".vercel/output/static/_worker.js/index.js",
+  "assets": {
+    "directory": ".vercel/output/static",
+    "binding": "ASSETS",
+  },
 
   "d1_databases": [
     {
