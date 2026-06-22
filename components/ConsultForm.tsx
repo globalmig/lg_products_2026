@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
 import { adminStore } from "@/lib/adminStore";
 import { LuSearch, LuX, LuPlus, LuCheck } from "react-icons/lu";
 
-interface Props {
-  initialIds?: string;
-}
-
-export default function ConsultForm({ initialIds }: Props) {
+export default function ConsultForm() {
+  const searchParams = useSearchParams();
+  const initialIds = searchParams.get("ids") ?? "";
   const [submitted, setSubmitted] = useState(false);
   const [allProducts, setAllProducts] = useState<ManagedProduct[]>([]);
   const [selected, setSelected] = useState<ManagedProduct[]>([]);
