@@ -2,10 +2,7 @@ export const runtime = "edge";
 
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import SubscriptionTabs from "@/components/SubscriptionTabs";
-import Benefit from "@/components/Benefit";
-import BenefitTab from "@/components/BenefitTab";
-import CardTab from "@/components/CardTab";
+import SubscriptionContent from "@/components/SubscriptionContent";
 
 export const metadata: Metadata = {
   title: "가전 구독",
@@ -18,26 +15,15 @@ export const metadata: Metadata = {
   },
 };
 
-function TabContent({ tab }: { tab: string }) {
-  if (tab === "benefit") return <BenefitTab />;
-  if (tab === "card") return <CardTab />;
-  return <Benefit bg="/images/bg_white_benefit.png" />;
-}
-
-export default async function SubscriptionPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { tab = "service" } = await searchParams;
-
+export default function SubscriptionPage() {
   return (
     <>
       <section className="relative h-75 sm:h-105 md:h-140 lg:h-180">
         <video src="https://static.lge.co.kr/kr/caresolutions/images/care-service-kv-pc.mp4" autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover object-center" />
       </section>
-
       <Suspense>
-        <SubscriptionTabs />
+        <SubscriptionContent />
       </Suspense>
-
-      <TabContent tab={tab} />
     </>
   );
 }
