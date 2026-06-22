@@ -1,26 +1,31 @@
-import { notFound } from "next/navigation";
-import { kitchenProducts } from "@/data/kitchenProducts";
+"use client";
+
+import { use, useEffect, useState } from "react";
+import { productStore, type ManagedProduct } from "@/lib/productStore";
 import ProductDetailPage from "@/components/ProductDetailPage";
 
-export function generateStaticParams() {
-  return kitchenProducts.map((p) => ({ id: String(p.id) }));
-}
+export default function KitchenDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [product, setProduct] = useState<ManagedProduct | null | undefined>(undefined);
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = kitchenProducts.find((p) => p.id === Number(id));
-  return { title: product ? `${product.name} | LG전자 BEST SHOP` : "상품 상세" };
-}
+  useEffect(() => {
+    productStore.products.getBySection("kitchen").then((products) => {
+      setProduct(products.find((p) => p.id === id) ?? null);
+    });
+  }, [id]);
 
-export default async function KitchenDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = kitchenProducts.find((p) => p.id === Number(id));
-  if (!product) notFound();
+  if (product === undefined) return <div className="min-h-screen bg-white" />;
+  if (product === null) return (
+    <div className="flex min-h-screen items-center justify-center text-[14px] text-[#999]">
+      상품을 찾을 수 없습니다.
+    </div>
+  );
 
   return (
     <ProductDetailPage
       product={product}
       breadcrumb={[{ label: "주방가전", href: "/products/kitchen" }]}
+      section="kitchen"
     />
   );
 }

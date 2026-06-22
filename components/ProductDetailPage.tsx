@@ -16,13 +16,14 @@ import {
 } from "react-icons/lu";
 
 export type DetailProduct = {
-  id: number;
+  id: string | number;
   category: string;
   name: string;
   model: string;
   monthlyPrice: number;
   benefitPrice: number | null;
   image: string;
+  detailImage?: string;
   detailImages?: string[];
   tags: { label: string; type: string }[];
 };
@@ -30,6 +31,7 @@ export type DetailProduct = {
 type Props = {
   product: DetailProduct;
   breadcrumb: { label: string; href: string }[];
+  section?: string;
 };
 
 const benefits = [
@@ -45,7 +47,7 @@ const infoItems = [
   { Icon: LuTruck, label: "배송", value: "무료 배송" },
 ];
 
-export default function ProductDetailPage({ product, breadcrumb }: Props) {
+export default function ProductDetailPage({ product, breadcrumb, section }: Props) {
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -158,13 +160,13 @@ export default function ProductDetailPage({ product, breadcrumb }: Props) {
               ))}
             </div>
 
-            {/* 문의 버튼 */}
+            {/* 구독신청 버튼 */}
             <Link
-              href="/consult"
+              href={section ? `/consult?ids=${section}_${product.id}` : "/consult"}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#c90f45] text-[16px] font-black text-white transition-opacity hover:opacity-90"
             >
               <LuMessageCircle size={20} />
-              구독 문의하기
+              구독 신청하기
             </Link>
             <p className="mt-3 text-center text-[12px] text-[#aaa]">구매 기능 없음 · 상담 후 진행됩니다</p>
           </div>
@@ -176,18 +178,16 @@ export default function ProductDetailPage({ product, breadcrumb }: Props) {
         <div className="mx-auto max-w-[1080px]">
           <h2 className="mb-8 text-[20px] font-black tracking-[-0.04em]">상품 상세</h2>
 
-          {product.detailImages && product.detailImages.length > 0 ? (
+          {(product.detailImage || (product.detailImages && product.detailImages.length > 0)) ? (
             <div className="flex flex-col gap-2">
-              {product.detailImages.map((src, i) => (
+              {product.detailImage && (
+                <div className="relative w-full overflow-hidden rounded-xl">
+                  <Image src={product.detailImage} alt={`${product.name} 상세이미지`} width={1080} height={600} className="w-full object-cover" unoptimized />
+                </div>
+              )}
+              {product.detailImages?.map((src, i) => (
                 <div key={i} className="relative w-full overflow-hidden rounded-xl">
-                  <Image
-                    src={src}
-                    alt={`${product.name} 상세이미지 ${i + 1}`}
-                    width={1080}
-                    height={600}
-                    className="w-full object-cover"
-                    unoptimized
-                  />
+                  <Image src={src} alt={`${product.name} 상세이미지 ${i + 1}`} width={1080} height={600} className="w-full object-cover" unoptimized />
                 </div>
               ))}
             </div>

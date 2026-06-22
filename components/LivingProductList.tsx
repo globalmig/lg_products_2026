@@ -29,55 +29,67 @@ function ProductCard({ product }: { product: ManagedProduct }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <a href={`/products/living/${product.id}`} className="group block">
-      <div className="relative mb-3 overflow-hidden rounded-2xl bg-[#f7f7f7] aspect-square">
-        {!imgError ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-            onError={() => setImgError(true)}
-            unoptimized
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <span className="text-[12px] text-[#bbb]">이미지 준비중</span>
+    <div className="flex flex-col">
+      <a href={`/products/living/${product.id}`} className="group flex flex-col flex-1">
+        <div className="relative mb-3 overflow-hidden rounded-2xl bg-[#f7f7f7] aspect-square">
+          {!imgError ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+              onError={() => setImgError(true)}
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <span className="text-[12px] text-[#bbb]">이미지 준비중</span>
+            </div>
+          )}
+          <div
+            className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full text-center text-[9px] font-bold leading-[1.3] text-white"
+            style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
+          >
+            LG전자
+            <br />
+            온라인
+            <br />
+            인증점
           </div>
-        )}
-        <div
-          className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full text-center text-[9px] font-bold leading-[1.3] text-white"
-          style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
-        >
-          LG전자
-          <br />
-          온라인
-          <br />
-          인증점
         </div>
-      </div>
 
-      <div>
-        <h3 className="mb-1 text-[13px] font-semibold leading-[1.45] tracking-[-0.03em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors line-clamp-2">
-          {product.name}
-        </h3>
-        <p className="mb-2 text-[11px] text-[#999]">{product.model}</p>
-        <p className="text-[15px] font-bold text-[#1a1a1a]">월 {product.monthlyPrice.toLocaleString()}원</p>
-        {product.benefitPrice !== null && (
-          <p className="text-[13px] font-semibold text-[#c90f45]">
-            최대혜택가 월 {product.benefitPrice === 0 ? "0" : product.benefitPrice.toLocaleString()}원
-          </p>
-        )}
-        {product.tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {product.tags.map((tag) => (
-              <TagBadge key={tag.label} tag={tag} />
-            ))}
+        <div className="flex flex-col flex-1">
+          <h3 className="mb-1 text-[13px] font-semibold leading-[1.45] tracking-[-0.03em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors line-clamp-2 min-h-[2.9em]">
+            {product.name}
+          </h3>
+          <p className="mb-2 text-[11px] text-[#999]">{product.model}</p>
+          <p className="text-[15px] font-bold text-[#1a1a1a]">월 {product.monthlyPrice.toLocaleString()}원</p>
+          <div className="min-h-6">
+            {product.benefitPrice !== null && (
+              <p className="text-[13px] font-semibold text-[#c90f45]">
+                최대혜택가 월 {product.benefitPrice === 0 ? "0" : product.benefitPrice.toLocaleString()}원
+              </p>
+            )}
           </div>
-        )}
-      </div>
-    </a>
+          <div className="mt-auto">
+            {product.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {product.tags.map((tag) => (
+                  <TagBadge key={tag.label} tag={tag} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </a>
+      <a
+        href={`/consult?ids=${product.id}`}
+        className="mt-3 flex h-9 w-full items-center justify-center rounded-full border border-[#c90f45] text-[12px] font-bold text-[#c90f45] transition-colors hover:bg-[#c90f45] hover:text-white"
+      >
+        구독신청
+      </a>
+    </div>
   );
 }
 
@@ -143,8 +155,8 @@ export default function LivingProductList() {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    setProducts(productStore.products.getBySection("living"));
-    setCategories(productStore.categories.getBySection("living").map((c) => c.name));
+    productStore.products.getBySection("living").then(setProducts);
+    productStore.categories.getBySection("living").then((cats) => setCategories(cats.map((c) => c.name)));
   }, []);
 
   const toValid = (cat: string | null) =>

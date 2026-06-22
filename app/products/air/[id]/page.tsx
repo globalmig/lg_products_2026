@@ -4,12 +4,12 @@ import { use, useEffect, useState } from "react";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
 import ProductDetailPage from "@/components/ProductDetailPage";
 
-export default function TVDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AirDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [product, setProduct] = useState<ManagedProduct | null | undefined>(undefined);
 
   useEffect(() => {
-    productStore.products.getBySection("tv").then((products) => {
+    productStore.products.getBySection("air").then((products) => {
       setProduct(products.find((p) => p.id === id) ?? null);
     });
   }, [id]);
@@ -24,8 +24,7 @@ export default function TVDetailPage({ params }: { params: Promise<{ id: string 
   return (
     <ProductDetailPage
       product={product}
-      breadcrumb={[{ label: "TV", href: "/products/tv" }]}
-      section="tv"
+      breadcrumb={[{ label: "에어케어", href: "/products/air" }]}
     />
   );
 }
