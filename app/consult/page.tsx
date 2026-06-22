@@ -2,7 +2,7 @@ import ConsultForm from "@/components/ConsultForm";
 
 export const metadata = {
   title: "구독신청 | LG전자 BEST SHOP",
-  description: "LG베스트샵 용산전자상가점 가전 구독 신청",
+  description: "LG베스트샵 용산전자상가점 가전 구독 신청하기",
 };
 
 export default async function ConsultPage({ searchParams }: { searchParams: Promise<{ ids?: string }> }) {
