@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import ConsultForm from "@/components/ConsultForm";
 
 export const metadata = {

@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 import { use, useEffect, useState } from "react";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
 import ProductDetailPage from "@/components/ProductDetailPage";
