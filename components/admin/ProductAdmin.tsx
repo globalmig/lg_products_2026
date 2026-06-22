@@ -21,6 +21,7 @@ const EMPTY_PRODUCT: Omit<ManagedProduct, "id" | "order"> = {
   benefitPrice: null,
   tags: [],
   image: "",
+  detailImage: "",
   isBest: false,
 };
 
@@ -40,11 +41,31 @@ function ProductModal({
 }) {
   const [form, setForm] = useState<Omit<ManagedProduct, "id" | "order">>(
     initial
-      ? { section: initial.section, category: initial.category, name: initial.name, model: initial.model, monthlyPrice: initial.monthlyPrice, benefitPrice: initial.benefitPrice, tags: initial.tags, image: initial.image, isBest: initial.isBest }
+      ? { section: initial.section, category: initial.category, name: initial.name, model: initial.model, monthlyPrice: initial.monthlyPrice, benefitPrice: initial.benefitPrice, tags: initial.tags, image: initial.image, detailImage: initial.detailImage ?? "", isBest: initial.isBest }
       : { ...EMPTY_PRODUCT, section, category: categories[0]?.name ?? "" }
   );
   const [tagInput, setTagInput] = useState("");
   const [tagType, setTagType] = useState("naver");
+  const [thumbPreview, setThumbPreview] = useState<string>(initial?.image ?? "");
+  const [detailPreview, setDetailPreview] = useState<string>(initial?.detailImage ?? "");
+  const thumbRef = useRef<HTMLInputElement>(null);
+  const detailRef = useRef<HTMLInputElement>(null);
+
+  const makeFileHandler = (
+    setPreview: (v: string) => void,
+    field: "image" | "detailImage"
+  ) => (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setPreview(result);
+      set(field, result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleThumb = makeFileHandler(setThumbPreview, "image");
+  const handleDetail = makeFileHandler(setDetailPreview, "detailImage");
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -104,11 +125,62 @@ function ProductModal({
             </div>
           </div>
 
-          {/* 이미지 URL */}
+          {/* 썸네일 이미지 */}
           <div>
-            <label className="mb-1 block text-[12px] font-semibold text-[#555]">이미지 URL</label>
-            <input value={form.image} onChange={(e) => set("image", e.target.value)}
-              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="https://..." />
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">썸네일 이미지 <span className="font-normal text-[#aaa]">(목록에 표시)</span></label>
+            <input ref={thumbRef} type="file" accept="image/*" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleThumb(f); }} />
+            <div
+              onClick={() => thumbRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleThumb(f); }}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 hover:border-[#c90f45] hover:bg-[#fff8fa] transition-colors"
+            >
+              {thumbPreview ? (
+                <div className="relative h-20 w-20">
+                  <Image src={thumbPreview} alt="썸네일 미리보기" fill className="object-contain rounded-lg" unoptimized />
+                </div>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+              )}
+              <p className="text-[12px] text-[#aaa]">{thumbPreview ? "클릭하여 변경" : "클릭하거나 드래그하여 첨부"}</p>
+            </div>
+            {thumbPreview && (
+              <button type="button"
+                onClick={() => { setThumbPreview(""); set("image", ""); if (thumbRef.current) thumbRef.current.value = ""; }}
+                className="mt-1.5 text-[11px] text-[#bbb] hover:text-[#c90f45]">썸네일 삭제</button>
+            )}
+          </div>
+
+          {/* 상세 배너 이미지 */}
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">상세 배너 이미지 <span className="font-normal text-[#aaa]">(상세 페이지에 표시)</span></label>
+            <input ref={detailRef} type="file" accept="image/*" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDetail(f); }} />
+            <div
+              onClick={() => detailRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleDetail(f); }}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 hover:border-[#c90f45] hover:bg-[#fff8fa] transition-colors"
+            >
+              {detailPreview ? (
+                <div className="relative h-28 w-full max-w-xs">
+                  <Image src={detailPreview} alt="상세 배너 미리보기" fill className="object-contain rounded-lg" unoptimized />
+                </div>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+              )}
+              <p className="text-[12px] text-[#aaa]">{detailPreview ? "클릭하여 변경" : "클릭하거나 드래그하여 첨부"}</p>
+            </div>
+            {detailPreview && (
+              <button type="button"
+                onClick={() => { setDetailPreview(""); set("detailImage", ""); if (detailRef.current) detailRef.current.value = ""; }}
+                className="mt-1.5 text-[11px] text-[#bbb] hover:text-[#c90f45]">배너 삭제</button>
+            )}
           </div>
 
           {/* 태그 */}
@@ -286,57 +358,55 @@ function ProductRow({ product, isFirst, isLast, onMoveUp, onMoveDown, onEdit, on
 
 /* ────── 메인 ────── */
 export default function ProductAdmin() {
+  const [subTab, setSubTab] = useState<"category" | "products">("category");
   const [section, setSection] = useState<Section>("kitchen");
   const [products, setProductsState] = useState<ManagedProduct[]>([]);
   const [categories, setCategoriesState] = useState<ManagedCategory[]>([]);
   const [modal, setModal] = useState<{ open: boolean; editing: ManagedProduct | null }>({ open: false, editing: null });
   const [filterCat, setFilterCat] = useState<string>("전체");
+  const [search, setSearch] = useState("");
 
-  const reload = () => {
-    setProductsState(productStore.products.getBySection(section));
-    setCategoriesState(productStore.categories.getBySection(section));
-  };
+  const reload = () =>
+    Promise.all([
+      productStore.products.getBySection(section),
+      productStore.categories.getBySection(section),
+    ]).then(([prods, cats]) => {
+      setProductsState(prods);
+      setCategoriesState(cats);
+    });
 
   useEffect(() => {
-    reload();
-    setFilterCat("전체");
+    reload().then(() => { setFilterCat("전체"); setSearch(""); });
   }, [section]);
 
   /* 카테고리 저장 */
   const saveCategories = (next: ManagedCategory[]) => {
-    const all = productStore.categories.get().filter((c) => c.section !== section);
-    productStore.categories.set([...all, ...next]);
     setCategoriesState([...next].sort((a, b) => a.order - b.order));
+    productStore.categories.setForSection(section, next);
   };
 
   /* 상품 저장 */
   const saveProducts = (next: ManagedProduct[]) => {
-    const all = productStore.products.get().filter((p) => p.section !== section);
-    productStore.products.set([...all, ...next]);
     setProductsState([...next].sort((a, b) => a.order - b.order));
+    productStore.products.setForSection(section, next);
   };
 
   const addOrEdit = (form: Omit<ManagedProduct, "id" | "order">) => {
-    const all = productStore.products.get().filter((p) => p.section !== section);
-    const sectionProds = productStore.products.getBySection(section);
-
+    let next: ManagedProduct[];
     if (modal.editing) {
-      const next = sectionProds.map((p) => p.id === modal.editing!.id ? { ...p, ...form } : p);
-      productStore.products.set([...all, ...next]);
-      setProductsState(next);
+      next = products.map((p) => p.id === modal.editing!.id ? { ...p, ...form } : p);
     } else {
-      const maxOrder = sectionProds.length ? Math.max(...sectionProds.map((p) => p.order)) + 1 : 0;
-      const newProd: ManagedProduct = { ...form, id: `${section}_${Date.now()}`, order: maxOrder };
-      productStore.products.set([...all, ...sectionProds, newProd]);
-      setProductsState([...sectionProds, newProd]);
+      const maxOrder = products.length ? Math.max(...products.map((p) => p.order)) + 1 : 0;
+      next = [...products, { ...form, id: `${section}_${Date.now()}`, order: maxOrder }];
     }
     setModal({ open: false, editing: null });
+    saveProducts(next);
   };
 
   const deleteProduct = (id: string) => {
     if (!confirm("이 상품을 삭제하시겠습니까?")) return;
-    const next = products.filter((p) => p.id !== id);
-    saveProducts(next.map((p, i) => ({ ...p, order: i })));
+    const next = products.filter((p) => p.id !== id).map((p, i) => ({ ...p, order: i }));
+    saveProducts(next);
   };
 
   const move = (id: string, dir: -1 | 1) => {
@@ -352,13 +422,33 @@ export default function ProductAdmin() {
     saveProducts(next);
   };
 
-  const filteredProducts = filterCat === "전체"
-    ? products
-    : products.filter((p) => p.category === filterCat);
+  const filteredProducts = products
+    .filter((p) => filterCat === "전체" || p.category === filterCat)
+    .filter((p) => {
+      if (!search.trim()) return true;
+      const q = search.trim().toLowerCase();
+      return p.name.toLowerCase().includes(q) || p.model.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+    });
 
   return (
     <div>
-      {/* 섹션 탭 */}
+      {/* 하위 탭 */}
+      <div className="mb-6 flex gap-1 rounded-2xl bg-[#f5f5f5] p-1">
+        {([["category", "상품 카테고리 관리"], ["products", "상품추가 관리"]] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setSubTab(id)}
+            className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition-colors ${
+              subTab === id ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#888] hover:text-[#555]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 섹션 탭 (공통) */}
       <div className="mb-6 flex gap-2 border-b border-[#f0f0f0] pb-4">
         {SECTIONS.map((s) => (
           <button
@@ -374,69 +464,82 @@ export default function ProductAdmin() {
         ))}
       </div>
 
-      {/* 카테고리 관리 */}
-      <CategoryManager section={section} categories={categories} onChange={saveCategories} />
+      {/* 상품 카테고리 관리 */}
+      {subTab === "category" && (
+        <CategoryManager section={section} categories={categories} onChange={saveCategories} />
+      )}
 
-      {/* 상품 목록 헤더 */}
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex gap-2 overflow-x-auto">
-          {["전체", ...categories.map((c) => c.name)].map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setFilterCat(cat)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
-                filterCat === cat ? "border-[#1a1a1a] bg-[#1a1a1a] text-white" : "border-[#e8e8e8] text-[#555] hover:border-[#555]"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={() => { if (confirm("정적 데이터로 초기화하시겠습니까?")) { productStore.products.reset(); productStore.categories.reset(); reload(); } }}
-            className="h-8 rounded-full border border-[#e8e8e8] px-3 text-[12px] text-[#999] hover:text-[#555]"
-          >
-            초기화
-          </button>
-          <button
-            type="button"
-            onClick={() => setModal({ open: true, editing: null })}
-            className="h-8 rounded-full bg-[#c90f45] px-4 text-[12px] font-bold text-white hover:opacity-90"
-          >
-            + 상품 추가
-          </button>
-        </div>
-      </div>
-
-      {/* 상품 수 */}
-      <p className="mb-3 text-[12px] text-[#aaa]">총 {filteredProducts.length}개 상품</p>
-
-      {/* 상품 리스트 */}
-      <div className="space-y-2">
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map((product, idx) => (
-            <ProductRow
-              key={product.id}
-              product={product}
-              isFirst={idx === 0}
-              isLast={idx === filteredProducts.length - 1}
-              onMoveUp={() => move(product.id, -1)}
-              onMoveDown={() => move(product.id, 1)}
-              onEdit={() => setModal({ open: true, editing: product })}
-              onDelete={() => deleteProduct(product.id)}
+      {/* 상품추가 관리 */}
+      {subTab === "products" && (
+        <>
+          {/* 검색 */}
+          <div className="mb-4">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="상품명, 모델번호, 카테고리 검색..."
+              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-4 text-[13px] outline-none focus:border-[#c90f45]"
             />
-          ))
-        ) : (
-          <div className="rounded-2xl border-2 border-dashed border-[#f0f0f0] py-12 text-center text-[14px] text-[#bbb]">
-            상품이 없습니다. 상품을 추가해 주세요.
           </div>
-        )}
-      </div>
 
-      {/* 모달 */}
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex gap-2 overflow-x-auto">
+              {["전체", ...categories.map((c) => c.name)].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilterCat(cat)}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
+                    filterCat === cat ? "border-[#1a1a1a] bg-[#1a1a1a] text-white" : "border-[#e8e8e8] text-[#555] hover:border-[#555]"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={async () => { if (confirm("정적 데이터로 초기화하시겠습니까?")) { await Promise.all([productStore.products.reset(), productStore.categories.reset()]); reload(); } }}
+                className="h-8 rounded-full border border-[#e8e8e8] px-3 text-[12px] text-[#999] hover:text-[#555]"
+              >
+                초기화
+              </button>
+              <button
+                type="button"
+                onClick={() => setModal({ open: true, editing: null })}
+                className="h-8 rounded-full bg-[#c90f45] px-4 text-[12px] font-bold text-white hover:opacity-90"
+              >
+                + 상품 추가
+              </button>
+            </div>
+          </div>
+
+          <p className="mb-3 text-[12px] text-[#aaa]">총 {filteredProducts.length}개 상품</p>
+
+          <div className="space-y-2">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product, idx) => (
+                <ProductRow
+                  key={product.id}
+                  product={product}
+                  isFirst={idx === 0}
+                  isLast={idx === filteredProducts.length - 1}
+                  onMoveUp={() => move(product.id, -1)}
+                  onMoveDown={() => move(product.id, 1)}
+                  onEdit={() => setModal({ open: true, editing: product })}
+                  onDelete={() => deleteProduct(product.id)}
+                />
+              ))
+            ) : (
+              <div className="rounded-2xl border-2 border-dashed border-[#f0f0f0] py-12 text-center text-[14px] text-[#bbb]">
+                상품이 없습니다. 상품을 추가해 주세요.
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       {modal.open && (
         <ProductModal
           initial={modal.editing}
