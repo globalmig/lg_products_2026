@@ -13,6 +13,7 @@
       "binding": "lg_product_db",
       "database_name": "lg-product-db",
       "database_id": "7dbc7a79-8c22-4b17-9429-9210cea01332",
+      "migrations_dir": "migrations",
     },
   ],
 
