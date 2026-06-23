@@ -1,7 +1,6 @@
 ﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
 
 type DBCategory = { id: string; section: string; name: string; sort_order: number };
 

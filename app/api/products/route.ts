@@ -1,7 +1,6 @@
 ﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
 
 type DBProduct = {
   id: string; section: string; category: string; name: string; model: string;
