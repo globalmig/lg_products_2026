@@ -1,10 +1,10 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 
 export async function POST(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { searchParams } = new URL(req.url);
   const folder = searchParams.get("folder") ?? "misc";
 

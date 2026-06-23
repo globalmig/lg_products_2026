@@ -1,10 +1,10 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 
 export async function GET() {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { results } = await env.lg_product_db
     .prepare("SELECT * FROM managers ORDER BY sort_order ASC")
     .all();
@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { id, img_key = "", name, store = "", tags = [], desc = "", href = "#", sort_order = 0 } = await req.json();
   await env.lg_product_db
     .prepare("INSERT INTO managers (id, img_key, name, store, tags, desc, href, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")

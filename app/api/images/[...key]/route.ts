@@ -1,9 +1,9 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const runtime = "edge";
 
 export async function GET(_: Request, { params }: { params: Promise<{ key: string[] }> }) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { key } = await params;
   const objectKey = key.join("/");
 

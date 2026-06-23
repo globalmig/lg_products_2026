@@ -1,4 +1,4 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
@@ -10,7 +10,7 @@ function deserialize(row: DBCategory) {
 }
 
 export async function GET(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const section = new URL(req.url).searchParams.get("section");
   const { results } = section
     ? await env.lg_product_db.prepare("SELECT * FROM product_categories WHERE section=? ORDER BY sort_order ASC").bind(section).all()
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { section, items } = await req.json() as { section: string; items: { id: string; name: string; order: number }[] };
   await env.lg_product_db.prepare("DELETE FROM product_categories WHERE section=?").bind(section).run();
   if (items.length > 0) {

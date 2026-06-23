@@ -1,10 +1,10 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 
 export async function GET() {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const row = await env.lg_product_db
     .prepare("SELECT * FROM feature_banner WHERE id=1")
     .first();
@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { image_key = "", subtitle = "", title = "", button_label = "", href = "" } = await req.json();
   await env.lg_product_db
     .prepare("UPDATE feature_banner SET image_key=?, subtitle=?, title=?, button_label=?, href=? WHERE id=1")

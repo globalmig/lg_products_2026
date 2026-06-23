@@ -1,10 +1,10 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 
 export async function GET(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
   const { results } = await env.lg_product_db
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { id, type, title, content = "", created_at } = await req.json();
   await env.lg_product_db
     .prepare("INSERT INTO posts (id, type, title, content, created_at) VALUES (?, ?, ?, ?, ?)")

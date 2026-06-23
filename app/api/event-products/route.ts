@@ -1,10 +1,10 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+﻿import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "edge";
 
 export async function GET() {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { results } = await env.lg_product_db
     .prepare("SELECT * FROM event_products ORDER BY sort_order ASC")
     .all();
@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const { id, product_id, sort_order = 0 } = await req.json();
   await env.lg_product_db
     .prepare("INSERT INTO event_products (id, product_id, sort_order) VALUES (?, ?, ?)")
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const { env } = getRequestContext<CloudflareEnv>();
+  const { env } = await getCloudflareContext();
   const items: { id: string; product_id: string; sort_order: number }[] = await req.json();
   await env.lg_product_db.batch(
     items.map((item, i) =>
