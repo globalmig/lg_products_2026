@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import ConsultForm from "@/components/ConsultForm";
 
 export const metadata = {
-  title: "구독신청 | LG전자 BEST SHOP",
-  description: "LG베스트샵 용산전자상가점 가전 구독 신청하기",
+  title: "상담 신청",
+  description: "LG전자 베스트샵 용산점에 방문 상담을 신청하세요. 가전 구독·렌탈 전문 상담사가 안내해드립니다.",
 };
 
 export default function ConsultPage() {

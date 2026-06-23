@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import LivingProductList from "@/components/LivingProductList";
 
 export const metadata = {
-  title: "생활가전 | LG전자 BEST SHOP",
-  description: "LG전자 BEST SHOP 생활가전 렌탈 가전 구독 상품 목록",
+  title: "생활가전",
+  description: "LG 세탁기·건조기·스타일러·청소기를 월 구독료로 이용하세요. 설치·AS 포함.",
 };
 
 export default function LivingPage() {

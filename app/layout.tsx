@@ -5,8 +5,17 @@ import Header from "@/components/Header";
 import ConditionalLayout from "@/components/ConditionalLayout";
 
 export const metadata: Metadata = {
-  title: "LG전자 BEST SHOP",
-  description: "LG전자 BEST SHOP 용산전자 상담 신청 페이지",
+  title: {
+    template: "%s | LG전자 베스트샵 용산점",
+    default: "LG전자 베스트샵 용산점 – 가전 구독·렌탈 전문",
+  },
+  description:
+    "LG전자 베스트샵 용산점. 정수기·공기청정기·에어컨·세탁기·냉장고 등 가전을 월 구독료로 합리적으로 이용하세요. 방문 상담·구독 신청 가능.",
+  openGraph: {
+    siteName: "LG전자 베스트샵 용산점",
+    locale: "ko_KR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

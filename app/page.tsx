@@ -1,4 +1,15 @@
+import type { Metadata } from "next";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "LG전자 베스트샵 용산점 – 가전 구독·렌탈 전문",
+  description:
+    "LG전자 베스트샵 용산점. 정수기·공기청정기·에어컨·세탁기·냉장고 등 가전을 월 구독료로 합리적으로 이용하세요. 방문 상담·구독 신청 가능.",
+  openGraph: {
+    title: "LG전자 베스트샵 용산점 – 가전 구독·렌탈 전문",
+    description: "LG전자 베스트샵 용산점에서 가전 구독·렌탈 서비스를 경험해보세요.",
+  },
+};
 import HeroSlider from "@/components/HeroSlider";
 import CategorySection from "@/components/CategorySection";
 import ProductTabSection from "@/components/ProductTabSection";

@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import KitchenProductList from "@/components/KitchenProductList";
 
 export const metadata = {
-  title: "주방가전 | LG전자 BEST SHOP",
-  description: "LG전자 BEST SHOP 주방가전 렌탈 가전 구독 상품 목록",
+  title: "주방가전",
+  description: "LG 정수기·냉장고·식기세척기·전자레인지를 월 구독료로 이용하세요. 설치·AS 포함.",
 };
 
 export default function KitchenPage() {

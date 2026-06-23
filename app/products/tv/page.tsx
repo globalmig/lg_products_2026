@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import TVProductList from "@/components/TVProductList";
 
 export const metadata = {
-  title: "TV | LG전자 BEST SHOP",
-  description: "LG전자 BEST SHOP TV 렌탈 가전 구독 상품 목록",
+  title: "TV",
+  description: "LG OLED·QNED TV를 월 구독료로 이용하세요. 최신 모델을 합리적인 비용으로 경험해보세요.",
 };
 
 export default function TVPage() {
