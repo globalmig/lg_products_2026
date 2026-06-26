@@ -15,6 +15,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { env } = await getCloudflareContext();
   const { id } = await params;
+  const row = await env.lg_product_db
+    .prepare("SELECT image_key FROM event_posts WHERE id=?")
+    .bind(id)
+    .first<{ image_key: string }>();
+  if (row?.image_key) {
+    await env.lg_product_images.delete(row.image_key);
+  }
   await env.lg_product_db.prepare("DELETE FROM event_posts WHERE id=?").bind(id).run();
   return NextResponse.json({ ok: true });
 }
