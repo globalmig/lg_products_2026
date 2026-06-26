@@ -45,7 +45,8 @@ const quickLinks = [
     icon: "/images/icon/smallBusiness.png",
     title: "소상공인",
     description: "기업 · 사업자 전용 혜택",
-    href: "/sme",
+    href: "https://lgshop-ys.com/sme",
+    blank: true,
   },
 ];
 

@@ -372,9 +372,6 @@ export default function CardDiscountAdmin() {
   const [modal, setModal] = useState<CardDiscount | null | "new">(undefined as unknown as null);
   const [showModal, setShowModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CardDiscount | null>(null);
-  const [migrating, setMigrating] = useState(false);
-  const [migrateProgress, setMigrateProgress] = useState("");
-
   const load = async () => setCards(await adminStore.cardDiscounts.get());
 
   useEffect(() => { load(); }, []);
@@ -389,35 +386,6 @@ export default function CardDiscountAdmin() {
     setDeleteTarget(null);
   };
 
-  const hasLocalImages = cards.some((c) => c.image_key.startsWith("/images/"));
-
-  const migrateToR2 = async () => {
-    setMigrating(true);
-    const targets = cards.filter((c) => c.image_key.startsWith("/images/"));
-    for (let i = 0; i < targets.length; i++) {
-      const card = targets[i];
-      setMigrateProgress(`${card.name} 업로드 중... (${i + 1}/${targets.length})`);
-      try {
-        const res = await fetch(card.image_key);
-        const blob = await res.blob();
-        const filename = card.image_key.split("/").pop() || "card.jpg";
-        const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
-        const r2key = await uploadImage(file, "cards");
-        await adminStore.cardDiscounts.update(card.id, {
-          name: card.name,
-          discount: card.discount,
-          image_key: r2key,
-          sort_order: card.sort_order,
-        });
-      } catch (e) {
-        console.error("migrate failed:", card.id, e);
-      }
-    }
-    setMigrateProgress("");
-    setMigrating(false);
-    load();
-  };
-
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -426,13 +394,7 @@ export default function CardDiscountAdmin() {
           <p className="mt-0.5 text-[13px] text-[#888]">제휴카드 혜택 페이지 및 상품 상세 페이지에 표시되는 카드 목록을 관리합니다.</p>
         </div>
         <div className="flex items-center gap-2">
-          {hasLocalImages && (
-            <button type="button" onClick={migrateToR2} disabled={migrating}
-              className="flex h-9 items-center gap-1.5 rounded-full border border-[#e0a800] bg-[#fff9e6] px-4 text-[13px] font-bold text-[#b07800] hover:bg-[#fff3cc] disabled:opacity-60">
-              {migrating ? migrateProgress || "업로드 중..." : "☁ 이미지 R2 업로드"}
-            </button>
-          )}
-          <button type="button" onClick={openNew}
+<button type="button" onClick={openNew}
             className="flex h-9 items-center gap-1.5 rounded-full bg-[#c90f45] px-4 text-[13px] font-bold text-white hover:opacity-90">
             + 카드 추가
           </button>

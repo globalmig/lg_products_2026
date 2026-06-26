@@ -40,6 +40,14 @@ body {
   animation-play-state: paused;
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @media (max-width: 767px) {
   header a[aria-label="LG전자 BEST SHOP 홈"] span:nth-child(n + 2) {
     font-size: 16px;
