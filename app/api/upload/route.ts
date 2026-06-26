@@ -9,26 +9,38 @@ export async function POST(req: Request) {
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
+  if (!file || file.size === 0) {
+    return NextResponse.json({ error: "No file" }, { status: 400 });
+  }
 
   const ext = file.name.split(".").pop() ?? "jpg";
   const uuid = crypto.randomUUID();
   const filename = `${uuid}.${ext}`;
   const key = `${folder}/${filename}`;
 
-  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(await file.arrayBuffer());
 
+  // Try R2
   try {
     const { env } = await getCloudflareContext();
-    await env.lg_product_images.put(key, buffer, {
+    await env.lg_product_images.put(key, bytes, {
       httpMetadata: { contentType: file.type },
     });
-    return NextResponse.json({ key });
-  } catch {
-    // local dev fallback: save to public/uploads/
+    return NextResponse.json({ key, size: bytes.byteLength });
+  } catch (r2Err) {
+    // In production Workers, filesystem is unavailable — surface the error
+    if (process.env.NODE_ENV !== "development") {
+      return NextResponse.json({ error: String(r2Err) }, { status: 500 });
+    }
+  }
+
+  // Local dev fallback
+  try {
     const dir = path.join(process.cwd(), "public", "uploads", folder);
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, filename), Buffer.from(buffer));
+    await writeFile(path.join(dir, filename), Buffer.from(bytes));
     return NextResponse.json({ key: `/uploads/${key}` });
+  } catch (fsErr) {
+    return NextResponse.json({ error: String(fsErr) }, { status: 500 });
   }
 }
