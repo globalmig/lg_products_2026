@@ -16,9 +16,11 @@ export async function POST(req: Request) {
   const filename = `${uuid}.${ext}`;
   const key = `${folder}/${filename}`;
 
+  const buffer = await file.arrayBuffer();
+
   try {
     const { env } = await getCloudflareContext();
-    await env.lg_product_images.put(key, file.stream(), {
+    await env.lg_product_images.put(key, buffer, {
       httpMetadata: { contentType: file.type },
     });
     return NextResponse.json({ key });
@@ -26,8 +28,7 @@ export async function POST(req: Request) {
     // local dev fallback: save to public/uploads/
     const dir = path.join(process.cwd(), "public", "uploads", folder);
     await mkdir(dir, { recursive: true });
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(dir, filename), buffer);
+    await writeFile(path.join(dir, filename), Buffer.from(buffer));
     return NextResponse.json({ key: `/uploads/${key}` });
   }
 }
