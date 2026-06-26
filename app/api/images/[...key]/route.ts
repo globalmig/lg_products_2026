@@ -13,5 +13,15 @@ export async function GET(_: Request, { params }: { params: Promise<{ key: strin
   object.writeHttpMetadata(headers);
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
+  // Ensure Content-Type is set (next/image requires it)
+  if (!headers.get("Content-Type")) {
+    const ext = objectKey.split(".").pop()?.toLowerCase() ?? "";
+    const MIME: Record<string, string> = {
+      jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+      gif: "image/gif", webp: "image/webp", avif: "image/avif",
+    };
+    headers.set("Content-Type", MIME[ext] ?? "image/jpeg");
+  }
+
   return new Response(object.body, { headers });
 }

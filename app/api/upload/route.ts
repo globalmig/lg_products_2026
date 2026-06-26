@@ -13,10 +13,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No file" }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop() ?? "jpg";
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
   const uuid = crypto.randomUUID();
   const filename = `${uuid}.${ext}`;
   const key = `${folder}/${filename}`;
+
+  const MIME: Record<string, string> = {
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+    gif: "image/gif", webp: "image/webp", avif: "image/avif",
+  };
+  const contentType = file.type || MIME[ext] || "image/jpeg";
 
   const bytes = new Uint8Array(await file.arrayBuffer());
 
@@ -24,9 +30,13 @@ export async function POST(req: Request) {
   try {
     const { env } = await getCloudflareContext();
     await env.lg_product_images.put(key, bytes, {
-      httpMetadata: { contentType: file.type },
+      httpMetadata: { contentType },
     });
-    return NextResponse.json({ key, size: bytes.byteLength });
+    const head = await env.lg_product_images.head(key);
+    if (!head) {
+      return NextResponse.json({ error: "R2 put reported success but file not found" }, { status: 500 });
+    }
+    return NextResponse.json({ key, size: bytes.byteLength, r2Size: head.size });
   } catch (r2Err) {
     // In production Workers, filesystem is unavailable — surface the error
     if (process.env.NODE_ENV !== "development") {
