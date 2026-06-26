@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminStore, type ConsultSubmission } from "@/lib/adminStore";
+import ConfirmDialog from "./ConfirmDialog";
 
 const STATUS = {
   new: { label: "신규", cls: "bg-blue-50 text-blue-600 border-blue-200" },
@@ -49,6 +50,7 @@ export default function ConsultAdmin() {
   const [memo, setMemo] = useState("");
   const [memoSaving, setMemoSaving] = useState(false);
   const [memoSaved, setMemoSaved] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     adminStore.consult.get().then(setSubmissions);
@@ -77,15 +79,19 @@ export default function ConsultAdmin() {
     setTimeout(() => setMemoSaved(false), 2000);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    await adminStore.consult.delete(id);
-    setSubmissions((prev) => prev.filter((s) => s.id !== id));
-    if (selected?.id === id) setSelected(null);
+  const handleDelete = (id: string) => setConfirmId(id);
+
+  const doDelete = async () => {
+    if (!confirmId) return;
+    await adminStore.consult.delete(confirmId);
+    setSubmissions((prev) => prev.filter((s) => s.id !== confirmId));
+    if (selected?.id === confirmId) setSelected(null);
+    setConfirmId(null);
   };
 
   return (
     <div>
+      {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
         <div>

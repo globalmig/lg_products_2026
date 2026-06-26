@@ -5,11 +5,6 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
 
-const SORT_OPTIONS = [
-  { label: "- 정렬방식 -", value: "default" },
-  { label: "낮은 가격순", value: "price_asc" },
-  { label: "높은 가격순", value: "price_desc" },
-];
 
 function ProductCard({ product }: { product: ManagedProduct }) {
   const [imgError, setImgError] = useState(false);
@@ -66,8 +61,7 @@ function ProductCard({ product }: { product: ManagedProduct }) {
             )}
           </div>
           <div className="mt-auto">
-            {product.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-2 flex min-h-4.5 flex-wrap gap-1">
                 {product.tags.map((tag) => (
                   <span
                     key={tag.label}
@@ -83,7 +77,6 @@ function ProductCard({ product }: { product: ManagedProduct }) {
                   </span>
                 ))}
               </div>
-            )}
           </div>
         </div>
       </a>
@@ -111,21 +104,17 @@ export default function KitchenProductList() {
     cat && ["전체", ...categories].includes(cat) ? cat : "전체";
 
   const [activeCategory, setActiveCategory] = useState<string>("전체");
-  const [sort, setSort] = useState("default");
 
   useEffect(() => {
     setActiveCategory(toValid(searchParams.get("category")));
   }, [searchParams, categories]);
 
   const filtered = useMemo(() => {
-    let list = activeCategory === "전체" ? products : products.filter((p) => p.category === activeCategory);
-    if (sort === "price_asc") list = [...list].sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-    if (sort === "price_desc") list = [...list].sort((a, b) => b.monthlyPrice - a.monthlyPrice);
-    return list;
-  }, [activeCategory, sort, products]);
+    return activeCategory === "전체" ? products : products.filter((p) => p.category === activeCategory);
+  }, [activeCategory, products]);
 
   return (
-    <div className="mx-auto max-w-[1080px] px-5 py-10">
+    <div className="mx-auto max-w-270 px-5 py-10">
       {/* 필터 */}
       <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {["전체", ...categories].map((cat) => {
@@ -145,21 +134,6 @@ export default function KitchenProductList() {
             </button>
           );
         })}
-      </div>
-
-      {/* 정렬 */}
-      <div className="mb-8 flex justify-end">
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          className="rounded-full border border-[#d8d8d8] bg-white px-4 py-1.5 text-[13px] text-[#555] outline-none cursor-pointer hover:border-[#555]"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* 상품 그리드 */}

@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 if (process.env.NODE_ENV === "development") {
-  void import("@cloudflare/next-on-pages/next-dev").then(({ setupDevPlatform }) =>
-    setupDevPlatform()
-  );
+  initOpenNextCloudflareForDev();
 }
 
 const nextConfig: NextConfig = {

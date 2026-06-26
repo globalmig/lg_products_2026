@@ -124,8 +124,10 @@ function BenefitCard({ item }: { item: BenefitItem }) {
         boxShadow: "2px 3px 12px #FFCED8",
       }}
     >
-      <div className="animate-float absolute -right-3 -top-20" style={{ animationDelay: `${(item.id - 1) * 0.4}s` }}>
-        <Image src={item.icon} alt="" width={170} height={170} />
+      <div className="animate-float absolute -right-3 -top-14 sm:-top-16 lg:-top-20" style={{ animationDelay: `${(item.id - 1) * 0.4}s` }}>
+        <div className="relative w-25 h-25 sm:w-32.5 sm:h-32.5 lg:w-42.5 lg:h-42.5">
+          <Image src={item.icon} alt="" fill className="object-contain" />
+        </div>
       </div>
 
       <span className="inline-flex w-fit rounded-full bg-[#c90f45] px-3 py-1 text-[11px] font-bold text-white">{item.badge}</span>
@@ -180,8 +182,10 @@ function MembershipCard() {
         boxShadow: "2px 3px 12px #FFCED8",
       }}
     >
-      <div className="animate-float absolute -right-3 -top-20" style={{ animationDelay: "0.2s" }}>
-        <Image src="/images/icon/3D/coin.png" alt="" width={170} height={170} />
+      <div className="animate-float absolute -right-3 -top-14 sm:-top-16 lg:-top-20" style={{ animationDelay: "0.2s" }}>
+        <div className="relative w-25 h-25 sm:w-32.5 sm:h-32.5 lg:w-42.5 lg:h-42.5">
+          <Image src="/images/icon/3D/coin.png" alt="" fill className="object-contain" />
+        </div>
       </div>
 
       <span className="inline-flex w-fit rounded-full bg-[#ff6b00] px-3 py-1 text-[11px] font-bold text-white">최대 30만 포인트</span>
@@ -234,7 +238,7 @@ export default function BenefitTab() {
       <div className="relative z-10 mx-auto max-w-[1080px] px-5">
         <div className="mb-16 text-center">
           <p className="mb-3 text-[13px] font-medium text-[#c90f45]">더 많은 구독료 혜택을 받을 수 있나요?</p>
-          <h2 className="text-[32px] font-black leading-[1.35] tracking-[-0.05em] text-[#1a1a1a]">
+          <h2 className="text-[24px] sm:text-[32px] font-black leading-[1.35] tracking-[-0.05em] text-[#1a1a1a]">
             고객님의 조건에 적합한
             <br />
             다양한 혜택을 안내드립니다
@@ -242,13 +246,13 @@ export default function BenefitTab() {
         </div>
 
         {/* 카드 그리드 — 아이콘 overflow 공간 확보 위해 pt-12 */}
-        <div className="mb-16 grid grid-cols-3 gap-x-4 gap-y-16 pt-12">
+        <div className="mb-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-16 pt-12">
           {items.map((item) => (
             <BenefitCard key={item.id} item={item} />
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 pt-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-12">
           <MembershipCard />
           <a
             href="https://docs.google.com/forms/d/1eE__jHrr2ywkEuFu0G18wEFIdKqUt9AUdbsGv6k94sY/edit"

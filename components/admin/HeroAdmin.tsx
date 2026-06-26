@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { adminStore, uploadImage, imageUrl } from "@/lib/adminStore";
 import type { Slide } from "@/lib/adminStore";
+import ConfirmDialog from "./ConfirmDialog";
 
 type SlideWithKey = Slide & { image_key: string };
 
@@ -13,6 +14,7 @@ export default function HeroAdmin() {
   const [editing, setEditing] = useState<SlideWithKey | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(EMPTY);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     adminStore.slides.get().then(async (data) => {
@@ -55,10 +57,13 @@ export default function HeroAdmin() {
     setAdding(false);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    await adminStore.slides.delete(id);
-    setSlides((prev) => prev.filter((s) => s.id !== id));
+  const handleDelete = (id: number) => setConfirmId(id);
+
+  const doDelete = async () => {
+    if (confirmId === null) return;
+    await adminStore.slides.delete(confirmId);
+    setSlides((prev) => prev.filter((s) => s.id !== confirmId));
+    setConfirmId(null);
   };
 
   const handleMove = async (idx: number, dir: -1 | 1) => {
@@ -75,6 +80,7 @@ export default function HeroAdmin() {
 
   return (
     <div>
+      {confirmId !== null && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-[18px] font-black text-[#1a1a1a]">히어로 슬라이드 관리</h2>
         <button onClick={() => setAdding(true)} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white">

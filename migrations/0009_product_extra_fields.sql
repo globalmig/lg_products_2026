@@ -1,0 +1,4 @@
+ALTER TABLE products ADD COLUMN care_service TEXT NOT NULL DEFAULT '';
+ALTER TABLE products ADD COLUMN manage_cycle TEXT NOT NULL DEFAULT '';
+ALTER TABLE products ADD COLUMN color        TEXT NOT NULL DEFAULT '';
+ALTER TABLE products ADD COLUMN size         TEXT NOT NULL DEFAULT '';

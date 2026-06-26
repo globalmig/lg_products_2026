@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   LuShoppingCart,
   LuStar,
@@ -227,35 +226,6 @@ export default function ReviewEventPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="border-t border-[#f1f1f1] bg-[#fafafa] px-5 py-16">
-        <div className="mx-auto max-w-[600px] text-center">
-          <h2 className="mb-3 text-[26px] font-black tracking-[-0.04em]">
-            지금 바로 참여해보세요
-          </h2>
-          <p className="mb-8 text-[15px] leading-[1.7] text-[#666]">
-            상담 신청 후 구독·구매 완료하시고<br className="hidden sm:block" />
-            리뷰 이벤트 혜택까지 누리세요.
-          </p>
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Link
-              href="/consult"
-              className="flex h-12 w-full items-center justify-center rounded-full bg-[#c90f45] px-8 text-[15px] font-bold text-white transition-opacity hover:opacity-90 sm:w-auto"
-            >
-              상담 신청하기
-            </Link>
-            <a
-              href="https://map.naver.com/p/search/lg베스트샵%20용산점"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-12 w-full items-center justify-center rounded-full border border-[#ddd] bg-white px-8 text-[15px] font-bold text-[#333] transition-colors hover:border-[#c90f45] hover:text-[#c90f45] sm:w-auto"
-            >
-              네이버 지도 리뷰 쓰기
-            </a>
           </div>
         </div>
       </section>

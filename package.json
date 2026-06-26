@@ -8,6 +8,7 @@
     "cf:build": "opennextjs-cloudflare build",
     "pages:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && wrangler dev",
+    "cf:remote": "opennextjs-cloudflare build && wrangler dev --remote",
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
     "start": "next start",
     "lint": "eslint"

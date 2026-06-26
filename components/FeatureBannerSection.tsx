@@ -42,10 +42,10 @@ export default function FeatureBannerSection() {
 
       {/* 텍스트 오버레이 */}
       <div className="relative z-10 flex h-full min-h-[260px] flex-col justify-center px-10 py-12 md:px-16">
-        <p className="mb-1.5 text-[14px] font-medium tracking-[-0.02em] text-[#333]">
+        <p className="mb-1.5 text-[12px] sm:text-[14px] font-medium tracking-[-0.02em] text-[#333]">
           {banner.subtitle}
         </p>
-        <h2 className="mb-6 text-[28px] font-black leading-tight tracking-[-0.04em] text-[#1a1a1a] md:text-[34px]">
+        <h2 className="mb-6 text-[20px] sm:text-[28px] md:text-[34px] font-black leading-tight tracking-[-0.04em] text-[#1a1a1a]">
           {banner.title}
         </h2>
         <div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { adminStore, type MainCategoryItem } from "@/lib/adminStore";
+import ConfirmDialog from "./ConfirmDialog";
 
 const ICON_OPTIONS = [
   "/images/icon/3D/box.png",
@@ -48,6 +49,7 @@ export default function MainCategoryAdmin() {
   const [editing, setEditing] = useState<MainCategoryItem | null>(null);
   const [adding, setAdding] = useState(false);
   const [addForm, setAddForm] = useState<Omit<MainCategoryItem, "id" | "sort_order">>(EMPTY);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   // 드래그 상태
   const dragIdx = useRef<number | null>(null);
@@ -57,7 +59,7 @@ export default function MainCategoryAdmin() {
   useEffect(() => {
     adminStore.mainCategories.get().then((data) => {
       setItems(data.length > 0 ? data : DEFAULT_ITEMS);
-      if (data.length === 0) adminStore.mainCategories.set(DEFAULT_ITEMS);
+      if (data.length === 0) adminStore.mainCategories.set(DEFAULT_ITEMS).catch(() => {});
     });
   }, []);
 
@@ -98,14 +100,18 @@ export default function MainCategoryAdmin() {
     setEditing(null);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    await adminStore.mainCategories.delete(id);
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleDelete = (id: string) => setConfirmId(id);
+
+  const doDelete = async () => {
+    if (!confirmId) return;
+    await adminStore.mainCategories.delete(confirmId);
+    setItems((prev) => prev.filter((item) => item.id !== confirmId));
+    setConfirmId(null);
   };
 
   return (
     <div>
+      {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-[18px] font-black text-[#1a1a1a]">메인 카테고리 관리</h2>
         <button type="button" onClick={() => { setAdding(true); setEditing(null); }}
@@ -321,6 +327,7 @@ function ItemForm({
                 </svg>
               )}
               <p className="text-[12px] text-[#aaa]">{isCustom ? "클릭하여 변경" : "클릭하거나 드래그하여 이미지 업로드"}</p>
+              <p className="text-[11px] text-[#bbb]">권장: 120 × 120px · PNG · 투명 배경</p>
             </div>
             {isCustom && (
               <button type="button"

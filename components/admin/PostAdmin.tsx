@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminStore, type Post } from "@/lib/adminStore";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface Props {
   storeKey: "benefit" | "smallbiz";
@@ -13,6 +14,7 @@ export default function PostAdmin({ storeKey, title }: Props) {
   const [editing, setEditing] = useState<Post | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ title: "", content: "" });
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     adminStore.posts.get(storeKey).then(setPosts);
@@ -33,14 +35,18 @@ export default function PostAdmin({ storeKey, title }: Props) {
     setAdding(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    await adminStore.posts.delete(id);
-    setPosts((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = (id: string) => setConfirmId(id);
+
+  const doDelete = async () => {
+    if (!confirmId) return;
+    await adminStore.posts.delete(confirmId);
+    setPosts((prev) => prev.filter((p) => p.id !== confirmId));
+    setConfirmId(null);
   };
 
   return (
     <div>
+      {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-[18px] font-black text-[#1a1a1a]">{title} 관리</h2>
         <button onClick={() => setAdding(true)} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white">

@@ -55,8 +55,7 @@ function ProductCard({ product, category }: { product: GridProduct; category: st
           최대혜택가 월 {product.benefitPrice === 0 ? "0" : product.benefitPrice.toLocaleString()}원
         </p>
       )}
-      {product.tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
+      <div className="mt-2 flex min-h-4.5 flex-wrap gap-1">
           {product.tags.slice(0, 2).map((tag) => (
             <span
               key={tag.label}
@@ -72,7 +71,6 @@ function ProductCard({ product, category }: { product: GridProduct; category: st
             </span>
           ))}
         </div>
-      )}
     </a>
   );
 }

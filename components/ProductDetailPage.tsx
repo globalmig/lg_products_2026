@@ -2,18 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { adminStore, imageUrl, type CardDiscount } from "@/lib/adminStore";
 import {
   LuChevronRight,
   LuWrench,
   LuRefreshCw,
   LuShieldCheck,
   LuTruck,
-  LuCalendarDays,
-  LuUserCheck,
   LuMessageCircle,
   LuImage,
+  LuChevronDown,
 } from "react-icons/lu";
+
+
+const CONTRACT_MONTHS = [72, 60, 48, 36];
 
 export type DetailProduct = {
   id: string | number;
@@ -22,10 +25,17 @@ export type DetailProduct = {
   model: string;
   monthlyPrice: number;
   benefitPrice: number | null;
+  price60?: number | null;
+  price48?: number | null;
+  price36?: number | null;
   image: string;
   detailImage?: string;
   detailImages?: string[];
   tags: { label: string; type: string }[];
+  careService?: string;
+  manageCycle?: string;
+  color?: string;
+  size?: string;
 };
 
 type Props = {
@@ -38,23 +48,33 @@ const benefits = [
   { Icon: LuWrench, title: "전문가 정기 점검", desc: "전문 매니저가 정기적으로 방문해 제품 상태를 점검·관리합니다." },
   { Icon: LuRefreshCw, title: "제품 업그레이드", desc: "약정 기간 후 최신 제품으로 업그레이드할 수 있습니다." },
   { Icon: LuShieldCheck, title: "완전 보장 서비스", desc: "사용 중 고장 시 무상 수리 또는 교체로 걱정 없이 사용하세요." },
-];
-
-const infoItems = [
-  { Icon: LuCalendarDays, label: "약정 기간", value: "36개월" },
-  { Icon: LuUserCheck, label: "서비스", value: "전문가 관리 포함" },
-  { Icon: LuWrench, label: "설치", value: "전문 설치 기사" },
-  { Icon: LuTruck, label: "배송", value: "무료 배송" },
+  { Icon: LuTruck, title: "무료 배송·설치", desc: "전문 설치 기사가 무료로 배송 및 설치를 진행합니다." },
 ];
 
 export default function ProductDetailPage({ product, breadcrumb, section }: Props) {
   const [imgError, setImgError] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState(72);
+  const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
+  const [cardOpen, setCardOpen] = useState(false);
+  const [cards, setCards] = useState<CardDiscount[]>([]);
+
+  useEffect(() => { adminStore.cardDiscounts.get().then(setCards); }, []);
+
+  const selectedCard = selectedCardIdx !== null ? cards[selectedCardIdx] : null;
+
+  const basePrice =
+    selectedPeriod === 60 && product.price60 != null ? product.price60 :
+    selectedPeriod === 48 && product.price48 != null ? product.price48 :
+    selectedPeriod === 36 && product.price36 != null ? product.price36 :
+    product.monthlyPrice;
+
+  const cardPrice = selectedCard ? Math.max(0, basePrice - selectedCard.discount) : null;
 
   return (
     <main className="min-h-screen bg-white text-[#1a1a1a]">
       {/* 브레드크럼 */}
       <div className="border-b border-[#f1f1f1] bg-white px-5 py-3">
-        <div className="mx-auto flex max-w-[1080px] items-center gap-1 text-[12px] text-[#999]">
+        <div className="mx-auto flex max-w-270 items-center gap-1 text-[12px] text-[#999]">
           <Link href="/" className="hover:text-[#c90f45]">홈</Link>
           {breadcrumb.map((b) => (
             <span key={b.href} className="flex items-center gap-1">
@@ -70,7 +90,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
       </div>
 
       {/* 상품 메인 */}
-      <section className="mx-auto max-w-[1080px] px-5 py-10">
+      <section className="mx-auto max-w-270 px-5 py-10">
         <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
 
           {/* 좌측: 메인 이미지 */}
@@ -104,60 +124,129 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
           {/* 우측: 상품 정보 */}
           <div className="flex-1">
-            {/* 카테고리 + 태그 */}
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[#f5f5f5] px-3 py-1 text-[12px] font-semibold text-[#666]">
-                {product.category}
-              </span>
-              {product.tags.map((tag) => (
-                <span
-                  key={tag.label}
-                  className={`rounded px-2 py-0.5 text-[11px] font-bold ${
-                    tag.type === "hot" || tag.type === "md"
-                      ? "bg-[#fff0f3] text-[#c90f45]"
-                      : tag.type === "naver"
-                      ? "bg-[#03c75a] text-white"
-                      : "bg-[#f5f5f5] text-[#666]"
-                  }`}
-                >
-                  {tag.label}
-                </span>
-              ))}
-            </div>
-
-            <h1 className="mb-2 text-[22px] font-black leading-[1.35] tracking-[-0.04em] sm:text-[26px]">
+            <h1 className="mb-1 text-[20px] font-black leading-[1.35] tracking-[-0.04em] sm:text-[24px]">
               {product.name}
             </h1>
-            <p className="mb-6 text-[13px] text-[#aaa]">모델번호: {product.model}</p>
+            <p className="mb-6 text-[14px] text-[#aaa]">{product.model}</p>
 
-            {/* 가격 박스 */}
-            <div className="mb-6 rounded-2xl bg-[#fafafa] px-6 py-5">
-              <p className="mb-1 text-[13px] text-[#888]">월 구독료</p>
-              <p className="text-[32px] font-black tracking-[-0.04em] text-[#1a1a1a]">
-                {product.monthlyPrice.toLocaleString()}
-                <span className="text-[18px] font-bold">원/월</span>
-              </p>
-              {product.benefitPrice !== null && (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="rounded bg-[#fff0f3] px-2 py-0.5 text-[11px] font-bold text-[#c90f45]">최대혜택가</span>
-                  <p className="text-[18px] font-bold text-[#c90f45]">
-                    월 {product.benefitPrice === 0 ? "0" : product.benefitPrice.toLocaleString()}원
-                  </p>
+            {/* 계약기간 */}
+            <div className="mb-5">
+              <p className="mb-2 text-[13px] font-semibold text-[#333]">계약기간</p>
+              <div className="grid grid-cols-4 gap-2">
+                {CONTRACT_MONTHS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setSelectedPeriod(m)}
+                    className={`rounded-lg border py-3 text-[14px] font-semibold transition-colors ${
+                      selectedPeriod === m
+                        ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                        : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
+                    }`}
+                  >
+                    {m}개월
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 옵션 행 */}
+            {[
+              { label: "케어서비스 주기", value: product.careService },
+              { label: "관리주기", value: product.manageCycle },
+              { label: "색상", value: product.color },
+              { label: "크기", value: product.size },
+            ].filter((r) => r.value).map(({ label, value }) => (
+              <div key={label} className="mb-3">
+                <p className="mb-1.5 text-[13px] font-semibold text-[#333]">{label}</p>
+                <div className="flex items-center justify-center rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#555]">
+                  {value}
+                </div>
+              </div>
+            ))}
+
+            {/* 이용요금 / 제휴카드가 */}
+            <div className="mb-4 mt-6 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
+                <span className="text-[14px] text-[#555]">
+                  {selectedPeriod}개월 기준{" "}
+                  <span className="text-[20px] font-black text-[#1a1a1a]">
+                    월 {basePrice.toLocaleString()}
+                  </span>
+                  {" "}원
+                </span>
+              </div>
+              {cardPrice !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[16px] font-black text-[#1a1a1a]">제휴카드가</span>
+                  <span className="text-[20px] font-black text-[#c90f45]">
+                    월 {cardPrice.toLocaleString()} 원
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* 구독 정보 그리드 */}
-            <div className="mb-8 grid grid-cols-2 gap-3">
-              {infoItems.map(({ Icon, label, value }) => (
-                <div key={label} className="flex items-center gap-3 rounded-xl border border-[#f0f0f0] px-4 py-3">
-                  <Icon size={16} className="shrink-0 text-[#c90f45]" />
-                  <div>
-                    <p className="text-[11px] text-[#aaa]">{label}</p>
-                    <p className="text-[13px] font-semibold text-[#333]">{value}</p>
-                  </div>
+            {/* 제휴카드 선택 박스 */}
+            <div className="mb-6 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-4 py-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[13px] font-semibold text-[#555]">제휴카드 할인</span>
+                <span className="text-[13px] text-[#888]">
+                  월 최대 -{(cards[0]?.discount ?? 0).toLocaleString()}원
+                </span>
+              </div>
+
+              {/* 드롭다운 트리거 */}
+              <button
+                type="button"
+                onClick={() => setCardOpen((v) => !v)}
+                className="flex w-full items-center justify-between rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#333]"
+              >
+                <div className="flex items-center gap-2">
+                  {selectedCard?.image_key && (
+                    <div className="relative h-5 w-9 shrink-0">
+                      <Image src={imageUrl(selectedCard.image_key)} alt="" fill className="object-contain" unoptimized />
+                    </div>
+                  )}
+                  <span>{selectedCard ? selectedCard.name : "선택안함"}</span>
                 </div>
-              ))}
+                <LuChevronDown size={16} className={`text-[#999] transition-transform ${cardOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* 드롭다운 목록 */}
+              {cardOpen && (
+                <div className="mt-1 rounded-lg border border-[#e0e0e0] bg-white shadow-md">
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCardIdx(null); setCardOpen(false); }}
+                    className="block w-full px-4 py-3 text-left text-[14px] text-[#555] hover:bg-[#f5f5f5]"
+                  >
+                    선택안함
+                  </button>
+                  {cards.map((card, idx) => (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => { setSelectedCardIdx(idx); setCardOpen(false); }}
+                      className={`flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-[14px] hover:bg-[#f5f5f5] ${
+                        selectedCardIdx === idx ? "text-[#c90f45] font-semibold" : "text-[#333]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {card.image_key && (
+                          <div className="relative h-5 w-9 shrink-0">
+                            <Image src={imageUrl(card.image_key)} alt="" fill className="object-contain" unoptimized />
+                          </div>
+                        )}
+                        <span>{card.name}</span>
+                      </div>
+                      <span className={`shrink-0 ${selectedCardIdx === idx ? "text-[#c90f45]" : "text-[#888]"}`}>
+                        월 최대 -{card.discount.toLocaleString()}원
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* 구독신청 버튼 */}
@@ -175,7 +264,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
       {/* 상세 이미지 영역 */}
       <section className="border-t border-[#f1f1f1] px-5 py-12">
-        <div className="mx-auto max-w-[1080px]">
+        <div className="mx-auto max-w-270">
           <h2 className="mb-8 text-[20px] font-black tracking-[-0.04em]">상품 상세</h2>
 
           {(product.detailImage || (product.detailImages && product.detailImages.length > 0)) ? (
@@ -211,7 +300,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
       {/* 가전구독 혜택 */}
       <section className="border-t border-[#f1f1f1] bg-[#fafafa] px-5 py-12">
-        <div className="mx-auto max-w-[1080px]">
+        <div className="mx-auto max-w-270">
           <h2 className="mb-8 text-[20px] font-black tracking-[-0.04em]">가전구독 혜택</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             {benefits.map(({ Icon, title, desc }) => (

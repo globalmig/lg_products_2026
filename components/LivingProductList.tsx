@@ -5,11 +5,6 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
 
-const SORT_OPTIONS = [
-  { label: "- 정렬방식 -", value: "default" },
-  { label: "낮은 가격순", value: "price_asc" },
-  { label: "높은 가격순", value: "price_desc" },
-];
 
 function TagBadge({ tag }: { tag: ManagedProduct["tags"][number] }) {
   const styles: Record<string, string> = {
@@ -73,13 +68,11 @@ function ProductCard({ product }: { product: ManagedProduct }) {
             )}
           </div>
           <div className="mt-auto">
-            {product.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-2 flex min-h-4.5 flex-wrap gap-1">
                 {product.tags.map((tag) => (
                   <TagBadge key={tag.label} tag={tag} />
                 ))}
               </div>
-            )}
           </div>
         </div>
       </a>
@@ -124,23 +117,14 @@ export default function LivingProductList() {
     cat && ["전체", ...categories].includes(cat) ? cat : "전체";
 
   const [activeCategory, setActiveCategory] = useState<string>("전체");
-  const [sort, setSort] = useState("default");
 
   useEffect(() => {
     setActiveCategory(toValid(searchParams.get("category")));
   }, [searchParams, categories]);
 
   const filtered = useMemo(() => {
-    let list =
-      activeCategory === "전체"
-        ? products
-        : products.filter((p) => p.category === activeCategory);
-
-    if (sort === "price_asc") list = [...list].sort((a, b) => a.monthlyPrice - b.monthlyPrice);
-    if (sort === "price_desc") list = [...list].sort((a, b) => b.monthlyPrice - a.monthlyPrice);
-
-    return list;
-  }, [activeCategory, sort, products]);
+    return activeCategory === "전체" ? products : products.filter((p) => p.category === activeCategory);
+  }, [activeCategory, products]);
 
   return (
     <>
@@ -168,21 +152,6 @@ export default function LivingProductList() {
               </button>
             );
           })}
-        </div>
-
-        {/* 정렬 */}
-        <div className="mb-8 flex justify-end">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="rounded-full border border-[#d8d8d8] bg-white px-4 py-1.5 text-[13px] text-[#555] outline-none cursor-pointer hover:border-[#555]"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
         </div>
 
         {filtered.length > 0 ? (

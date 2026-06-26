@@ -7,7 +7,9 @@ import ConsultAdmin from "@/components/admin/ConsultAdmin";
 import ProductAdmin from "@/components/admin/ProductAdmin";
 import FeatureBannerAdmin from "@/components/admin/FeatureBannerAdmin";
 import MainCategoryAdmin from "@/components/admin/MainCategoryAdmin";
-import EventProductAdmin from "@/components/admin/EventProductAdmin";
+import EventPostAdmin from "@/components/admin/EventPostAdmin";
+import CardDiscountAdmin from "@/components/admin/CardDiscountAdmin";
+import ReviewAdmin from "@/components/admin/ReviewAdmin";
 import { adminStore } from "@/lib/adminStore";
 
 const NAV = [
@@ -17,6 +19,8 @@ const NAV = [
   { id: "featureBanner", label: "피처 배너", icon: "🏷" },
   { id: "mainCategory", label: "메인 카테고리", icon: "🗂" },
   { id: "eventProducts", label: "이달의 행사 제품", icon: "🎯" },
+  { id: "cardDiscounts", label: "제휴카드 관리", icon: "💳" },
+  { id: "reviews", label: "리뷰 관리", icon: "⭐" },
   { id: "consult", label: "상담 신청 현황", icon: "📋" },
 ] as const;
 
@@ -260,7 +264,9 @@ export default function AdminPage() {
           {tab === "hero" && <HeroAdmin />}
           {tab === "featureBanner" && <FeatureBannerAdmin />}
           {tab === "mainCategory" && <MainCategoryAdmin />}
-          {tab === "eventProducts" && <EventProductAdmin />}
+          {tab === "eventProducts" && <EventPostAdmin />}
+          {tab === "cardDiscounts" && <CardDiscountAdmin />}
+          {tab === "reviews" && <ReviewAdmin />}
           {tab === "consult" && <ConsultAdmin />}
         </main>
       </div>

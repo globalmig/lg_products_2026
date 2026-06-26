@@ -13,11 +13,18 @@ export interface ManagedProduct {
   model: string;
   monthlyPrice: number;
   benefitPrice: number | null;
+  price60?: number | null;
+  price48?: number | null;
+  price36?: number | null;
   tags: { label: string; type: string }[];
   image: string;
   detailImage?: string;
   isBest: boolean;
   order: number;
+  careService?: string;
+  manageCycle?: string;
+  color?: string;
+  size?: string;
 }
 
 export interface ManagedCategory {

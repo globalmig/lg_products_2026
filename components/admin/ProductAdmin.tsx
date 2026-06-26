@@ -9,6 +9,8 @@ import {
   type ManagedProduct,
   type ManagedCategory,
 } from "@/lib/productStore";
+import { uploadImage } from "@/lib/adminStore";
+import ConfirmDialog from "./ConfirmDialog";
 
 const SECTIONS: Section[] = ["kitchen", "tv", "air", "living"];
 
@@ -19,10 +21,17 @@ const EMPTY_PRODUCT: Omit<ManagedProduct, "id" | "order"> = {
   model: "",
   monthlyPrice: 0,
   benefitPrice: null,
+  price60: null,
+  price48: null,
+  price36: null,
   tags: [],
   image: "",
   detailImage: "",
   isBest: false,
+  careService: "",
+  manageCycle: "",
+  color: "",
+  size: "",
 };
 
 /* ────── 상품 편집 모달 ────── */
@@ -36,36 +45,48 @@ function ProductModal({
   initial: ManagedProduct | null;
   section: Section;
   categories: ManagedCategory[];
-  onSave: (p: Omit<ManagedProduct, "id" | "order">) => void;
+  onSave: (p: Omit<ManagedProduct, "id" | "order">) => void | Promise<void>;
   onClose: () => void;
 }) {
   const [form, setForm] = useState<Omit<ManagedProduct, "id" | "order">>(
     initial
-      ? { section: initial.section, category: initial.category, name: initial.name, model: initial.model, monthlyPrice: initial.monthlyPrice, benefitPrice: initial.benefitPrice, tags: initial.tags, image: initial.image, detailImage: initial.detailImage ?? "", isBest: initial.isBest }
+      ? { section: initial.section, category: initial.category, name: initial.name, model: initial.model, monthlyPrice: initial.monthlyPrice, benefitPrice: initial.benefitPrice, price60: initial.price60 ?? null, price48: initial.price48 ?? null, price36: initial.price36 ?? null, tags: initial.tags, image: initial.image, detailImage: initial.detailImage ?? "", isBest: initial.isBest, careService: initial.careService ?? "", manageCycle: initial.manageCycle ?? "", color: initial.color ?? "", size: initial.size ?? "" }
       : { ...EMPTY_PRODUCT, section, category: categories[0]?.name ?? "" }
   );
   const [tagInput, setTagInput] = useState("");
   const [tagType, setTagType] = useState("naver");
   const [thumbPreview, setThumbPreview] = useState<string>(initial?.image ?? "");
   const [detailPreview, setDetailPreview] = useState<string>(initial?.detailImage ?? "");
+  const [saving, setSaving] = useState(false);
   const thumbRef = useRef<HTMLInputElement>(null);
   const detailRef = useRef<HTMLInputElement>(null);
 
-  const makeFileHandler = (
-    setPreview: (v: string) => void,
-    field: "image" | "detailImage"
-  ) => (file: File) => {
+  const makeFileHandler = (setPreview: (v: string) => void) => (file: File) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setPreview(result);
-      set(field, result);
-    };
+    reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(file);
   };
 
-  const handleThumb = makeFileHandler(setThumbPreview, "image");
-  const handleDetail = makeFileHandler(setDetailPreview, "detailImage");
+  const handleThumb = makeFileHandler(setThumbPreview);
+  const handleDetail = makeFileHandler(setDetailPreview);
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    try {
+      let image = form.image;
+      let detailImage = form.detailImage;
+      if (thumbRef.current?.files?.[0]) {
+        image = await uploadImage(thumbRef.current.files[0], "products");
+      }
+      if (detailRef.current?.files?.[0]) {
+        detailImage = await uploadImage(detailRef.current.files[0], "products");
+      }
+      await onSave({ ...form, image, detailImage });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -112,22 +133,63 @@ function ProductModal({
           </div>
 
           {/* 가격 */}
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">계약기간별 월 구독료 (원)</label>
+            <p className="mb-2 text-[11px] text-[#bbb]">기간별로 다른 금액을 입력하세요. 비워두면 72개월 금액으로 표시됩니다.</p>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                { label: "72개월", key: "monthlyPrice" as const },
+                { label: "60개월", key: "price60" as const },
+                { label: "48개월", key: "price48" as const },
+                { label: "36개월", key: "price36" as const },
+              ]).map(({ label, key }) => (
+                <div key={key}>
+                  <label className="mb-1 block text-[11px] text-[#888]">{label}</label>
+                  <input
+                    type="number"
+                    value={key === "monthlyPrice" ? form.monthlyPrice : (form[key] ?? "")}
+                    onChange={(e) => set(key, e.target.value === "" ? (key === "monthlyPrice" ? 0 : null) : Number(e.target.value))}
+                    className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+                    placeholder={key === "monthlyPrice" ? "필수" : "없음"}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">최대혜택가 (원, 없으면 비워두기)</label>
+            <input type="number" value={form.benefitPrice ?? ""} onChange={(e) => set("benefitPrice", e.target.value === "" ? null : Number(e.target.value))}
+              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="없음" />
+          </div>
+
+          {/* 상품 옵션 */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-[12px] font-semibold text-[#555]">월 구독료 (원)</label>
-              <input type="number" value={form.monthlyPrice} onChange={(e) => set("monthlyPrice", Number(e.target.value))}
-                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" />
+              <label className="mb-1 block text-[12px] font-semibold text-[#555]">케어서비스 주기 <span className="font-normal text-[#aaa]">(선택)</span></label>
+              <input type="text" value={form.careService ?? ""} onChange={(e) => set("careService", e.target.value)}
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 라이트+" />
             </div>
             <div>
-              <label className="mb-1 block text-[12px] font-semibold text-[#555]">최대혜택가 (원, 없으면 비워두기)</label>
-              <input type="number" value={form.benefitPrice ?? ""} onChange={(e) => set("benefitPrice", e.target.value === "" ? null : Number(e.target.value))}
-                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="없음" />
+              <label className="mb-1 block text-[12px] font-semibold text-[#555]">관리주기 <span className="font-normal text-[#aaa]">(선택)</span></label>
+              <input type="text" value={form.manageCycle ?? ""} onChange={(e) => set("manageCycle", e.target.value)}
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 라이트+ (12개월/6개월) 12개월 기준" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] font-semibold text-[#555]">색상 <span className="font-normal text-[#aaa]">(선택)</span></label>
+              <input type="text" value={form.color ?? ""} onChange={(e) => set("color", e.target.value)}
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 네이처 그린" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] font-semibold text-[#555]">크기 <span className="font-normal text-[#aaa]">(선택)</span></label>
+              <input type="text" value={form.size ?? ""} onChange={(e) => set("size", e.target.value)}
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 700 x 1,890 x 830mm" />
             </div>
           </div>
 
           {/* 썸네일 이미지 */}
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">썸네일 이미지 <span className="font-normal text-[#aaa]">(목록에 표시)</span></label>
+            <p className="mb-1.5 text-[11px] text-[#bbb]">권장: 800 × 800px · 1:1 비율 · PNG/JPG · 1MB 이하</p>
             <input ref={thumbRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleThumb(f); }} />
             <div
@@ -157,6 +219,7 @@ function ProductModal({
           {/* 상세 배너 이미지 */}
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">상세 배너 이미지 <span className="font-normal text-[#aaa]">(상세 페이지에 표시)</span></label>
+            <p className="mb-1.5 text-[11px] text-[#bbb]">권장: 1080 × 600px · 16:9 또는 가로형 · PNG/JPG · 2MB 이하</p>
             <input ref={detailRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDetail(f); }} />
             <div
@@ -219,8 +282,10 @@ function ProductModal({
 
         <div className="flex justify-end gap-2 border-t border-[#f0f0f0] px-6 py-4">
           <button type="button" onClick={onClose} className="h-9 rounded-full border border-[#e8e8e8] px-5 text-[13px] text-[#555] hover:bg-[#f5f5f5]">취소</button>
-          <button type="button" onClick={() => onSave(form)}
-            className="h-9 rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white hover:opacity-90">저장</button>
+          <button type="button" onClick={handleSave} disabled={saving}
+            className="h-9 rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-50">
+            {saving ? "저장 중..." : "저장"}
+          </button>
         </div>
       </div>
     </div>
@@ -236,6 +301,7 @@ function CategoryManager({ section, categories, onChange }: {
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const move = (id: string, dir: -1 | 1) => {
     const sorted = [...categories].sort((a, b) => a.order - b.order);
@@ -256,9 +322,12 @@ function CategoryManager({ section, categories, onChange }: {
     setNewName("");
   };
 
-  const del = (id: string) => {
-    if (!confirm("이 카테고리를 삭제하면 해당 카테고리의 상품도 모두 삭제됩니다. 계속하시겠습니까?")) return;
-    onChange(categories.filter((c) => c.id !== id));
+  const del = (id: string) => setConfirmId(id);
+
+  const doCatDelete = () => {
+    if (!confirmId) return;
+    onChange(categories.filter((c) => c.id !== confirmId));
+    setConfirmId(null);
   };
 
   const save = (id: string) => {
@@ -270,6 +339,7 @@ function CategoryManager({ section, categories, onChange }: {
 
   return (
     <div className="mb-6 rounded-2xl border border-[#f0f0f0] bg-white p-4">
+      {confirmId && <ConfirmDialog message="이 카테고리를 삭제하면 해당 카테고리의 상품도 모두 삭제됩니다. 계속하시겠습니까?" onConfirm={doCatDelete} onCancel={() => setConfirmId(null)} />}
       <p className="mb-3 text-[13px] font-bold text-[#1a1a1a]">카테고리 관리</p>
       <div className="space-y-1">
         {sorted.map((cat, idx) => (
@@ -365,6 +435,7 @@ export default function ProductAdmin() {
   const [modal, setModal] = useState<{ open: boolean; editing: ManagedProduct | null }>({ open: false, editing: null });
   const [filterCat, setFilterCat] = useState<string>("전체");
   const [search, setSearch] = useState("");
+  const [confirmProductId, setConfirmProductId] = useState<string | null>(null);
 
   const reload = () =>
     Promise.all([
@@ -391,7 +462,7 @@ export default function ProductAdmin() {
     productStore.products.setForSection(section, next);
   };
 
-  const addOrEdit = (form: Omit<ManagedProduct, "id" | "order">) => {
+  const addOrEdit = async (form: Omit<ManagedProduct, "id" | "order">) => {
     let next: ManagedProduct[];
     if (modal.editing) {
       next = products.map((p) => p.id === modal.editing!.id ? { ...p, ...form } : p);
@@ -400,13 +471,17 @@ export default function ProductAdmin() {
       next = [...products, { ...form, id: `${section}_${Date.now()}`, order: maxOrder }];
     }
     setModal({ open: false, editing: null });
-    saveProducts(next);
+    await productStore.products.setForSection(section, next);
+    reload();
   };
 
-  const deleteProduct = (id: string) => {
-    if (!confirm("이 상품을 삭제하시겠습니까?")) return;
-    const next = products.filter((p) => p.id !== id).map((p, i) => ({ ...p, order: i }));
+  const deleteProduct = (id: string) => setConfirmProductId(id);
+
+  const doDeleteProduct = () => {
+    if (!confirmProductId) return;
+    const next = products.filter((p) => p.id !== confirmProductId).map((p, i) => ({ ...p, order: i }));
     saveProducts(next);
+    setConfirmProductId(null);
   };
 
   const move = (id: string, dir: -1 | 1) => {
@@ -432,6 +507,7 @@ export default function ProductAdmin() {
 
   return (
     <div>
+      {confirmProductId && <ConfirmDialog onConfirm={doDeleteProduct} onCancel={() => setConfirmProductId(null)} />}
       {/* 하위 탭 */}
       <div className="mb-6 flex gap-1 rounded-2xl bg-[#f5f5f5] p-1">
         {([["category", "상품 카테고리 관리"], ["products", "상품추가 관리"]] as const).map(([id, label]) => (

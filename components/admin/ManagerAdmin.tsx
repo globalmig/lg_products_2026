@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { adminStore, uploadImage, imageUrl, type Manager } from "@/lib/adminStore";
+import ConfirmDialog from "./ConfirmDialog";
 
 const EMPTY: Omit<Manager, "id"> = { img_key: "", name: "", store: "용산전자상가점", tags: [], desc: "", href: "#" };
 
@@ -11,6 +12,7 @@ export default function ManagerAdmin() {
   const [editing, setEditing] = useState<Manager | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<Omit<Manager, "id">>(EMPTY);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     adminStore.managers.get().then(setManagers);
@@ -31,14 +33,18 @@ export default function ManagerAdmin() {
     setAdding(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    await adminStore.managers.delete(id);
-    setManagers((prev) => prev.filter((m) => m.id !== id));
+  const handleDelete = (id: string) => setConfirmId(id);
+
+  const doDelete = async () => {
+    if (!confirmId) return;
+    await adminStore.managers.delete(confirmId);
+    setManagers((prev) => prev.filter((m) => m.id !== confirmId));
+    setConfirmId(null);
   };
 
   return (
     <div>
+      {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-[18px] font-black text-[#1a1a1a]">매니저 관리</h2>
         <button onClick={() => setAdding(true)} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white">
@@ -152,6 +158,7 @@ function ImgUpload({ value, onChange }: { value: string; onChange: (v: string) =
           className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45] disabled:opacity-50">
           {uploading ? "업로드 중..." : value ? "이미지 변경" : "이미지 업로드"}
         </button>
+        <p className="mt-1 text-[11px] text-[#bbb]">권장: 300 × 300px · 1:1 비율 · JPG/PNG</p>
         {value && (
           <button type="button" onClick={() => onChange("")} className="mt-1 text-[11px] text-[#bbb] hover:text-red-400">삭제</button>
         )}

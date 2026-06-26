@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 export default function SubscriptionPage() {
   return (
     <>
-      <section className="relative h-75 sm:h-105 md:h-140 lg:h-180">
-        <video src="https://static.lge.co.kr/kr/caresolutions/images/care-service-kv-pc.mp4" autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover object-center" />
+      <section className="w-full overflow-hidden">
+        <video src="/care-service-kv-pc.mp4" autoPlay muted loop playsInline className="w-full h-auto block" />
       </section>
       <Suspense>
         <SubscriptionContent />

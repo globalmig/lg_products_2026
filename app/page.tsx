@@ -12,13 +12,13 @@ export const metadata: Metadata = {
 };
 import HeroSlider from "@/components/HeroSlider";
 import CategorySection from "@/components/CategorySection";
-import ProductTabSection from "@/components/ProductTabSection";
 import EventBanner from "@/components/EventBanner";
 import JuneEventProducts from "@/components/JuneEventProducts";
 import Benefit from "@/components/Benefit";
 import BlogSection from "@/components/BlogSection";
 import ReviewSection from "@/components/ReviewSection";
 import FeatureBannerSection from "@/components/FeatureBannerSection";
+import HomeProductSections from "@/components/HomeProductSections";
 import { getNaverBlogPosts } from "@/lib/naverBlog";
 
 const quickLinks = [
@@ -91,8 +91,8 @@ export default async function Home() {
       {/* 3-1. 피처 배너 */}
       <FeatureBannerSection />
 
-      {/* 4. 상품 탭 (주방가전 / TV) */}
-      <ProductTabSection />
+      {/* 4. 카테고리별 상품 슬라이더 */}
+      <HomeProductSections />
 
       {/* 5. 6월 행사 배너 */}
       <EventBanner />
@@ -100,7 +100,7 @@ export default async function Home() {
       {/* 6. 6월 행사 특가 제품 */}
       <JuneEventProducts />
 
-      {/* 7. 혜택 소개 */}
+      {/* 8. 혜택 소개 */}
       <Benefit bg="/images/main/bg_benefit.png" />
 
       {/* 8. 고객 생생 후기 */}
