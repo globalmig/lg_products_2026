@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminStore } from "@/lib/adminStore";
 import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "@/lib/siteDefaults";
+import ConfirmDialog from "./ConfirmDialog";
 
 type Section = "basic" | "consultBanner" | "footerInfo" | "privacy" | "terms";
 
@@ -27,6 +28,7 @@ export default function SiteSettingsAdmin() {
     buttonHref: "/consult",
   });
   const [editingItem, setEditingItem] = useState<FooterInfoItem | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -61,7 +63,11 @@ export default function SiteSettingsAdmin() {
     setNewValue("");
   };
 
-  const deleteItem = (id: string) => setFooterInfo((prev) => prev.filter((i) => i.id !== id));
+  const doDelete = () => {
+    if (!confirmId) return;
+    setFooterInfo((prev) => prev.filter((i) => i.id !== confirmId));
+    setConfirmId(null);
+  };
 
   const saveEdit = () => {
     if (!editingItem) return;
@@ -193,7 +199,7 @@ export default function SiteSettingsAdmin() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => deleteItem(item.id)}
+                        onClick={() => setConfirmId(item.id)}
                         className="h-7 rounded-lg bg-[#fff0f3] px-3 text-[11px] text-[#c90f45] hover:bg-[#ffe0e7]"
                       >
                         삭제
@@ -273,5 +279,7 @@ export default function SiteSettingsAdmin() {
         </button>
       </div>
     </div>
+
+    {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
   );
 }
