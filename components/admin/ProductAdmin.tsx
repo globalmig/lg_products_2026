@@ -56,7 +56,18 @@ function ProductModal({
   const [tagInput, setTagInput] = useState("");
   const [tagType, setTagType] = useState("naver");
   const [thumbPreview, setThumbPreview] = useState<string>(initial?.image ?? "");
-  const [detailPreview, setDetailPreview] = useState<string>(initial?.detailImage ?? "");
+  const [detailPreview, setDetailPreview] = useState<string>(
+    initial?.detailImage && !initial.detailImage.startsWith("<") ? initial.detailImage : ""
+  );
+  const [detailMode, setDetailMode] = useState<"upload" | "url" | "html">(
+    initial?.detailImage?.startsWith("<") ? "html" : "upload"
+  );
+  const [detailUrl, setDetailUrl] = useState<string>(
+    initial?.detailImage && !initial.detailImage.startsWith("<") && initial.detailImage.startsWith("http") ? initial.detailImage : ""
+  );
+  const [detailHtml, setDetailHtml] = useState<string>(
+    initial?.detailImage?.startsWith("<") ? initial.detailImage : ""
+  );
   const [saving, setSaving] = useState(false);
   const thumbRef = useRef<HTMLInputElement>(null);
   const detailRef = useRef<HTMLInputElement>(null);
@@ -79,8 +90,14 @@ function ProductModal({
       if (thumbRef.current?.files?.[0]) {
         image = await uploadImage(thumbRef.current.files[0], "products");
       }
-      if (detailRef.current?.files?.[0]) {
-        detailImage = await uploadImage(detailRef.current.files[0], "products");
+      if (detailMode === "upload") {
+        if (detailRef.current?.files?.[0]) {
+          detailImage = await uploadImage(detailRef.current.files[0], "products");
+        }
+      } else if (detailMode === "url") {
+        detailImage = detailUrl.trim();
+      } else {
+        detailImage = detailHtml.trim();
       }
       await onSave({ ...form, image, detailImage });
     } finally {
@@ -216,33 +233,95 @@ function ProductModal({
             )}
           </div>
 
-          {/* 상세 배너 이미지 */}
+          {/* 상세 이미지 */}
           <div>
-            <label className="mb-1 block text-[12px] font-semibold text-[#555]">상세 배너 이미지 <span className="font-normal text-[#aaa]">(상세 페이지에 표시)</span></label>
-            <p className="mb-1.5 text-[11px] text-[#bbb]">권장: 1080 × 600px · 16:9 또는 가로형 · PNG/JPG · 2MB 이하</p>
-            <input ref={detailRef} type="file" accept="image/*" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDetail(f); }} />
-            <div
-              onClick={() => detailRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleDetail(f); }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 hover:border-[#c90f45] hover:bg-[#fff8fa] transition-colors"
-            >
-              {detailPreview ? (
-                <div className="relative h-28 w-full max-w-xs">
-                  <Image src={detailPreview} alt="상세 배너 미리보기" fill className="object-contain rounded-lg" unoptimized />
-                </div>
-              ) : (
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
-                </svg>
-              )}
-              <p className="text-[12px] text-[#aaa]">{detailPreview ? "클릭하여 변경" : "클릭하거나 드래그하여 첨부"}</p>
+            <label className="mb-2 block text-[12px] font-semibold text-[#555]">상품 상세설명 <span className="font-normal text-[#aaa]">(상세 페이지에 표시)</span></label>
+            {/* 모드 탭 */}
+            <div className="mb-3 flex rounded-xl border border-[#e8e8e8] overflow-hidden">
+              {([["upload", "파일 업로드"], ["url", "이미지 URL"], ["html", "HTML 작성"]] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setDetailMode(mode)}
+                  className={`flex-1 py-2 text-[12px] font-semibold transition-colors ${
+                    detailMode === mode
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-white text-[#888] hover:bg-[#f5f5f5]"
+                  }`}
+                >
+                  {detailMode === mode && "✓ "}{label}
+                </button>
+              ))}
             </div>
-            {detailPreview && (
-              <button type="button"
-                onClick={() => { setDetailPreview(""); set("detailImage", ""); if (detailRef.current) detailRef.current.value = ""; }}
-                className="mt-1.5 text-[11px] text-[#bbb] hover:text-[#c90f45]">배너 삭제</button>
+
+            {/* 파일 업로드 */}
+            {detailMode === "upload" && (
+              <>
+                <p className="mb-1.5 text-[11px] text-[#bbb]">권장: 1080 × 600px · 16:9 또는 가로형 · PNG/JPG · 2MB 이하</p>
+                <input ref={detailRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDetail(f); }} />
+                <div
+                  onClick={() => detailRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleDetail(f); }}
+                  className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 hover:border-[#c90f45] hover:bg-[#fff8fa] transition-colors"
+                >
+                  {detailPreview ? (
+                    <div className="relative h-28 w-full max-w-xs">
+                      <Image src={detailPreview} alt="상세 배너 미리보기" fill className="object-contain rounded-lg" unoptimized />
+                    </div>
+                  ) : (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                    </svg>
+                  )}
+                  <p className="text-[12px] text-[#aaa]">{detailPreview ? "클릭하여 변경" : "클릭하거나 드래그하여 첨부"}</p>
+                </div>
+                {detailPreview && (
+                  <button type="button"
+                    onClick={() => { setDetailPreview(""); set("detailImage", ""); if (detailRef.current) detailRef.current.value = ""; }}
+                    className="mt-1.5 text-[11px] text-[#bbb] hover:text-[#c90f45]">배너 삭제</button>
+                )}
+              </>
+            )}
+
+            {/* URL 입력 */}
+            {detailMode === "url" && (
+              <>
+                <input
+                  type="url"
+                  value={detailUrl}
+                  onChange={(e) => setDetailUrl(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+                />
+                {detailUrl && (
+                  <div className="relative mt-2 h-28 w-full overflow-hidden rounded-xl border border-[#f0f0f0]">
+                    <Image src={detailUrl} alt="미리보기" fill className="object-contain" unoptimized />
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* HTML 작성 */}
+            {detailMode === "html" && (
+              <>
+                <p className="mb-1.5 text-[11px] text-[#bbb]">Iframe, 다른상품링크, 팝업링크를 제외하고 입력해주세요. 이미지 URL은 보안연결(https) 주소로 작성해 주세요.</p>
+                <textarea
+                  value={detailHtml}
+                  onChange={(e) => setDetailHtml(e.target.value)}
+                  placeholder={"<img src='https://...' />\n<div>...</div>"}
+                  rows={8}
+                  className="w-full rounded-xl border border-[#e8e8e8] px-3 py-2.5 font-mono text-[12px] outline-none focus:border-[#c90f45] resize-y"
+                  spellCheck={false}
+                />
+                <div className="mt-1.5 flex justify-between">
+                  <p className="text-[11px] text-[#bbb]">{detailHtml.length} 자</p>
+                  {detailHtml && (
+                    <button type="button" onClick={() => setDetailHtml("")} className="text-[11px] text-[#bbb] hover:text-[#c90f45]">초기화</button>
+                  )}
+                </div>
+              </>
             )}
           </div>
 

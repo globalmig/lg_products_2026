@@ -2,9 +2,15 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 
 export async function GET(_: Request, { params }: { params: Promise<{ key: string[] }> }) {
-  const { env } = await getCloudflareContext();
   const { key } = await params;
   const objectKey = key.join("/");
+
+  let env: Awaited<ReturnType<typeof getCloudflareContext>>["env"];
+  try {
+    ({ env } = await getCloudflareContext());
+  } catch {
+    return new Response("R2 not available in local dev (use wrangler dev)", { status: 503 });
+  }
 
   const object = await env.lg_product_images.get(objectKey);
   if (!object) return new Response("Not found", { status: 404 });

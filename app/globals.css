@@ -48,6 +48,16 @@ body {
   display: none;
 }
 
+.detail-html-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.detail-html-content p {
+  margin: 0;
+}
+
 @media (max-width: 767px) {
   header a[aria-label="LG전자 BEST SHOP 홈"] span:nth-child(n + 2) {
     font-size: 16px;

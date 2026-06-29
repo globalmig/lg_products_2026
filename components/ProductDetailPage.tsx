@@ -270,9 +270,16 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
           {(product.detailImage || (product.detailImages && product.detailImages.length > 0)) ? (
             <div className="flex flex-col gap-2">
               {product.detailImage && (
-                <div className="relative w-full overflow-hidden rounded-xl">
-                  <Image src={product.detailImage} alt={`${product.name} 상세이미지`} width={1080} height={600} className="w-full object-cover" unoptimized />
-                </div>
+                product.detailImage.trimStart().startsWith("<") ? (
+                  <div
+                    className="w-full detail-html-content"
+                    dangerouslySetInnerHTML={{ __html: product.detailImage }}
+                  />
+                ) : (
+                  <div className="relative w-full overflow-hidden rounded-xl">
+                    <Image src={product.detailImage} alt={`${product.name} 상세이미지`} width={1080} height={600} className="w-full object-cover" unoptimized />
+                  </div>
+                )
               )}
               {product.detailImages?.map((src, i) => (
                 <div key={i} className="relative w-full overflow-hidden rounded-xl">
