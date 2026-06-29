@@ -11,6 +11,7 @@ import EventPostAdmin from "@/components/admin/EventPostAdmin";
 import PostAdmin from "@/components/admin/PostAdmin";
 import CardDiscountAdmin from "@/components/admin/CardDiscountAdmin";
 import ReviewAdmin from "@/components/admin/ReviewAdmin";
+import SiteSettingsAdmin from "@/components/admin/SiteSettingsAdmin";
 import { adminStore } from "@/lib/adminStore";
 
 const NAV = [
@@ -23,6 +24,7 @@ const NAV = [
   { id: "cardDiscounts", label: "제휴카드 관리", icon: "💳" },
   { id: "reviews", label: "리뷰 관리", icon: "⭐" },
   { id: "consult", label: "상담 신청 현황", icon: "📋" },
+  { id: "siteSettings", label: "사이트 설정", icon: "⚙️" },
 ] as const;
 
 type TabId = (typeof NAV)[number]["id"];
@@ -270,6 +272,7 @@ export default function AdminPage() {
           {tab === "cardDiscounts" && <CardDiscountAdmin />}
           {tab === "reviews" && <ReviewAdmin />}
           {tab === "consult" && <ConsultAdmin />}
+          {tab === "siteSettings" && <SiteSettingsAdmin />}
         </main>
       </div>
     </div>

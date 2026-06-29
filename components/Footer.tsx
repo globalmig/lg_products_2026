@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { adminStore } from "@/lib/adminStore";
 
 type ModalType = "privacy" | "terms" | null;
 
@@ -82,6 +83,15 @@ const TERMS = {
 export default function Footer() {
   const pathname = usePathname();
   const [modal, setModal] = useState<ModalType>(null);
+  const [storeName, setStoreName] = useState("용산전자상가점");
+  const [copyright, setCopyright] = useState("© 2025 LG Electronics Inc. All rights reserved.");
+
+  useEffect(() => {
+    adminStore.siteSettings.get().then((s) => {
+      setStoreName(s.storeName);
+      setCopyright(s.copyright);
+    });
+  }, []);
 
   if (pathname.startsWith("/lgbs-7x4q2")) return null;
   const data = modal === "privacy" ? PRIVACY : modal === "terms" ? TERMS : null;
@@ -90,8 +100,11 @@ export default function Footer() {
     <>
       <footer className="border-t border-[#efefef] bg-white py-8">
         <div className="mx-auto max-w-270 px-5 text-center">
-          <div className="mb-4 flex items-center justify-center">
+          <div className="mb-4 flex items-center justify-center gap-2">
             <Image src="/images/logo.png" alt="LG전자 BEST SHOP" width={140} height={35} />
+            {storeName && (
+              <span className="text-[13px] font-semibold text-[#555]">{storeName}</span>
+            )}
           </div>
 
           <nav className="mb-4 flex items-center justify-center gap-4">
@@ -108,7 +121,7 @@ export default function Footer() {
             ))}
           </nav>
 
-          <p className="text-[11px] text-[#aaa]">© 2025 LG Electronics Inc. All rights reserved.</p>
+          <p className="text-[11px] text-[#aaa]">{copyright}</p>
         </div>
       </footer>
 

@@ -260,4 +260,13 @@ export const adminStore = {
       apiFetch(`/api/card-discounts/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(card) }),
     delete: (id: string) => apiFetch(`/api/card-discounts/${id}`, { method: "DELETE" }),
   },
+
+  siteSettings: {
+    get: () => apiFetch<{ storeName: string; copyright: string }>("/api/site-settings").catch(() => ({
+      storeName: "용산전자상가점",
+      copyright: "© 2025 LG Electronics Inc. All rights reserved.",
+    })),
+    set: (data: { storeName?: string; copyright?: string }) =>
+      apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
+  },
 };

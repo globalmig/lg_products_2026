@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { search, type SearchResult } from "@/data/searchIndex";
+import { adminStore } from "@/lib/adminStore";
 
 type SubItem = { label: string; href: string };
 type NavItem = { label: string; href: string; sub?: SubItem[] };
@@ -76,7 +77,12 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [storeName, setStoreName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    adminStore.siteSettings.get().then((s) => setStoreName(s.storeName));
+  }, []);
 
   useEffect(() => {
     setResults(search(query));
@@ -122,8 +128,13 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-30 border-b border-[#e8e8e8] bg-white">
         <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-5">
-          <Link href="/" aria-label="LG전자 BEST SHOP 홈">
+          <Link href="/" aria-label="LG전자 BEST SHOP 홈" className="flex items-center gap-2">
             <Image src="/images/logo.png" alt="LG전자 BEST SHOP" width={160} height={40} priority />
+            {storeName && (
+              <span className="hidden text-[13px] font-semibold text-[#555] sm:inline">
+                {storeName}
+              </span>
+            )}
           </Link>
 
           {/* 데스크톱 GNB */}
