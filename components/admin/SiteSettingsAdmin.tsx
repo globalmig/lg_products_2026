@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { adminStore } from "@/lib/adminStore";
 import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "@/lib/siteDefaults";
 
-type Section = "basic" | "footerInfo" | "privacy" | "terms";
+type Section = "basic" | "consultBanner" | "footerInfo" | "privacy" | "terms";
 
 interface FooterInfoItem {
   id: string;
@@ -19,6 +19,13 @@ export default function SiteSettingsAdmin() {
   const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
   const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
   const [footerInfo, setFooterInfo] = useState<FooterInfoItem[]>([]);
+  const [consultBanner, setConsultBanner] = useState({
+    badge: "주주 상담",
+    title: "지금 바로 상담을 신청하세요",
+    desc: "전담 매니저가 빠르게 연락드립니다. 방문 없이 집에서 편리하게.",
+    buttonText: "지금 바로 상담 예약",
+    buttonHref: "/consult",
+  });
   const [editingItem, setEditingItem] = useState<FooterInfoItem | null>(null);
   const [newLabel, setNewLabel] = useState("");
   const [newValue, setNewValue] = useState("");
@@ -31,13 +38,14 @@ export default function SiteSettingsAdmin() {
       if (s.privacyContent) setPrivacyContent(s.privacyContent);
       if (s.termsContent) setTermsContent(s.termsContent);
       setFooterInfo(s.footerInfo ?? []);
+      if (s.consultBanner) setConsultBanner(s.consultBanner);
     });
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await adminStore.siteSettings.set({ storeName, privacyContent, termsContent, footerInfo });
+      await adminStore.siteSettings.set({ storeName, privacyContent, termsContent, footerInfo, consultBanner });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -63,6 +71,7 @@ export default function SiteSettingsAdmin() {
 
   const TABS: { id: Section; label: string }[] = [
     { id: "basic", label: "기본 정보" },
+    { id: "consultBanner", label: "상담 배너" },
     { id: "footerInfo", label: "사업자 정보" },
     { id: "privacy", label: "개인정보처리방침" },
     { id: "terms", label: "이용약관" },
@@ -71,13 +80,13 @@ export default function SiteSettingsAdmin() {
   return (
     <div className="max-w-2xl space-y-4">
       {/* 탭 */}
-      <div className="flex gap-1 rounded-2xl bg-[#f5f5f5] p-1">
+      <div className="flex flex-wrap gap-1 rounded-2xl bg-[#f5f5f5] p-1">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActiveSection(id)}
-            className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition-colors outline-none ${
+            className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors outline-none ${
               activeSection === id ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#888] hover:text-[#555]"
             }`}
           >
@@ -101,6 +110,31 @@ export default function SiteSettingsAdmin() {
                 className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
               />
             </div>
+          </>
+        )}
+
+        {/* 상담 배너 */}
+        {activeSection === "consultBanner" && (
+          <>
+            <h2 className="text-[15px] font-bold text-[#1a1a1a]">상담 배너</h2>
+            <p className="text-[11px] text-[#bbb]">메인 페이지 하단의 상담 신청 배너 텍스트를 수정합니다.</p>
+            {[
+              { label: "배지 텍스트", key: "badge", placeholder: "예: 주주 상담" },
+              { label: "제목", key: "title", placeholder: "예: 지금 바로 상담을 신청하세요" },
+              { label: "설명", key: "desc", placeholder: "예: 전담 매니저가 빠르게 연락드립니다." },
+              { label: "버튼 텍스트", key: "buttonText", placeholder: "예: 지금 바로 상담 예약" },
+              { label: "버튼 링크", key: "buttonHref", placeholder: "예: /consult" },
+            ].map(({ label, key, placeholder }) => (
+              <div key={key}>
+                <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">{label}</label>
+                <input
+                  value={consultBanner[key as keyof typeof consultBanner]}
+                  onChange={(e) => setConsultBanner((prev) => ({ ...prev, [key]: e.target.value }))}
+                  placeholder={placeholder}
+                  className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+                />
+              </div>
+            ))}
           </>
         )}
 

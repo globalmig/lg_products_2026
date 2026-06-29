@@ -262,14 +262,22 @@ export const adminStore = {
   },
 
   siteSettings: {
-    get: () => apiFetch<{ storeName: string; copyright: string; privacyContent: string; termsContent: string; footerInfo: { id: string; label: string; value: string }[] }>("/api/site-settings").catch(() => ({
+    get: () => apiFetch<{
+      storeName: string;
+      copyright: string;
+      privacyContent: string;
+      termsContent: string;
+      footerInfo: { id: string; label: string; value: string }[];
+      consultBanner: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string };
+    }>("/api/site-settings").catch(() => ({
       storeName: "용산전자상가점",
       copyright: "© 2025 LG Electronics Inc. All rights reserved.",
       privacyContent: "",
       termsContent: "",
       footerInfo: [],
+      consultBanner: { badge: "주주 상담", title: "지금 바로 상담을 신청하세요", desc: "전담 매니저가 빠르게 연락드립니다. 방문 없이 집에서 편리하게.", buttonText: "지금 바로 상담 예약", buttonHref: "/consult" },
     })),
-    set: (data: { storeName?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[] }) =>
+    set: (data: { storeName?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string } }) =>
       apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
   },
 };

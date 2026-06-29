@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO site_settings (key, value) VALUES ('consult_banner', '{"badge":"주주 상담","title":"지금 바로 상담을 신청하세요","desc":"전담 매니저가 빠르게 연락드립니다. 방문 없이 집에서 편리하게.","buttonText":"지금 바로 상담 예약","buttonHref":"/consult"}');
