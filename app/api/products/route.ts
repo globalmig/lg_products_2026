@@ -11,7 +11,7 @@ type DBProduct = {
 };
 
 function toImageUrl(key: string) {
-  if (!key || key.startsWith("/") || key.startsWith("http")) return key;
+  if (!key || key.startsWith("/") || key.startsWith("http") || key.trimStart().startsWith("<")) return key;
   return `/api/images/${key}`;
 }
 

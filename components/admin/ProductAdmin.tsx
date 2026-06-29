@@ -71,6 +71,22 @@ function ProductModal({
   const [saving, setSaving] = useState(false);
   const thumbRef = useRef<HTMLInputElement>(null);
   const detailRef = useRef<HTMLInputElement>(null);
+  const detailTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertTag = (before: string, after = "") => {
+    const el = detailTextareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = detailHtml.slice(start, end);
+    const next = detailHtml.slice(0, start) + before + selected + after + detailHtml.slice(end);
+    setDetailHtml(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + before.length + selected.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
 
   const makeFileHandler = (setPreview: (v: string) => void) => (file: File) => {
     const reader = new FileReader();
@@ -306,8 +322,35 @@ function ProductModal({
             {/* HTML 작성 */}
             {detailMode === "html" && (
               <>
-                <p className="mb-1.5 text-[11px] text-[#bbb]">Iframe, 다른상품링크, 팝업링크를 제외하고 입력해주세요. 이미지 URL은 보안연결(https) 주소로 작성해 주세요.</p>
+                <p className="mb-1.5 text-[11px] text-[#bbb]">Iframe, 팝업링크 제외. 이미지 URL은 https로 작성해주세요.</p>
+
+                {/* 태그 빠른 삽입 툴바 */}
+                <div className="mb-2 flex flex-wrap gap-1 rounded-lg border border-[#f0f0f0] bg-[#fafafa] p-1.5">
+                  {([
+                    { label: "img",    before: '<img src="" alt="" style="max-width:100%;height:auto;display:block;" />', after: "" },
+                    { label: "p",      before: "<p>", after: "</p>" },
+                    { label: "h2",     before: "<h2>", after: "</h2>" },
+                    { label: "h3",     before: "<h3>", after: "</h3>" },
+                    { label: "div",    before: "<div>\n", after: "\n</div>" },
+                    { label: "span",   before: "<span>", after: "</span>" },
+                    { label: "strong", before: "<strong>", after: "</strong>" },
+                    { label: "a",      before: '<a href="" target="_blank">', after: "</a>" },
+                    { label: "br",     before: "<br />", after: "" },
+                    { label: "hr",     before: '<hr style="border:none;border-top:1px solid #eee;margin:16px 0;" />', after: "" },
+                  ] as const).map(({ label, before, after }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); insertTag(before, after); }}
+                      className="rounded border border-[#e8e8e8] bg-white px-2 py-0.5 font-mono text-[11px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors"
+                    >
+                      {`<${label}>`}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
+                  ref={detailTextareaRef}
                   value={detailHtml}
                   onChange={(e) => setDetailHtml(e.target.value)}
                   placeholder={"<img src='https://...' />\n<div>...</div>"}
@@ -594,7 +637,7 @@ export default function ProductAdmin() {
             key={id}
             type="button"
             onClick={() => setSubTab(id)}
-            className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition-colors ${
+            className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition-colors outline-none ${
               subTab === id ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#888] hover:text-[#555]"
             }`}
           >
