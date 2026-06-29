@@ -6,64 +6,36 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { search, type SearchResult } from "@/data/searchIndex";
 import { adminStore } from "@/lib/adminStore";
+import { productStore, type ManagedCategory } from "@/lib/productStore";
 
 type SubItem = { label: string; href: string };
 type NavItem = { label: string; href: string; sub?: SubItem[] };
 
-const navItems: NavItem[] = [
-  { label: "6월 행사", href: "/benefit" },
-  {
-    label: "주방가전",
-    href: "/products/kitchen",
-    sub: [
-      { label: "냉장고", href: "/products/kitchen?category=냉장고" },
-      { label: "김치냉장고", href: "/products/kitchen?category=김치냉장고" },
-      { label: "식기세척기", href: "/products/kitchen?category=식기세척기" },
-      { label: "전기레인지", href: "/products/kitchen?category=전기레인지" },
-      { label: "광파오븐", href: "/products/kitchen?category=광파오븐" },
-      { label: "Fit & Max", href: "/products/kitchen?category=Fit+%26+Max" },
-      { label: "Fit & Max(냉장고+김치냉장고)", href: "/products/kitchen?category=Fit+%26+Max%28냉장고%2B김치냉장고%29" },
-      { label: "컨버터블", href: "/products/kitchen?category=컨버터블" },
-    ],
-  },
-  {
-    label: "TV",
-    href: "/products/tv",
-    sub: [
-      { label: "스탠바이미", href: "/products/tv?category=스탠바이미" },
-      { label: "UHD", href: "/products/tv?category=UHD" },
-      { label: "QNED", href: "/products/tv?category=QNED" },
-      { label: "OLED", href: "/products/tv?category=OLED" },
-    ],
-  },
-  {
-    label: "생활가전",
-    href: "/products/living",
-    sub: [
-      { label: "세탁기", href: "/products/living?category=세탁기" },
-      { label: "세탁기+건조기 세트", href: "/products/living?category=세탁기+건조기+세트" },
-      { label: "워시타워", href: "/products/living?category=워시타워" },
-      { label: "워시콤보", href: "/products/living?category=워시콤보" },
-      { label: "의류건조기", href: "/products/living?category=의류건조기" },
-      { label: "스타일러", href: "/products/living?category=스타일러" },
-      { label: "슈케어", href: "/products/living?category=슈케어" },
-      { label: "청소기", href: "/products/living?category=청소기" },
-      { label: "안마의자", href: "/products/living?category=안마의자" },
-    ],
-  },
-  {
-    label: "에어케어",
-    href: "/products/air",
-    sub: [
-      { label: "에어컨", href: "/products/air?category=에어컨" },
-      { label: "공기청정기", href: "/products/air?category=공기청정기" },
-      { label: "제습기", href: "/products/air?category=제습기" },
-      { label: "바스에어", href: "/products/air?category=바스에어" },
-    ],
-  },
-  { label: "제휴카드", href: "/subscription?tab=card" },
-  { label: "리뷰 이벤트", href: "/news" },
+const SECTION_NAV: { section: string; label: string; href: string }[] = [
+  { section: "kitchen", label: "주방가전", href: "/products/kitchen" },
+  { section: "tv",      label: "TV",      href: "/products/tv" },
+  { section: "living",  label: "생활가전", href: "/products/living" },
+  { section: "air",     label: "에어케어", href: "/products/air" },
 ];
+
+function buildNavItems(categories: ManagedCategory[]): NavItem[] {
+  const productNavItems: NavItem[] = SECTION_NAV.map(({ section, label, href }) => {
+    const cats = categories
+      .filter((c) => c.section === section)
+      .sort((a, b) => a.order - b.order);
+    return {
+      label,
+      href,
+      sub: cats.length > 0 ? cats.map((c) => ({ label: c.name, href: `${href}?category=${encodeURIComponent(c.name)}` })) : undefined,
+    };
+  });
+  return [
+    { label: "6월 행사", href: "/benefit" },
+    ...productNavItems,
+    { label: "제휴카드", href: "/subscription?tab=card" },
+    { label: "리뷰 이벤트", href: "/news" },
+  ];
+}
 
 export default function Header() {
   const pathname = usePathname();
@@ -78,10 +50,12 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [storeName, setStoreName] = useState("");
+  const [navItems, setNavItems] = useState<NavItem[]>(buildNavItems([]));
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => setStoreName(s.storeName));
+    productStore.categories.get().then((cats) => setNavItems(buildNavItems(cats)));
   }, []);
 
   useEffect(() => {
