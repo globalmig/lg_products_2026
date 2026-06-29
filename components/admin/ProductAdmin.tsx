@@ -358,6 +358,11 @@ function ProductModal({
                   className="w-full rounded-xl border border-[#e8e8e8] px-3 py-2.5 font-mono text-[12px] outline-none focus:border-[#c90f45] resize-y"
                   spellCheck={false}
                 />
+                {/charset=["']?EUC-KR/i.test(detailHtml) && (
+                  <p className="mt-1 rounded-lg bg-[#fff8e1] px-3 py-2 text-[11px] text-[#b8860b]">
+                    ⚠ EUC-KR 인코딩 HTML이 감지되었습니다. 한글이 깨질 수 있습니다. 메모장에서 UTF-8로 저장 후 다시 붙여넣기 해주세요. (파일 → 다른 이름으로 저장 → 인코딩: UTF-8)
+                  </p>
+                )}
                 <div className="mt-1.5 flex justify-between">
                   <p className="text-[11px] text-[#bbb]">{detailHtml.length} 자</p>
                   {detailHtml && (

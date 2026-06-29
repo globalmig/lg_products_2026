@@ -271,10 +271,25 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="flex flex-col gap-2">
               {product.detailImage && (
                 product.detailImage.trimStart().startsWith("<") ? (
+                  /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage) ? (
+                    <iframe
+                      srcDoc={product.detailImage}
+                      className="w-full border-none"
+                      style={{ minHeight: 400 }}
+                      sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin"
+                      onLoad={(e) => {
+                        try {
+                          const el = e.currentTarget.contentDocument?.documentElement;
+                          if (el) e.currentTarget.style.height = el.scrollHeight + "px";
+                        } catch {}
+                      }}
+                    />
+                  ) : (
                   <div
                     className="w-full detail-html-content"
                     dangerouslySetInnerHTML={{ __html: product.detailImage }}
                   />
+                  )
                 ) : (
                   <div className="relative w-full overflow-hidden rounded-xl">
                     <Image src={product.detailImage} alt={`${product.name} 상세이미지`} width={1080} height={600} className="w-full object-cover" unoptimized />
