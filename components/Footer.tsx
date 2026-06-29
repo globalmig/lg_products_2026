@@ -4,97 +4,36 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { adminStore } from "@/lib/adminStore";
+import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "@/lib/siteDefaults";
 
 type ModalType = "privacy" | "terms" | null;
-
-const PRIVACY = {
-  title: "개인정보처리방침",
-  content: `LG베스트샵 용산전자상가점(이하 '매장')은 고객님의 개인정보를 소중히 여기며, 「개인정보 보호법」에 따라 아래와 같이 처리합니다.
-
-1. 수집하는 개인정보 항목
-매장은 상담 신청 시 아래 정보를 수집합니다.
-· 필수항목: 이름, 연락처(휴대폰 번호)
-· 선택항목: 배송 지역, 거주 아파트명, 구매 희망 제품 모델명
-
-2. 개인정보 수집 및 이용 목적
-· 상담 신청 접수 및 예약 확인
-· 담당 매니저 배정 및 상담 진행
-· 견적 안내 및 구매 정보 제공
-
-3. 개인정보 보유 및 이용 기간
-상담 완료 후 3개월간 보유 후 즉시 파기합니다.
-단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관합니다.
-
-4. 개인정보의 제3자 제공
-매장은 고객님의 개인정보를 원칙적으로 외부에 제공하지 않습니다.
-단, 법령의 규정에 의거하거나 수사 목적으로 기관의 요청이 있는 경우는 예외로 합니다.
-
-5. 개인정보 파기 절차 및 방법
-보유 기간이 경과한 개인정보는 지체 없이 파기합니다.
-전자파일 형태로 저장된 개인정보는 복구 불가능한 방법으로 영구 삭제합니다.
-
-6. 개인정보 보호 책임자
-· 담당: LG베스트샵 용산전자상가점
-· 문의: 매장 대표번호로 연락 주시기 바랍니다.
-
-7. 개인정보처리방침 변경
-본 방침은 법령·정책 변경에 따라 개정될 수 있으며, 변경 시 매장 홈페이지를 통해 공지합니다.
-
-시행일: 2025년 1월 1일`,
-};
-
-const TERMS = {
-  title: "이용약관",
-  content: `제1조 (목적)
-본 약관은 LG베스트샵 용산전자상가점(이하 '매장')이 제공하는 비대면 상담 신청 서비스(이하 '서비스')의 이용에 관한 조건 및 절차, 매장과 이용자의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.
-
-제2조 (서비스 내용)
-매장은 다음의 서비스를 제공합니다.
-· LG 가전제품 비대면 구매 상담
-· 가전구독 서비스 안내 및 견적 제공
-· 혼수·이사 패키지 상담
-· 소상공인 전용 상담
-
-제3조 (서비스 이용)
-① 서비스는 상담 신청서를 통해 이용할 수 있습니다.
-② 매장은 신청 접수 후 영업일 기준 1일 이내 담당 매니저가 연락드립니다.
-③ 매장 운영 시간(월~토 10:00~20:00) 외 신청 건은 다음 영업일에 처리됩니다.
-
-제4조 (이용자의 의무)
-① 이용자는 서비스 이용 시 허위 정보를 입력하여서는 안 됩니다.
-② 이용자는 타인의 개인정보를 도용하여서는 안 됩니다.
-③ 이용자는 매장의 서비스 운영을 방해하는 행위를 하여서는 안 됩니다.
-
-제5조 (매장의 의무)
-① 매장은 이용자가 신청한 상담을 성실히 처리합니다.
-② 매장은 이용자의 개인정보를 본 약관 및 개인정보처리방침에 따라 안전하게 관리합니다.
-③ 매장은 서비스 개선을 위해 지속적으로 노력합니다.
-
-제6조 (면책사항)
-① 천재지변, 시스템 장애 등 불가항력적 사유로 서비스가 중단될 경우 책임을 지지 않습니다.
-② 이용자가 제공한 정보의 오류로 발생한 문제에 대해 매장은 책임을 지지 않습니다.
-
-제7조 (약관의 변경)
-매장은 필요한 경우 본 약관을 변경할 수 있으며, 변경 시 홈페이지를 통해 공지합니다.
-
-시행일: 2025년 1월 1일`,
-};
 
 export default function Footer() {
   const pathname = usePathname();
   const [modal, setModal] = useState<ModalType>(null);
   const [storeName, setStoreName] = useState("용산전자상가점");
   const [copyright, setCopyright] = useState("© 2025 LG Electronics Inc. All rights reserved.");
+  const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
+  const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
+  const [footerInfo, setFooterInfo] = useState<{ id: string; label: string; value: string }[]>([]);
 
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => {
       setStoreName(s.storeName);
       setCopyright(s.copyright);
+      if (s.privacyContent) setPrivacyContent(s.privacyContent);
+      if (s.termsContent) setTermsContent(s.termsContent);
+      if (s.footerInfo?.length) setFooterInfo(s.footerInfo);
     });
   }, []);
 
   if (pathname.startsWith("/lgbs-7x4q2")) return null;
-  const data = modal === "privacy" ? PRIVACY : modal === "terms" ? TERMS : null;
+
+  const modalData = modal === "privacy"
+    ? { title: "개인정보처리방침", content: privacyContent }
+    : modal === "terms"
+    ? { title: "이용약관", content: termsContent }
+    : null;
 
   return (
     <>
@@ -121,18 +60,27 @@ export default function Footer() {
             ))}
           </nav>
 
+          {footerInfo.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+              {footerInfo.map((item) => (
+                <span key={item.id} className="text-[11px] text-[#aaa]">
+                  <span className="mr-1 text-[#ccc]">{item.label}</span>
+                  {item.value}
+                </span>
+              ))}
+            </div>
+          )}
+
           <p className="text-[11px] text-[#aaa]">{copyright}</p>
         </div>
       </footer>
 
-      {/* 모달 */}
-      {data && (
+      {modalData && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setModal(null)} />
           <div className="relative z-10 flex max-h-[80vh] w-full max-w-150 flex-col rounded-t-2xl bg-white sm:rounded-2xl">
-            {/* 헤더 */}
             <div className="flex items-center justify-between border-b border-[#f1f1f1] px-6 py-4">
-              <h2 className="text-[16px] font-black tracking-tighter text-[#1a1a1a]">{data.title}</h2>
+              <h2 className="text-[16px] font-black tracking-tighter text-[#1a1a1a]">{modalData.title}</h2>
               <button
                 onClick={() => setModal(null)}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] text-[#888] hover:bg-[#f5f5f5]"
@@ -141,13 +89,11 @@ export default function Footer() {
                 ✕
               </button>
             </div>
-            {/* 내용 */}
             <div className="overflow-y-auto px-6 py-5">
               <pre className="whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-[#555]">
-                {data.content}
+                {modalData.content}
               </pre>
             </div>
-            {/* 하단 버튼 */}
             <div className="border-t border-[#f1f1f1] px-6 py-4">
               <button
                 onClick={() => setModal(null)}

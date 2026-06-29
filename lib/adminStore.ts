@@ -262,11 +262,14 @@ export const adminStore = {
   },
 
   siteSettings: {
-    get: () => apiFetch<{ storeName: string; copyright: string }>("/api/site-settings").catch(() => ({
+    get: () => apiFetch<{ storeName: string; copyright: string; privacyContent: string; termsContent: string; footerInfo: { id: string; label: string; value: string }[] }>("/api/site-settings").catch(() => ({
       storeName: "용산전자상가점",
       copyright: "© 2025 LG Electronics Inc. All rights reserved.",
+      privacyContent: "",
+      termsContent: "",
+      footerInfo: [],
     })),
-    set: (data: { storeName?: string; copyright?: string }) =>
+    set: (data: { storeName?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[] }) =>
       apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
   },
 };

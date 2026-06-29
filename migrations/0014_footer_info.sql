@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO site_settings (key, value) VALUES ('footer_info', '[{"id":"1","label":"상호","value":"LG베스트샵 용산전자상가점"},{"id":"2","label":"사업자등록번호","value":""},{"id":"3","label":"대표자","value":""},{"id":"4","label":"주소","value":""},{"id":"5","label":"대표전화","value":""}]');

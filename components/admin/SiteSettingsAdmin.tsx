@@ -2,24 +2,42 @@
 
 import { useEffect, useState } from "react";
 import { adminStore } from "@/lib/adminStore";
+import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "@/lib/siteDefaults";
+
+type Section = "basic" | "footerInfo" | "privacy" | "terms";
+
+interface FooterInfoItem {
+  id: string;
+  label: string;
+  value: string;
+}
 
 export default function SiteSettingsAdmin() {
+  const [activeSection, setActiveSection] = useState<Section>("basic");
   const [storeName, setStoreName] = useState("");
-  const [copyright, setCopyright] = useState("");
+
+  const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
+  const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
+  const [footerInfo, setFooterInfo] = useState<FooterInfoItem[]>([]);
+  const [editingItem, setEditingItem] = useState<FooterInfoItem | null>(null);
+  const [newLabel, setNewLabel] = useState("");
+  const [newValue, setNewValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => {
       setStoreName(s.storeName);
-      setCopyright(s.copyright);
+      if (s.privacyContent) setPrivacyContent(s.privacyContent);
+      if (s.termsContent) setTermsContent(s.termsContent);
+      setFooterInfo(s.footerInfo ?? []);
     });
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await adminStore.siteSettings.set({ storeName, copyright });
+      await adminStore.siteSettings.set({ storeName, privacyContent, termsContent, footerInfo });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -27,32 +45,189 @@ export default function SiteSettingsAdmin() {
     }
   };
 
+  const addItem = () => {
+    if (!newLabel.trim()) return;
+    const item: FooterInfoItem = { id: Date.now().toString(), label: newLabel.trim(), value: newValue.trim() };
+    setFooterInfo((prev) => [...prev, item]);
+    setNewLabel("");
+    setNewValue("");
+  };
+
+  const deleteItem = (id: string) => setFooterInfo((prev) => prev.filter((i) => i.id !== id));
+
+  const saveEdit = () => {
+    if (!editingItem) return;
+    setFooterInfo((prev) => prev.map((i) => (i.id === editingItem.id ? editingItem : i)));
+    setEditingItem(null);
+  };
+
+  const TABS: { id: Section; label: string }[] = [
+    { id: "basic", label: "기본 정보" },
+    { id: "footerInfo", label: "사업자 정보" },
+    { id: "privacy", label: "개인정보처리방침" },
+    { id: "terms", label: "이용약관" },
+  ];
+
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="max-w-2xl space-y-4">
+      {/* 탭 */}
+      <div className="flex gap-1 rounded-2xl bg-[#f5f5f5] p-1">
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveSection(id)}
+            className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition-colors outline-none ${
+              activeSection === id ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#888] hover:text-[#555]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="rounded-2xl border border-[#f0f0f0] bg-white p-6 space-y-4">
-        <h2 className="text-[15px] font-bold text-[#1a1a1a]">헤더 / 푸터 설정</h2>
+        {/* 기본 정보 */}
+        {activeSection === "basic" && (
+          <>
+            <h2 className="text-[15px] font-bold text-[#1a1a1a]">헤더 / 푸터 기본 정보</h2>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">매장명</label>
+              <p className="mb-2 text-[11px] text-[#bbb]">헤더와 푸터 로고 옆에 표시됩니다.</p>
+              <input
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                placeholder="예: 용산전자상가점"
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+              />
+            </div>
+          </>
+        )}
 
-        <div>
-          <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">매장명</label>
-          <p className="mb-2 text-[11px] text-[#bbb]">헤더와 푸터 로고 옆에 표시됩니다.</p>
-          <input
-            value={storeName}
-            onChange={(e) => setStoreName(e.target.value)}
-            placeholder="예: 용산전자상가점"
-            className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
-          />
-        </div>
+        {/* 사업자 정보 */}
+        {activeSection === "footerInfo" && (
+          <>
+            <h2 className="text-[15px] font-bold text-[#1a1a1a]">사업자 정보</h2>
+            <p className="text-[11px] text-[#bbb]">푸터 하단에 사업자 정보가 표시됩니다. 항목을 추가·수정·삭제할 수 있습니다.</p>
 
-        <div>
-          <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">저작권 문구</label>
-          <p className="mb-2 text-[11px] text-[#bbb]">푸터 하단에 표시됩니다.</p>
-          <input
-            value={copyright}
-            onChange={(e) => setCopyright(e.target.value)}
-            placeholder="© 2025 LG Electronics Inc. All rights reserved."
-            className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
-          />
-        </div>
+            {/* 현재 항목 목록 */}
+            <div className="space-y-2">
+              {footerInfo.length === 0 && (
+                <p className="text-[12px] text-[#ccc]">등록된 항목이 없습니다.</p>
+              )}
+              {footerInfo.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 rounded-xl border border-[#f0f0f0] bg-[#fafafa] px-3 py-2.5">
+                  {editingItem?.id === item.id ? (
+                    <>
+                      <input
+                        value={editingItem.label}
+                        onChange={(e) => setEditingItem({ ...editingItem, label: e.target.value })}
+                        placeholder="항목명"
+                        className="h-8 w-24 rounded-lg border border-[#e8e8e8] px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                      />
+                      <input
+                        value={editingItem.value}
+                        onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
+                        placeholder="내용"
+                        className="h-8 flex-1 rounded-lg border border-[#e8e8e8] px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                      />
+                      <button
+                        type="button"
+                        onClick={saveEdit}
+                        className="h-8 rounded-lg bg-[#c90f45] px-3 text-[11px] font-bold text-white"
+                      >
+                        완료
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem(null)}
+                        className="h-8 rounded-lg bg-[#f0f0f0] px-3 text-[11px] text-[#555]"
+                      >
+                        취소
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-24 text-[12px] font-semibold text-[#888]">{item.label}</span>
+                      <span className="flex-1 text-[12px] text-[#333]">{item.value || <span className="text-[#ccc]">미입력</span>}</span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem({ ...item })}
+                        className="h-7 rounded-lg bg-[#f5f5f5] px-3 text-[11px] text-[#555] hover:bg-[#eee]"
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteItem(item.id)}
+                        className="h-7 rounded-lg bg-[#fff0f3] px-3 text-[11px] text-[#c90f45] hover:bg-[#ffe0e7]"
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* 새 항목 추가 */}
+            <div className="border-t border-[#f5f5f5] pt-4">
+              <p className="mb-2 text-[12px] font-semibold text-[#555]">항목 추가</p>
+              <div className="flex gap-2">
+                <input
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="항목명 (예: 대표자)"
+                  className="h-9 w-28 rounded-xl border border-[#e8e8e8] px-2.5 text-[12px] outline-none focus:border-[#c90f45]"
+                />
+                <input
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addItem()}
+                  placeholder="내용"
+                  className="h-9 flex-1 rounded-xl border border-[#e8e8e8] px-2.5 text-[12px] outline-none focus:border-[#c90f45]"
+                />
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="h-9 rounded-xl bg-[#f5f5f5] px-4 text-[12px] font-semibold text-[#555] hover:bg-[#eee]"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* 개인정보처리방침 */}
+        {activeSection === "privacy" && (
+          <>
+            <h2 className="text-[15px] font-bold text-[#1a1a1a]">개인정보처리방침</h2>
+            <p className="text-[11px] text-[#bbb]">푸터의 '개인정보 처리방침' 클릭 시 표시되는 내용입니다.</p>
+            <textarea
+              value={privacyContent}
+              onChange={(e) => setPrivacyContent(e.target.value)}
+              rows={20}
+              className="w-full resize-y rounded-xl border border-[#e8e8e8] px-3 py-2.5 text-[13px] leading-relaxed outline-none focus:border-[#c90f45]"
+            />
+            <p className="text-right text-[11px] text-[#bbb]">{privacyContent.length} 자</p>
+          </>
+        )}
+
+        {/* 이용약관 */}
+        {activeSection === "terms" && (
+          <>
+            <h2 className="text-[15px] font-bold text-[#1a1a1a]">이용약관</h2>
+            <p className="text-[11px] text-[#bbb]">푸터의 '이용약관' 클릭 시 표시되는 내용입니다.</p>
+            <textarea
+              value={termsContent}
+              onChange={(e) => setTermsContent(e.target.value)}
+              rows={20}
+              className="w-full resize-y rounded-xl border border-[#e8e8e8] px-3 py-2.5 text-[13px] leading-relaxed outline-none focus:border-[#c90f45]"
+            />
+            <p className="text-right text-[11px] text-[#bbb]">{termsContent.length} 자</p>
+          </>
+        )}
 
         <button
           type="button"
