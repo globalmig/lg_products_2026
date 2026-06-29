@@ -99,7 +99,9 @@ export default function Header() {
   }, [searchOpen]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSearchOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSearchOpen(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -129,45 +131,25 @@ export default function Header() {
       <header className="sticky top-0 z-30 border-b border-[#e8e8e8] bg-white">
         <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-5">
           <Link href="/" aria-label="LG전자 BEST SHOP 홈" className="flex items-center gap-2">
-            <Image src="/images/logo.png" alt="LG전자 BEST SHOP" width={160} height={40} priority />
-            {storeName && (
-              <span className="hidden text-[13px] font-semibold text-[#555] sm:inline">
-                {storeName}
-              </span>
-            )}
+            <Image src="/images/logo2.png" alt="LG전자 BEST SHOP" width={24} height={24} priority />
+            {storeName && <span className="hidden text-[16px] font-black text-[#777] sm:inline">{storeName}</span>}
           </Link>
 
           {/* 데스크톱 GNB */}
           <nav className="hidden h-full items-center gap-1 md:flex" aria-label="주요 메뉴">
             {navItems.map(({ label, href, sub }) => {
-              const isActive = pathname.startsWith("/subscription") && href.startsWith("/subscription?tab=")
-                ? false
-                : href !== "/" && pathname.startsWith(href.split("?")[0]);
+              const isActive = pathname.startsWith("/subscription") && href.startsWith("/subscription?tab=") ? false : href !== "/" && pathname.startsWith(href.split("?")[0]);
               const isOpen = activeNav === label;
 
               return (
-                <div
-                  key={label}
-                  className="relative flex h-full items-center"
-                  onMouseEnter={() => handleNavEnter(label)}
-                  onMouseLeave={handleNavLeave}
-                >
+                <div key={label} className="relative flex h-full items-center" onMouseEnter={() => handleNavEnter(label)} onMouseLeave={handleNavLeave}>
                   <Link
                     href={href}
-                    className={`flex h-7 items-center rounded px-3 text-[13px] font-semibold transition-colors ${
-                      isActive || isOpen
-                        ? "text-[#c90f45]"
-                        : "text-[#333] hover:text-[#c90f45]"
-                    }`}
+                    className={`flex h-7 items-center rounded px-3 text-[13px] font-semibold transition-colors ${isActive || isOpen ? "text-[#c90f45]" : "text-[#333] hover:text-[#c90f45]"}`}
                   >
                     {label}
                     {sub && (
-                      <svg
-                        className={`ml-0.5 h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
+                      <svg className={`ml-0.5 h-3 w-3 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     )}
@@ -210,21 +192,13 @@ export default function Header() {
               </svg>
             </button>
 
-            <a
-              href="/consult"
-              className="hidden h-7 min-w-20 items-center justify-center rounded-full bg-[#c90f45] px-4 text-[13px] font-bold text-white md:flex"
-            >
+            <a href="/consult" className="hidden h-7 min-w-20 items-center justify-center rounded-full bg-[#c90f45] px-4 text-[13px] font-bold text-white md:flex">
               상담 신청
             </a>
           </div>
 
           {/* 모바일 햄버거 */}
-          <button
-            type="button"
-            onClick={() => setDrawerOpen(true)}
-            className="flex h-8 w-8 flex-col items-center justify-center gap-[5px] md:hidden"
-            aria-label="메뉴 열기"
-          >
+          <button type="button" onClick={() => setDrawerOpen(true)} className="flex h-8 w-8 flex-col items-center justify-center gap-[5px] md:hidden" aria-label="메뉴 열기">
             <span className="h-[2px] w-5 bg-[#333]" />
             <span className="h-[2px] w-5 bg-[#333]" />
             <span className="h-[2px] w-5 bg-[#333]" />
@@ -247,11 +221,15 @@ export default function Header() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && results[0]) goTo(results[0].href); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && results[0]) goTo(results[0].href);
+                  }}
                   placeholder="상품명, 카테고리, 혜택을 검색하세요"
                   className="flex-1 bg-transparent text-[15px] text-[#1a1a1a] outline-none placeholder:text-[#bbb]"
                 />
-                <button type="button" onClick={() => setSearchOpen(false)} className="text-[20px] text-[#999] hover:text-[#333]">✕</button>
+                <button type="button" onClick={() => setSearchOpen(false)} className="text-[20px] text-[#999] hover:text-[#333]">
+                  ✕
+                </button>
               </div>
 
               {/* 결과 */}
@@ -261,11 +239,7 @@ export default function Header() {
                     <ul>
                       {results.map((item, i) => (
                         <li key={i}>
-                          <button
-                            type="button"
-                            onClick={() => goTo(item.href)}
-                            className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-[#fff5f7]"
-                          >
+                          <button type="button" onClick={() => goTo(item.href)} className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-[#fff5f7]">
                             <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${item.type === "product" ? "bg-[#f0f0f0] text-[#666]" : "bg-[#f8eef2] text-[#c90f45]"}`}>
                               {item.type === "product" ? "상품" : "소식"}
                             </span>
@@ -312,12 +286,7 @@ export default function Header() {
           <div className="absolute right-0 top-0 h-full w-[300px] overflow-y-auto bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-[#f1f1f1] px-5 py-4">
               <span className="text-[15px] font-bold text-[#333]">메뉴</span>
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(false)}
-                className="flex h-8 w-8 items-center justify-center text-[22px] text-[#666]"
-                aria-label="메뉴 닫기"
-              >
+              <button type="button" onClick={() => setDrawerOpen(false)} className="flex h-8 w-8 items-center justify-center text-[22px] text-[#666]" aria-label="메뉴 닫기">
                 ✕
               </button>
             </div>
@@ -328,11 +297,7 @@ export default function Header() {
                 return (
                   <div key={label} className="border-b border-[#f1f1f1]">
                     <div className="flex items-center justify-between px-5">
-                      <Link
-                        href={href}
-                        onClick={() => !sub && setDrawerOpen(false)}
-                        className="flex-1 py-4 text-[15px] font-semibold text-[#333]"
-                      >
+                      <Link href={href} onClick={() => !sub && setDrawerOpen(false)} className="flex-1 py-4 text-[15px] font-semibold text-[#333]">
                         {label}
                       </Link>
                       {sub && (
@@ -342,12 +307,7 @@ export default function Header() {
                           className="flex h-8 w-8 items-center justify-center text-[#999]"
                           aria-label={isExpanded ? "접기" : "펼치기"}
                         >
-                          <svg
-                            className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
+                          <svg className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
@@ -357,12 +317,7 @@ export default function Header() {
                     {sub && isExpanded && (
                       <div className="bg-[#fafafa] pb-2">
                         {sub.map((item) => (
-                          <Link
-                            key={item.label}
-                            href={item.href}
-                            onClick={() => setDrawerOpen(false)}
-                            className="block px-8 py-2.5 text-[13px] text-[#555] hover:text-[#c90f45]"
-                          >
+                          <Link key={item.label} href={item.href} onClick={() => setDrawerOpen(false)} className="block px-8 py-2.5 text-[13px] text-[#555] hover:text-[#c90f45]">
                             {item.label}
                           </Link>
                         ))}
@@ -374,11 +329,7 @@ export default function Header() {
             </nav>
 
             <div className="px-5 pt-4 pb-6">
-              <a
-                href="/consult"
-                onClick={() => setDrawerOpen(false)}
-                className="flex h-11 w-full items-center justify-center rounded-full bg-[#c90f45] text-[14px] font-bold text-white"
-              >
+              <a href="/consult" onClick={() => setDrawerOpen(false)} className="flex h-11 w-full items-center justify-center rounded-full bg-[#c90f45] text-[14px] font-bold text-white">
                 상담 신청
               </a>
             </div>
