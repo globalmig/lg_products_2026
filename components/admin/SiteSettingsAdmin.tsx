@@ -84,6 +84,7 @@ export default function SiteSettingsAdmin() {
   ];
 
   return (
+    <>
     <div className="max-w-2xl space-y-4">
       {/* 탭 */}
       <div className="flex flex-wrap gap-1 rounded-2xl bg-[#f5f5f5] p-1">
@@ -281,5 +282,6 @@ export default function SiteSettingsAdmin() {
     </div>
 
     {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
+    </>
   );
 }
