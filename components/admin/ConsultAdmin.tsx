@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LuTrash2 } from "react-icons/lu";
+import AdminLoading from "./AdminLoading";
 import { adminStore, type ConsultSubmission } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -51,9 +53,10 @@ export default function ConsultAdmin() {
   const [memoSaving, setMemoSaving] = useState(false);
   const [memoSaved, setMemoSaved] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminStore.consult.get().then(setSubmissions);
+    adminStore.consult.get().then((data) => { setSubmissions(data); setLoading(false); });
   }, []);
 
   const openDetail = (sub: ConsultSubmission) => {
@@ -88,6 +91,8 @@ export default function ConsultAdmin() {
     if (selected?.id === confirmId) setSelected(null);
     setConfirmId(null);
   };
+
+  if (loading) return <AdminLoading label="상담 내역 불러오는 중..." />;
 
   return (
     <div>
@@ -222,8 +227,8 @@ export default function ConsultAdmin() {
                 ))}
               </div>
               <button onClick={() => handleDelete(selected.id)}
-                className="flex h-10 w-full items-center justify-center rounded-full border border-red-200 text-[13px] text-red-400 hover:bg-red-50">
-                삭제
+                className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-red-200 text-[13px] text-red-400 hover:bg-red-50">
+                <LuTrash2 size={14} /> 삭제
               </button>
             </div>
           </div>

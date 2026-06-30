@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
 import { adminStore, uploadImage, imageUrl, type Manager } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -79,8 +80,8 @@ export default function ManagerAdmin() {
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button onClick={() => setEditing({ ...m })} className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]">수정</button>
-                  <button onClick={() => handleDelete(m.id)} className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-red-400 hover:text-red-500">삭제</button>
+                  <button onClick={() => setEditing({ ...m })} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
+                  <button onClick={() => handleDelete(m.id)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-red-400 hover:text-red-500" title="삭제"><LuTrash2 size={14} /></button>
                 </div>
               </div>
             )}

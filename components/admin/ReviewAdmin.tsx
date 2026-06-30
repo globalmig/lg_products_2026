@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
+import AdminLoading from "./AdminLoading";
 import Image from "next/image";
 import { adminStore, uploadImage, imageUrl, type Review } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
@@ -20,9 +22,10 @@ export default function ReviewAdmin() {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<Omit<Review, "id" | "sort_order">>(EMPTY);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminStore.reviews.get().then(setReviews);
+    adminStore.reviews.get().then((data) => { setReviews(data); setLoading(false); });
   }, []);
 
   const handleSaveEdit = async () => {
@@ -48,6 +51,8 @@ export default function ReviewAdmin() {
     setReviews((prev) => prev.filter((r) => r.id !== confirmId));
     setConfirmId(null);
   };
+
+  if (loading) return <AdminLoading />;
 
   return (
     <div>
@@ -107,18 +112,8 @@ export default function ReviewAdmin() {
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button
-                      onClick={() => setEditing({ ...review })}
-                      className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]"
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={() => handleDelete(review.id)}
-                      className="flex h-8 items-center rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-red-400 hover:text-red-500"
-                    >
-                      삭제
-                    </button>
+                    <button onClick={() => setEditing({ ...review })} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
+                    <button onClick={() => handleDelete(review.id)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-red-400 hover:text-red-500" title="삭제"><LuTrash2 size={14} /></button>
                   </div>
                 </div>
               )}

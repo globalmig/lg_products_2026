@@ -13,27 +13,45 @@ import CardDiscountAdmin from "@/components/admin/CardDiscountAdmin";
 import ReviewAdmin from "@/components/admin/ReviewAdmin";
 import SiteSettingsAdmin from "@/components/admin/SiteSettingsAdmin";
 import { adminStore } from "@/lib/adminStore";
+import {
+  MdDashboard,
+  MdInventory2,
+  MdImage,
+  MdLocalOffer,
+  MdCategory,
+  MdArticle,
+  MdCreditCard,
+  MdStar,
+  MdAssignment,
+  MdSettings,
+  MdOpenInNew,
+  MdLogout,
+  MdChevronLeft,
+  MdChevronRight,
+} from "react-icons/md";
+import type { IconType } from "react-icons";
 
-const NAV = [
-  { id: "dashboard", label: "대시보드", icon: "⊞" },
-  { id: "products", label: "상품 관리", icon: "📦" },
-  { id: "hero", label: "히어로 슬라이드", icon: "🖼" },
-  { id: "featureBanner", label: "피처 배너", icon: "🏷" },
-  { id: "mainCategory", label: "메인 카테고리", icon: "🗂" },
-  { id: "benefitPosts", label: "혜택 & 소식 관리", icon: "📝" },
-  { id: "cardDiscounts", label: "제휴카드 관리", icon: "💳" },
-  { id: "reviews", label: "리뷰 관리", icon: "⭐" },
-  { id: "consult", label: "상담 신청 현황", icon: "📋" },
-  { id: "siteSettings", label: "사이트 설정", icon: "⚙️" },
-] as const;
+const NAV: { id: string; label: string; Icon: IconType }[] = [
+  { id: "dashboard", label: "대시보드", Icon: MdDashboard },
+  { id: "products", label: "상품 관리", Icon: MdInventory2 },
+  { id: "hero", label: "히어로 슬라이드", Icon: MdImage },
+  { id: "featureBanner", label: "피처 배너", Icon: MdLocalOffer },
+  { id: "mainCategory", label: "메인 카테고리", Icon: MdCategory },
+  { id: "benefitPosts", label: "혜택 & 소식 관리", Icon: MdArticle },
+  { id: "cardDiscounts", label: "제휴카드 관리", Icon: MdCreditCard },
+  { id: "reviews", label: "리뷰 관리", Icon: MdStar },
+  { id: "consult", label: "상담 신청 현황", Icon: MdAssignment },
+  { id: "siteSettings", label: "사이트 설정", Icon: MdSettings },
+];
 
-type TabId = (typeof NAV)[number]["id"];
+type TabId = "dashboard" | "products" | "hero" | "featureBanner" | "mainCategory" | "benefitPosts" | "cardDiscounts" | "reviews" | "consult" | "siteSettings";
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
   const [pw, setPw] = useState("");
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<TabId>("dashboard");
+  const [productsSubTab, setProductsSubTab] = useState<"category" | "products">("products");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -138,50 +156,78 @@ export default function AdminPage() {
             className="hidden lg:flex h-7 w-7 items-center justify-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
             aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
           >
-            {collapsed ? "›" : "‹"}
+            {collapsed ? <MdChevronRight size={18} /> : <MdChevronLeft size={18} />}
           </button>
         </div>
 
         {/* 내비게이션 */}
         <nav className="flex-1 overflow-y-auto px-2 py-4">
           {NAV.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => { setTab(item.id); setSidebarOpen(false); if (item.id === "dashboard") loadStats(); }}
-              title={collapsed ? item.label : undefined}
-              className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
-                collapsed ? "justify-center" : ""
-              } ${
-                tab === item.id
-                  ? "bg-[#c90f45] text-white"
-                  : "text-white/60 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <span className="shrink-0 text-[16px]">{item.icon}</span>
-              {!collapsed && (
-                <>
-                  {item.label}
-                  {item.id === "consult" && stats.newConsult > 0 && (
-                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-[10px] font-bold text-white">
-                      {stats.newConsult}
-                    </span>
-                  )}
-                </>
+            <div key={item.id}>
+              <button
+                onClick={() => {
+                  setTab(item.id);
+                  setSidebarOpen(false);
+                  if (item.id === "dashboard") loadStats();
+                }}
+                title={collapsed ? item.label : undefined}
+                className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                  collapsed ? "justify-center" : ""
+                } ${
+                  tab === item.id
+                    ? "bg-[#c90f45] text-white"
+                    : "text-white/60 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <item.Icon size={18} className="shrink-0" />
+                {!collapsed && (
+                  <>
+                    {item.label}
+                    {item.id === "consult" && stats.newConsult > 0 && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-[10px] font-bold text-white">
+                        {stats.newConsult}
+                      </span>
+                    )}
+                  </>
+                )}
+                {collapsed && item.id === "consult" && stats.newConsult > 0 && (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#c90f45]" />
+                )}
+              </button>
+
+              {/* 상품 관리 하위 항목 */}
+              {item.id === "products" && tab === "products" && !collapsed && (
+                <div className="mb-1 ml-4 space-y-0.5">
+                  {([
+                    { id: "products" as const, label: "상품추가 관리" },
+                    { id: "category" as const, label: "상품 카테고리 관리" },
+                  ]).map((sub) => (
+                    <button
+                      key={sub.id}
+                      onClick={() => { setProductsSubTab(sub.id); setSidebarOpen(false); }}
+                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors ${
+                        productsSubTab === sub.id
+                          ? "bg-white/15 text-white"
+                          : "text-white/45 hover:bg-white/10 hover:text-white/80"
+                      }`}
+                    >
+                      <span className="text-[10px]">└</span>
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
               )}
-              {collapsed && item.id === "consult" && stats.newConsult > 0 && (
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#c90f45]" />
-              )}
-            </button>
+            </div>
           ))}
         </nav>
 
         {/* 하단 */}
         <div className="border-t border-white/10 px-2 py-4 space-y-1">
           <a href="/" target="_blank" title={collapsed ? "사이트 보기" : undefined} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-[12px] text-white/50 hover:text-white/80 ${collapsed ? "justify-center" : ""}`}>
-            <span>↗</span>{!collapsed && " 사이트 보기"}
+            <MdOpenInNew size={16} />{!collapsed && " 사이트 보기"}
           </a>
           <button onClick={logout} title={collapsed ? "로그아웃" : undefined} className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[12px] text-white/50 hover:text-white/80 ${collapsed ? "justify-center" : ""}`}>
-            <span>→</span>{!collapsed && " 로그아웃"}
+            <MdLogout size={16} />{!collapsed && " 로그아웃"}
           </button>
         </div>
       </aside>
@@ -263,7 +309,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {tab === "products" && <ProductAdmin />}
+          {tab === "products" && <ProductAdmin key={productsSubTab} defaultSubTab={productsSubTab} />}
           {tab === "hero" && <HeroAdmin />}
           {tab === "featureBanner" && <FeatureBannerAdmin />}
           {tab === "mainCategory" && <MainCategoryAdmin />}

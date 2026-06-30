@@ -5,6 +5,21 @@ import { livingProducts, livingCategories } from "@/data/livingProducts";
 
 export type Section = "kitchen" | "tv" | "air" | "living";
 
+export interface PeriodPrice {
+  label: string;
+  price: number;
+}
+
+export interface CareServiceItem {
+  label: string;
+  cycle: string;
+}
+
+export interface ColorItem {
+  name: string;
+  image: string;
+}
+
 export interface ManagedProduct {
   id: string;
   section: Section;
@@ -16,6 +31,9 @@ export interface ManagedProduct {
   price60?: number | null;
   price48?: number | null;
   price36?: number | null;
+  periodPrices?: PeriodPrice[];
+  careServiceItems?: CareServiceItem[];
+  colorItems?: ColorItem[];
   tags: { label: string; type: string }[];
   image: string;
   detailImage?: string;

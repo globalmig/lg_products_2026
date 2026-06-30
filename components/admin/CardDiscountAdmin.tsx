@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
 import Image from "next/image";
 import { adminStore, imageUrl, uploadImage, type CardDiscount } from "@/lib/adminStore";
 import { CARD_DETAIL_DEFAULTS, type CardDetailJson, type CardTier } from "@/data/cardData";
@@ -439,14 +440,8 @@ export default function CardDiscountAdmin() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => openEdit(card)}
-                      className="rounded-lg border border-[#e0e0e0] px-3 py-1 text-[12px] font-semibold text-[#555] hover:border-[#999]">
-                      수정
-                    </button>
-                    <button type="button" onClick={() => setDeleteTarget(card)}
-                      className="rounded-lg border border-[#ffdde5] px-3 py-1 text-[12px] font-semibold text-[#c90f45] hover:bg-[#fff0f3]">
-                      삭제
-                    </button>
+                    <button type="button" onClick={() => openEdit(card)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e0e0e0] text-[#555] hover:border-[#999]" title="수정"><LuPencil size={13} /></button>
+                    <button type="button" onClick={() => setDeleteTarget(card)} className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#ffdde5] text-[#c90f45] hover:bg-[#fff0f3]" title="삭제"><LuTrash2 size={13} /></button>
                   </div>
                 </td>
               </tr>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
+import AdminLoading from "./AdminLoading";
 import Image from "next/image";
 import {
   productStore,
@@ -8,6 +10,9 @@ import {
   type Section,
   type ManagedProduct,
   type ManagedCategory,
+  type PeriodPrice,
+  type CareServiceItem,
+  type ColorItem,
 } from "@/lib/productStore";
 import { uploadImage } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
@@ -24,6 +29,9 @@ const EMPTY_PRODUCT: Omit<ManagedProduct, "id" | "order"> = {
   price60: null,
   price48: null,
   price36: null,
+  periodPrices: [],
+  careServiceItems: [],
+  colorItems: [],
   tags: [],
   image: "",
   detailImage: "",
@@ -31,8 +39,31 @@ const EMPTY_PRODUCT: Omit<ManagedProduct, "id" | "order"> = {
   careService: "",
   manageCycle: "",
   color: "",
-  size: "",
 };
+
+function legacyPeriodPrices(p: ManagedProduct): PeriodPrice[] {
+  if (p.periodPrices && p.periodPrices.length > 0) return p.periodPrices;
+  const pp: PeriodPrice[] = [];
+  if (p.monthlyPrice) pp.push({ label: "72개월", price: p.monthlyPrice });
+  if (p.price60 != null) pp.push({ label: "60개월", price: p.price60 });
+  if (p.price48 != null) pp.push({ label: "48개월", price: p.price48 });
+  if (p.price36 != null) pp.push({ label: "36개월", price: p.price36 });
+  return pp;
+}
+
+function legacyCareServiceItems(p: ManagedProduct): CareServiceItem[] {
+  if (p.careServiceItems && p.careServiceItems.length > 0) return p.careServiceItems;
+  if (p.careService || p.manageCycle) {
+    return [{ label: p.careService ?? "", cycle: p.manageCycle ?? "" }];
+  }
+  return [];
+}
+
+function legacyColorItems(p: ManagedProduct): ColorItem[] {
+  if (p.colorItems && p.colorItems.length > 0) return p.colorItems;
+  if (p.color) return [{ name: p.color, image: p.image ?? "" }];
+  return [];
+}
 
 /* ────── 상품 편집 모달 ────── */
 function ProductModal({
@@ -50,8 +81,24 @@ function ProductModal({
 }) {
   const [form, setForm] = useState<Omit<ManagedProduct, "id" | "order">>(
     initial
-      ? { section: initial.section, category: initial.category, name: initial.name, model: initial.model, monthlyPrice: initial.monthlyPrice, benefitPrice: initial.benefitPrice, price60: initial.price60 ?? null, price48: initial.price48 ?? null, price36: initial.price36 ?? null, tags: initial.tags, image: initial.image, detailImage: initial.detailImage ?? "", isBest: initial.isBest, careService: initial.careService ?? "", manageCycle: initial.manageCycle ?? "", color: initial.color ?? "", size: initial.size ?? "" }
+      ? {
+          section: initial.section, category: initial.category, name: initial.name,
+          model: initial.model, monthlyPrice: initial.monthlyPrice, benefitPrice: initial.benefitPrice,
+          price60: initial.price60 ?? null, price48: initial.price48 ?? null, price36: initial.price36 ?? null,
+          periodPrices: legacyPeriodPrices(initial),
+          careServiceItems: legacyCareServiceItems(initial),
+          colorItems: legacyColorItems(initial),
+          tags: initial.tags, image: initial.image, detailImage: initial.detailImage ?? "",
+          isBest: initial.isBest, careService: initial.careService ?? "",
+          manageCycle: initial.manageCycle ?? "", color: initial.color ?? "",
+        }
       : { ...EMPTY_PRODUCT, section, category: categories[0]?.name ?? "" }
+  );
+  const [colorFiles, setColorFiles] = useState<(File | null)[]>(
+    initial ? (legacyColorItems(initial)).map(() => null) : []
+  );
+  const [colorPreviews, setColorPreviews] = useState<string[]>(
+    initial ? legacyColorItems(initial).map((c) => c.image) : []
   );
   const [tagInput, setTagInput] = useState("");
   const [tagType, setTagType] = useState("naver");
@@ -115,7 +162,19 @@ function ProductModal({
       } else {
         detailImage = detailHtml.trim();
       }
-      await onSave({ ...form, image, detailImage });
+      const uploadedColorItems = await Promise.all(
+        (form.colorItems ?? []).map(async (ci, i) => {
+          const file = colorFiles[i];
+          if (file) {
+            const url = await uploadImage(file, "products");
+            return { name: ci.name, image: url };
+          }
+          return ci;
+        })
+      );
+      const periodPrices = form.periodPrices ?? [];
+      const monthlyPrice = periodPrices[0]?.price ?? form.monthlyPrice;
+      await onSave({ ...form, image, detailImage, colorItems: uploadedColorItems, monthlyPrice });
     } finally {
       setSaving(false);
     }
@@ -123,6 +182,38 @@ function ProductModal({
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  const addPeriodPrice = () => set("periodPrices", [...(form.periodPrices ?? []), { label: "", price: 0 }]);
+  const removePeriodPrice = (i: number) => set("periodPrices", (form.periodPrices ?? []).filter((_, j) => j !== i));
+  const updatePeriodPrice = (i: number, field: keyof PeriodPrice, val: string | number) =>
+    set("periodPrices", (form.periodPrices ?? []).map((pp, j) => j === i ? { ...pp, [field]: val } : pp));
+
+  const addCareServiceItem = () => set("careServiceItems", [...(form.careServiceItems ?? []), { label: "", cycle: "" }]);
+  const removeCareServiceItem = (i: number) => set("careServiceItems", (form.careServiceItems ?? []).filter((_, j) => j !== i));
+  const updateCareServiceItem = (i: number, field: keyof CareServiceItem, val: string) =>
+    set("careServiceItems", (form.careServiceItems ?? []).map((cs, j) => j === i ? { ...cs, [field]: val } : cs));
+
+  const addColorItem = () => {
+    set("colorItems", [...(form.colorItems ?? []), { name: "", image: "" }]);
+    setColorFiles((f) => [...f, null]);
+    setColorPreviews((p) => [...p, ""]);
+  };
+  const removeColorItem = (i: number) => {
+    set("colorItems", (form.colorItems ?? []).filter((_, j) => j !== i));
+    setColorFiles((f) => f.filter((_, j) => j !== i));
+    setColorPreviews((p) => p.filter((_, j) => j !== i));
+  };
+  const updateColorName = (i: number, name: string) =>
+    set("colorItems", (form.colorItems ?? []).map((ci, j) => j === i ? { ...ci, name } : ci));
+  const handleColorFile = (i: number, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target?.result as string;
+      setColorPreviews((p) => p.map((v, j) => j === i ? url : v));
+    };
+    reader.readAsDataURL(file);
+    setColorFiles((f) => f.map((v, j) => j === i ? file : v));
+  };
 
   const addTag = () => {
     if (!tagInput.trim()) return;
@@ -168,26 +259,30 @@ function ProductModal({
           {/* 가격 */}
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">계약기간별 월 구독료 (원)</label>
-            <p className="mb-2 text-[11px] text-[#bbb]">기간별로 다른 금액을 입력하세요. 비워두면 72개월 금액으로 표시됩니다.</p>
-            <div className="grid grid-cols-4 gap-2">
-              {([
-                { label: "72개월", key: "monthlyPrice" as const },
-                { label: "60개월", key: "price60" as const },
-                { label: "48개월", key: "price48" as const },
-                { label: "36개월", key: "price36" as const },
-              ]).map(({ label, key }) => (
-                <div key={key}>
-                  <label className="mb-1 block text-[11px] text-[#888]">{label}</label>
+            <p className="mb-2 text-[11px] text-[#bbb]">첫 번째 항목이 기본가로 사용됩니다.</p>
+            <div className="space-y-2">
+              {(form.periodPrices ?? []).map((pp, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3 py-2">
+                  <input
+                    value={pp.label}
+                    onChange={(e) => updatePeriodPrice(i, "label", e.target.value)}
+                    className="h-8 w-24 shrink-0 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                    placeholder="72개월"
+                  />
                   <input
                     type="number"
-                    value={key === "monthlyPrice" ? form.monthlyPrice : (form[key] ?? "")}
-                    onChange={(e) => set(key, e.target.value === "" ? (key === "monthlyPrice" ? 0 : null) : Number(e.target.value))}
-                    className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
-                    placeholder={key === "monthlyPrice" ? "필수" : "없음"}
+                    value={pp.price || ""}
+                    onChange={(e) => updatePeriodPrice(i, "price", e.target.value === "" ? 0 : Number(e.target.value))}
+                    className="h-8 flex-1 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                    placeholder="금액 (원)"
                   />
+                  <button type="button" onClick={() => removePeriodPrice(i)} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eee] text-[11px] text-[#888] hover:bg-[#c90f45] hover:text-white">×</button>
                 </div>
               ))}
             </div>
+            <button type="button" onClick={addPeriodPrice} className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#e0e0e0] text-[12px] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors">
+              + 기간 추가
+            </button>
           </div>
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">최대혜택가 (원, 없으면 비워두기)</label>
@@ -195,27 +290,84 @@ function ProductModal({
               className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="없음" />
           </div>
 
-          {/* 상품 옵션 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-[12px] font-semibold text-[#555]">케어서비스 주기 <span className="font-normal text-[#aaa]">(선택)</span></label>
-              <input type="text" value={form.careService ?? ""} onChange={(e) => set("careService", e.target.value)}
-                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 라이트+" />
+          {/* 케어서비스 주기 */}
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">케어서비스 주기 <span className="font-normal text-[#aaa]">(선택)</span></label>
+            <div className="space-y-2">
+              {(form.careServiceItems ?? []).map((cs, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3 py-2">
+                  <input
+                    value={cs.label}
+                    onChange={(e) => updateCareServiceItem(i, "label", e.target.value)}
+                    className="h-8 w-24 shrink-0 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                    placeholder="라이트+"
+                  />
+                  <input
+                    value={cs.cycle}
+                    onChange={(e) => updateCareServiceItem(i, "cycle", e.target.value)}
+                    className="h-8 flex-1 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                    placeholder="12개월에 1회"
+                  />
+                  <button type="button" onClick={() => removeCareServiceItem(i)} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eee] text-[11px] text-[#888] hover:bg-[#c90f45] hover:text-white">×</button>
+                </div>
+              ))}
             </div>
-            <div>
-              <label className="mb-1 block text-[12px] font-semibold text-[#555]">관리주기 <span className="font-normal text-[#aaa]">(선택)</span></label>
-              <input type="text" value={form.manageCycle ?? ""} onChange={(e) => set("manageCycle", e.target.value)}
-                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 라이트+ (12개월/6개월) 12개월 기준" />
-            </div>
-            <div>
-              <label className="mb-1 block text-[12px] font-semibold text-[#555]">색상 <span className="font-normal text-[#aaa]">(선택)</span></label>
-              <input type="text" value={form.color ?? ""} onChange={(e) => set("color", e.target.value)}
-                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 네이처 그린" />
-            </div>
-            <div>
-              <label className="mb-1 block text-[12px] font-semibold text-[#555]">크기 <span className="font-normal text-[#aaa]">(선택)</span></label>
-              <input type="text" value={form.size ?? ""} onChange={(e) => set("size", e.target.value)}
-                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="예: 700 x 1,890 x 830mm" />
+            <button type="button" onClick={addCareServiceItem} className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#e0e0e0] text-[12px] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors">
+              + 케어서비스 추가
+            </button>
+          </div>
+
+          {/* 색상 */}
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">색상 옵션 <span className="font-normal text-[#aaa]">(선택)</span></label>
+            <p className="mb-3 text-[11px] text-[#bbb]">색상별로 제품 이미지를 다르게 설정할 수 있습니다. 상세 페이지에서 색상 버튼 클릭 시 해당 이미지로 전환됩니다.</p>
+            <div className="grid grid-cols-3 gap-3">
+              {(form.colorItems ?? []).map((ci, i) => (
+                <div key={i} className="relative rounded-2xl border border-[#e8e8e8] bg-[#fafafa] p-3">
+                  <button
+                    type="button"
+                    onClick={() => removeColorItem(i)}
+                    className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#eee] text-[11px] text-[#888] hover:bg-[#c90f45] hover:text-white"
+                  >×</button>
+                  <label htmlFor={`color-file-${i}`} className="block cursor-pointer">
+                    <div className="relative mb-2 aspect-square w-full overflow-hidden rounded-xl border border-[#e8e8e8] bg-white">
+                      {colorPreviews[i] ? (
+                        <Image src={colorPreviews[i]} alt="" fill className="object-contain" unoptimized />
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center gap-1 text-[#ccc]">
+                          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="text-[10px]">이미지 추가</span>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      id={`color-file-${i}`}
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleColorFile(i, f); }}
+                    />
+                  </label>
+                  <input
+                    value={ci.name}
+                    onChange={(e) => updateColorName(i, e.target.value)}
+                    className="h-8 w-full rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                    placeholder="색상명"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addColorItem}
+                className="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-[#e0e0e0] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-[11px] font-medium">색상 추가</span>
+              </button>
             </div>
           </div>
 
@@ -429,19 +581,9 @@ function CategoryManager({ section, categories, onChange }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
-
-  const move = (id: string, dir: -1 | 1) => {
-    const sorted = [...categories].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex((c) => c.id === id);
-    const swapIdx = idx + dir;
-    if (swapIdx < 0 || swapIdx >= sorted.length) return;
-    const next = sorted.map((c, i) => {
-      if (i === idx) return { ...c, order: sorted[swapIdx].order };
-      if (i === swapIdx) return { ...c, order: sorted[idx].order };
-      return c;
-    });
-    onChange(next);
-  };
+  const [dragFromId, setDragFromId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const dragId = useRef<string | null>(null);
 
   const add = () => {
     if (!newName.trim()) return;
@@ -462,19 +604,56 @@ function CategoryManager({ section, categories, onChange }: {
     setEditingId(null);
   };
 
+  const handleDrop = (targetId: string) => {
+    const fromId = dragId.current;
+    dragId.current = null;
+    setDragFromId(null);
+    setDragOverId(null);
+    if (!fromId || fromId === targetId) return;
+    const sorted = [...categories].sort((a, b) => a.order - b.order);
+    const fromIdx = sorted.findIndex((c) => c.id === fromId);
+    const toIdx = sorted.findIndex((c) => c.id === targetId);
+    const next = [...sorted];
+    const [item] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, item);
+    onChange(next.map((c, i) => ({ ...c, order: i })));
+  };
+
   const sorted = [...categories].sort((a, b) => a.order - b.order);
 
   return (
     <div className="mb-6 rounded-2xl border border-[#f0f0f0] bg-white p-4">
       {confirmId && <ConfirmDialog message="이 카테고리를 삭제하면 해당 카테고리의 상품도 모두 삭제됩니다. 계속하시겠습니까?" onConfirm={doCatDelete} onCancel={() => setConfirmId(null)} />}
       <p className="mb-3 text-[13px] font-bold text-[#1a1a1a]">카테고리 관리</p>
+
+      {/* 추가 폼 — 상단 */}
+      <div className="mb-4 flex gap-2">
+        <input value={newName} onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+          className="h-9 flex-1 rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="새 카테고리 이름" />
+        <button type="button" onClick={add} className="h-9 rounded-xl bg-[#c90f45] px-4 text-[13px] font-bold text-white hover:opacity-90">추가</button>
+      </div>
+
       <div className="space-y-1">
-        {sorted.map((cat, idx) => (
-          <div key={cat.id} className="flex items-center gap-2 rounded-xl bg-[#fafafa] px-3 py-2">
-            <div className="flex flex-col gap-0.5">
-              <button type="button" onClick={() => move(cat.id, -1)} disabled={idx === 0} className="h-4 text-[10px] text-[#bbb] hover:text-[#555] disabled:opacity-30">▲</button>
-              <button type="button" onClick={() => move(cat.id, 1)} disabled={idx === sorted.length - 1} className="h-4 text-[10px] text-[#bbb] hover:text-[#555] disabled:opacity-30">▼</button>
-            </div>
+        {sorted.map((cat, idx) => {
+          const fromIdx = dragFromId ? sorted.findIndex((c) => c.id === dragFromId) : -1;
+          const isOver = dragOverId === cat.id && fromIdx !== -1 && fromIdx !== idx;
+          const insertAbove = isOver && fromIdx > idx;
+          const insertBelow = isOver && fromIdx < idx;
+          return (
+          <div key={cat.id}>
+            {insertAbove && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
+            <div
+              draggable
+              onDragStart={() => { dragId.current = cat.id; setDragFromId(cat.id); }}
+              onDragOver={(e) => { e.preventDefault(); setDragOverId(cat.id); }}
+              onDrop={() => handleDrop(cat.id)}
+              onDragEnd={() => { dragId.current = null; setDragFromId(null); setDragOverId(null); }}
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 transition-all ${
+                dragFromId === cat.id ? "opacity-40" : "bg-[#fafafa]"
+              }`}
+            >
+            <span className="cursor-grab text-[14px] text-[#ccc] active:cursor-grabbing">⠿</span>
             {editingId === cat.id ? (
               <>
                 <input value={editName} onChange={(e) => setEditName(e.target.value)}
@@ -486,42 +665,248 @@ function CategoryManager({ section, categories, onChange }: {
             ) : (
               <>
                 <span className="flex-1 text-[13px] text-[#333]">{cat.name}</span>
-                <button type="button" onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} className="text-[11px] text-[#888] hover:text-[#c90f45]">수정</button>
-                <button type="button" onClick={() => del(cat.id)} className="text-[11px] text-[#bbb] hover:text-[#c90f45]">삭제</button>
+                <button type="button" onClick={() => { setEditingId(cat.id); setEditName(cat.name); }} className="text-[#aaa] hover:text-[#c90f45]" title="수정"><LuPencil size={13} /></button>
+                <button type="button" onClick={() => del(cat.id)} className="text-[#ccc] hover:text-[#c90f45]" title="삭제"><LuTrash2 size={13} /></button>
               </>
             )}
+            </div>
+            {insertBelow && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
           </div>
-        ))}
+          );
+        })}
       </div>
-      <div className="mt-3 flex gap-2">
-        <input value={newName} onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          className="h-9 flex-1 rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="새 카테고리 이름" />
-        <button type="button" onClick={add} className="h-9 rounded-xl bg-[#c90f45] px-4 text-[13px] font-bold text-white hover:opacity-90">추가</button>
+    </div>
+  );
+}
+
+/* ────── 엑셀 템플릿 다운로드 ────── */
+async function downloadExcelTemplate(categories: ManagedCategory[]) {
+  const XLSX = await import("xlsx");
+  const headers = [
+    "카테고리", "상품명", "모델번호",
+    "72개월_구독료", "60개월_구독료", "48개월_구독료", "36개월_구독료",
+    "최대혜택가", "케어서비스주기", "관리주기", "색상",
+    "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
+  ];
+  const example = [
+    categories[0]?.name ?? "카테고리명",
+    "예시 상품명", "ABCD-1234",
+    45900, 49900, 53900, 57900,
+    "", "라이트+", "라이트+ (12개월)", "네이처 그린",
+    "N", "네이버페이:naver",
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+  ws["!cols"] = headers.map(() => ({ wch: 20 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "상품등록");
+  XLSX.writeFile(wb, "상품_업로드_템플릿.xlsx");
+}
+
+/* ────── 엑셀 업로드 모달 ────── */
+function ExcelUploadModal({
+  section,
+  categories,
+  onImport,
+  onClose,
+}: {
+  section: Section;
+  categories: ManagedCategory[];
+  onImport: (products: Omit<ManagedProduct, "id" | "order">[]) => void;
+  onClose: () => void;
+}) {
+  const [parsed, setParsed] = useState<Omit<ManagedProduct, "id" | "order">[]>([]);
+  const [error, setError] = useState("");
+  const [fileName, setFileName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+
+  const handleFile = async (file: File) => {
+    setError("");
+    setParsed([]);
+    setFileName(file.name);
+    try {
+      const XLSX = await import("xlsx");
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
+
+      const results: Omit<ManagedProduct, "id" | "order">[] = [];
+      const errors: string[] = [];
+
+      rows.forEach((row, i) => {
+        const rowNum = i + 2;
+        const name = String(row["상품명"] ?? "").trim();
+        const monthlyPrice = Number(row["72개월_구독료"] ?? 0);
+        if (!name) { errors.push(`${rowNum}행: 상품명 필수`); return; }
+        if (!monthlyPrice) { errors.push(`${rowNum}행: 72개월 구독료 필수`); return; }
+
+        const category = String(row["카테고리"] ?? "").trim() || (categories[0]?.name ?? "");
+        const tagsRaw = String(row["태그(라벨:타입,라벨2:타입2)"] ?? "").trim();
+        const tags = tagsRaw
+          ? tagsRaw.split(",").map((t) => {
+              const [label, type] = t.split(":").map((s) => s.trim());
+              return { label: label ?? t.trim(), type: type ?? "naver" };
+            }).filter((t) => t.label)
+          : [];
+
+        results.push({
+          section,
+          category,
+          name,
+          model: String(row["모델번호"] ?? "").trim(),
+          monthlyPrice,
+          price60: row["60개월_구독료"] ? Number(row["60개월_구독료"]) : null,
+          price48: row["48개월_구독료"] ? Number(row["48개월_구독료"]) : null,
+          price36: row["36개월_구독료"] ? Number(row["36개월_구독료"]) : null,
+          benefitPrice: row["최대혜택가"] ? Number(row["최대혜택가"]) : null,
+          careService: String(row["케어서비스주기"] ?? "").trim() || undefined,
+          manageCycle: String(row["관리주기"] ?? "").trim() || undefined,
+          color: String(row["색상"] ?? "").trim() || undefined,
+          tags,
+          image: "",
+          detailImage: "",
+          isBest: String(row["베스트상품(Y/N)"] ?? "").trim().toUpperCase() === "Y",
+        });
+      });
+
+      if (errors.length > 0) setError(errors.join(" / "));
+      setParsed(results);
+    } catch {
+      setError("파일을 읽을 수 없습니다. xlsx 형식인지 확인해주세요.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#f0f0f0] px-6 py-4">
+          <h3 className="text-[16px] font-bold text-[#1a1a1a]">엑셀로 상품 일괄 등록</h3>
+          <button type="button" onClick={onClose} className="text-[20px] text-[#999] hover:text-[#333]">✕</button>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-4">
+          {/* 안내 */}
+          <div className="rounded-xl bg-[#fafafa] border border-[#f0f0f0] px-4 py-3 text-[12px] text-[#666] leading-[1.8]">
+            <p className="font-semibold text-[#333] mb-1">안내사항</p>
+            <p>· 이미지는 엑셀로 등록 후 개별 상품 수정에서 직접 확인·추가해 주세요.</p>
+            <p>· 현재 선택된 섹션 <strong className="text-[#c90f45]">{SECTION_LABELS[section]}</strong> 에 등록됩니다.</p>
+            <p>· 카테고리명은 이미 등록된 카테고리명과 정확히 일치해야 합니다.</p>
+          </div>
+
+          {/* 템플릿 다운로드 */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => downloadExcelTemplate(categories)}
+              className="flex items-center gap-1.5 h-9 rounded-xl border border-[#e8e8e8] px-4 text-[13px] text-[#555] hover:border-[#555] transition-colors"
+            >
+              ↓ 템플릿 다운로드
+            </button>
+            <span className="text-[12px] text-[#aaa]">템플릿을 다운받아 작성 후 업로드하세요.</span>
+          </div>
+
+          {/* 파일 업로드 영역 */}
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
+            <div
+              onClick={() => fileRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-6 hover:border-[#c90f45] hover:bg-[#fff8fa] transition-colors"
+            >
+              <p className="text-[13px] font-semibold text-[#555]">{fileName || "클릭하거나 드래그하여 엑셀 파일 첨부"}</p>
+              <p className="text-[11px] text-[#aaa]">.xlsx, .xls 파일 지원</p>
+            </div>
+          </div>
+
+          {/* 오류 */}
+          {error && (
+            <p className="rounded-lg bg-[#fff0f0] px-3 py-2 text-[12px] text-[#c90f45]">⚠ {error}</p>
+          )}
+
+          {/* 미리보기 */}
+          {parsed.length > 0 && (
+            <div>
+              <p className="mb-2 text-[13px] font-semibold text-[#333]">미리보기 ({parsed.length}개 상품)</p>
+              <div className="overflow-x-auto rounded-xl border border-[#f0f0f0]">
+                <table className="w-full text-[12px]">
+                  <thead>
+                    <tr className="bg-[#fafafa] border-b border-[#f0f0f0]">
+                      <th className="px-3 py-2 text-left font-semibold text-[#555]">카테고리</th>
+                      <th className="px-3 py-2 text-left font-semibold text-[#555]">상품명</th>
+                      <th className="px-3 py-2 text-left font-semibold text-[#555]">모델번호</th>
+                      <th className="px-3 py-2 text-right font-semibold text-[#555]">72개월</th>
+                      <th className="px-3 py-2 text-center font-semibold text-[#555]">베스트</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parsed.map((p, i) => (
+                      <tr key={i} className="border-b border-[#f0f0f0] last:border-0">
+                        <td className="px-3 py-2 text-[#666]">{p.category}</td>
+                        <td className="px-3 py-2 font-semibold text-[#1a1a1a]">{p.name}</td>
+                        <td className="px-3 py-2 text-[#888]">{p.model || "-"}</td>
+                        <td className="px-3 py-2 text-right font-bold text-[#c90f45]">{p.monthlyPrice.toLocaleString()}원</td>
+                        <td className="px-3 py-2 text-center">{p.isBest ? "✓" : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-[#f0f0f0] px-6 py-4">
+          <button type="button" onClick={onClose} className="h-9 rounded-full border border-[#e8e8e8] px-5 text-[13px] text-[#555] hover:bg-[#f5f5f5]">취소</button>
+          <button
+            type="button"
+            onClick={() => { onImport(parsed); onClose(); }}
+            disabled={parsed.length === 0}
+            className="h-9 rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-40"
+          >
+            {parsed.length > 0 ? `${parsed.length}개 상품 가져오기` : "가져오기"}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 /* ────── 상품 행 ────── */
-function ProductRow({ product, isFirst, isLast, onMoveUp, onMoveDown, onEdit, onDelete }: {
+function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection }: {
   product: ManagedProduct;
-  isFirst: boolean;
-  isLast: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
+  isDragOver: boolean;
+  isDragging: boolean;
+  showSection?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-[#f0f0f0] bg-white px-4 py-3">
-      {/* 순서 */}
-      <div className="flex flex-col gap-0.5">
-        <button type="button" onClick={onMoveUp} disabled={isFirst} className="h-4 text-[10px] text-[#bbb] hover:text-[#555] disabled:opacity-30">▲</button>
-        <button type="button" onClick={onMoveDown} disabled={isLast} className="h-4 text-[10px] text-[#bbb] hover:text-[#555] disabled:opacity-30">▼</button>
-      </div>
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={`flex items-center gap-3 rounded-xl border border-[#f0f0f0] bg-white px-4 py-3 transition-all ${
+        isDragging ? "opacity-40" : ""
+      }`}
+    >
+      {/* 드래그 핸들 */}
+      <span className="cursor-grab text-[16px] text-[#ccc] active:cursor-grabbing shrink-0">⠿</span>
 
       {/* 이미지 */}
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#f5f5f5]">
@@ -535,7 +920,10 @@ function ProductRow({ product, isFirst, isLast, onMoveUp, onMoveDown, onEdit, on
       {/* 정보 */}
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-semibold text-[#1a1a1a]">{product.name}</p>
-        <p className="text-[11px] text-[#999]">{product.model} · {product.category}</p>
+        <p className="text-[11px] text-[#999]">
+          {showSection && <span className="mr-1 rounded bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#666]">{SECTION_LABELS[product.section]}</span>}
+          {product.model} · {product.category}
+        </p>
         <p className="text-[12px] font-bold text-[#c90f45]">월 {product.monthlyPrice.toLocaleString()}원</p>
       </div>
 
@@ -546,36 +934,49 @@ function ProductRow({ product, isFirst, isLast, onMoveUp, onMoveDown, onEdit, on
 
       {/* 액션 */}
       <div className="flex shrink-0 gap-2">
-        <button type="button" onClick={onEdit} className="h-8 rounded-lg border border-[#e8e8e8] px-3 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]">수정</button>
-        <button type="button" onClick={onDelete} className="h-8 rounded-lg border border-[#e8e8e8] px-3 text-[12px] text-[#999] hover:border-[#c90f45] hover:text-[#c90f45]">삭제</button>
+        <button type="button" onClick={onEdit} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
+        <button type="button" onClick={onDelete} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#999] hover:border-[#c90f45] hover:text-[#c90f45]" title="삭제"><LuTrash2 size={14} /></button>
       </div>
     </div>
   );
 }
 
 /* ────── 메인 ────── */
-export default function ProductAdmin() {
-  const [subTab, setSubTab] = useState<"category" | "products">("category");
+export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSubTab?: "category" | "products" }) {
+  const [subTab, setSubTab] = useState<"category" | "products">(defaultSubTab);
+  const [sectionFilter, setSectionFilter] = useState<"all" | Section>(defaultSubTab === "category" ? "kitchen" : "all");
   const [section, setSection] = useState<Section>("kitchen");
   const [products, setProductsState] = useState<ManagedProduct[]>([]);
   const [categories, setCategoriesState] = useState<ManagedCategory[]>([]);
   const [modal, setModal] = useState<{ open: boolean; editing: ManagedProduct | null }>({ open: false, editing: null });
+  const [excelModal, setExcelModal] = useState(false);
   const [filterCat, setFilterCat] = useState<string>("전체");
   const [search, setSearch] = useState("");
   const [confirmProductId, setConfirmProductId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dragFromProductId, setDragFromProductId] = useState<string | null>(null);
+  const [dragOverProductId, setDragOverProductId] = useState<string | null>(null);
+  const dragProductId = useRef<string | null>(null);
 
-  const reload = () =>
-    Promise.all([
-      productStore.products.getBySection(section),
-      productStore.categories.getBySection(section),
+  const reload = () => {
+    if (sectionFilter === "all") {
+      return Promise.all(SECTIONS.map((s) => productStore.products.getBySection(s)))
+        .then((allProds) => setProductsState(allProds.flat().sort((a, b) => a.order - b.order)));
+    }
+    return Promise.all([
+      productStore.products.getBySection(sectionFilter),
+      productStore.categories.getBySection(sectionFilter),
     ]).then(([prods, cats]) => {
       setProductsState(prods);
       setCategoriesState(cats);
     });
+  };
 
   useEffect(() => {
-    reload().then(() => { setFilterCat("전체"); setSearch(""); });
-  }, [section]);
+    if (sectionFilter !== "all") setSection(sectionFilter);
+    setLoading(true);
+    reload().then(() => { setFilterCat("전체"); setSearch(""); setLoading(false); });
+  }, [sectionFilter]);
 
   /* 카테고리 저장 */
   const saveCategories = (next: ManagedCategory[]) => {
@@ -602,7 +1003,33 @@ export default function ProductAdmin() {
     reload();
   };
 
+  const importFromExcel = async (newProducts: Omit<ManagedProduct, "id" | "order">[]) => {
+    const maxOrder = products.length ? Math.max(...products.map((p) => p.order)) + 1 : 0;
+    const toAdd: ManagedProduct[] = newProducts.map((p, i) => ({
+      ...p,
+      id: `${section}_excel_${Date.now()}_${i}`,
+      order: maxOrder + i,
+    }));
+    await productStore.products.setForSection(section, [...products, ...toAdd]);
+    reload();
+  };
+
   const deleteProduct = (id: string) => setConfirmProductId(id);
+
+  const handleProductDrop = (targetId: string) => {
+    const fromId = dragProductId.current;
+    dragProductId.current = null;
+    setDragFromProductId(null);
+    setDragOverProductId(null);
+    if (!fromId || fromId === targetId) return;
+    const sorted = [...products].sort((a, b) => a.order - b.order);
+    const fromIdx = sorted.findIndex((p) => p.id === fromId);
+    const toIdx = sorted.findIndex((p) => p.id === targetId);
+    const next = [...sorted];
+    const [item] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, item);
+    saveProducts(next.map((p, i) => ({ ...p, order: i })));
+  };
 
   const doDeleteProduct = () => {
     if (!confirmProductId) return;
@@ -635,15 +1062,18 @@ export default function ProductAdmin() {
   return (
     <div>
       {confirmProductId && <ConfirmDialog onConfirm={doDeleteProduct} onCancel={() => setConfirmProductId(null)} />}
+
       {/* 하위 탭 */}
-      <div className="mb-6 flex gap-1 rounded-2xl bg-[#f5f5f5] p-1">
+      <div className="flex border-b border-[#e8e8e8]">
         {([["category", "상품 카테고리 관리"], ["products", "상품추가 관리"]] as const).map(([id, label]) => (
           <button
             key={id}
             type="button"
-            onClick={() => setSubTab(id)}
-            className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition-colors outline-none ${
-              subTab === id ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#888] hover:text-[#555]"
+            onClick={() => { setSubTab(id); if (id === "category") setSectionFilter((f) => f === "all" ? "kitchen" : f); }}
+            className={`relative flex-1 py-2.5 text-[13px] font-semibold transition-colors outline-none after:absolute after:-bottom-px after:left-0 after:h-0.5 after:w-full after:transition-colors ${
+              subTab === id
+                ? "text-[#c90f45] after:bg-[#c90f45]"
+                : "text-[#888] after:bg-transparent hover:text-[#555] hover:after:bg-[#e8c0cb]"
             }`}
           >
             {label}
@@ -651,95 +1081,137 @@ export default function ProductAdmin() {
         ))}
       </div>
 
+      {/* 버튼 영역 — 상품카테고리관리 탭일 때 숨김 */}
+      <div className={`mt-4 mb-4 flex justify-end gap-2 ${subTab === "category" ? "invisible h-8" : ""}`}>
+        <button
+          type="button"
+          onClick={() => downloadExcelTemplate(categories)}
+          className="h-8 rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#555]"
+        >
+          ↓ 엑셀 양식 다운로드
+        </button>
+        <button
+          type="button"
+          onClick={() => setExcelModal(true)}
+          className="h-8 rounded-full border border-[#e8e8e8] px-4 text-[12px] font-semibold text-[#555] hover:border-[#555]"
+        >
+          엑셀 업로드
+        </button>
+        <button
+          type="button"
+          onClick={() => setModal({ open: true, editing: null })}
+          className="h-8 rounded-full bg-[#c90f45] px-4 text-[12px] font-bold text-white hover:opacity-90"
+        >
+          + 상품 추가
+        </button>
+      </div>
+
       {/* 섹션 탭 (공통) */}
-      <div className="mb-6 flex gap-2 border-b border-[#f0f0f0] pb-4">
-        {SECTIONS.map((s) => (
+      <div className="mb-3 flex border-b border-[#e8e8e8]">
+        {(subTab === "category" ? SECTIONS : (["all", ...SECTIONS] as const)).map((s) => (
           <button
             key={s}
             type="button"
-            onClick={() => setSection(s)}
-            className={`rounded-full px-4 py-1.5 text-[13px] font-semibold transition-colors ${
-              section === s ? "bg-[#1a1a1a] text-white" : "border border-[#e8e8e8] text-[#555] hover:border-[#555]"
+            onClick={() => setSectionFilter(s)}
+            className={`relative flex-1 py-2.5 text-[13px] font-bold transition-colors outline-none after:absolute after:-bottom-px after:left-0 after:h-0.5 after:w-full after:transition-colors ${
+              sectionFilter === s
+                ? "text-[#1a1a1a] after:bg-[#1a1a1a]"
+                : "text-[#aaa] after:bg-transparent hover:text-[#555]"
             }`}
           >
-            {SECTION_LABELS[s]}
+            {s === "all" ? "전체" : SECTION_LABELS[s]}
           </button>
         ))}
       </div>
 
+      {/* 하위 카테고리 (상품추가 관리 탭에서만 표시) */}
+      {subTab === "products" && (
+        <div className="mb-4 flex flex-wrap gap-1.5 border-b border-[#f0f0f0] pb-4 pl-2">
+          <span className="flex items-center pr-1 text-[11px] text-[#bbb]">└</span>
+          {["전체", ...categories.map((c) => c.name)].map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setFilterCat(cat)}
+              className={`rounded-full border px-3 py-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
+                filterCat === cat
+                  ? "border-[#c90f45] bg-[#c90f45] text-white"
+                  : "border-[#e8e8e8] text-[#888] hover:border-[#c90f45] hover:text-[#c90f45]"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+{/* 검색 (상품추가 관리 탭에서만 표시) */}
+      {subTab === "products" && (
+        <div className="mb-4">
+          <div className="flex items-center gap-3 rounded-2xl border-2 border-[#e8e8e8] bg-white px-4 py-3 focus-within:border-[#c90f45]">
+            <svg className="h-4 w-4 shrink-0 text-[#aaa]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" strokeWidth="2" />
+              <path d="m21 21-4.35-4.35" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="상품명, 모델번호, 카테고리 검색..."
+              className="flex-1 text-[14px] outline-none placeholder:text-[#bbb]"
+            />
+            {search && (
+              <button type="button" onClick={() => setSearch("")} className="shrink-0 text-[#bbb] hover:text-[#888]">
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 상품 카테고리 관리 */}
       {subTab === "category" && (
-        <CategoryManager section={section} categories={categories} onChange={saveCategories} />
+        loading ? <AdminLoading /> : <CategoryManager section={section} categories={categories} onChange={saveCategories} />
       )}
 
       {/* 상품추가 관리 */}
       {subTab === "products" && (
         <>
-          {/* 검색 */}
-          <div className="mb-4">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="상품명, 모델번호, 카테고리 검색..."
-              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-4 text-[13px] outline-none focus:border-[#c90f45]"
-            />
-          </div>
-
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex gap-2 overflow-x-auto">
-              {["전체", ...categories.map((c) => c.name)].map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setFilterCat(cat)}
-                  className={`shrink-0 rounded-full border px-3 py-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
-                    filterCat === cat ? "border-[#1a1a1a] bg-[#1a1a1a] text-white" : "border-[#e8e8e8] text-[#555] hover:border-[#555]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <button
-                type="button"
-                onClick={async () => { if (confirm("정적 데이터로 초기화하시겠습니까?")) { await Promise.all([productStore.products.reset(), productStore.categories.reset()]); reload(); } }}
-                className="h-8 rounded-full border border-[#e8e8e8] px-3 text-[12px] text-[#999] hover:text-[#555]"
-              >
-                초기화
-              </button>
-              <button
-                type="button"
-                onClick={() => setModal({ open: true, editing: null })}
-                className="h-8 rounded-full bg-[#c90f45] px-4 text-[12px] font-bold text-white hover:opacity-90"
-              >
-                + 상품 추가
-              </button>
-            </div>
-          </div>
-
+          {loading ? <AdminLoading /> : <>
           <p className="mb-3 text-[12px] text-[#aaa]">총 {filteredProducts.length}개 상품</p>
 
           <div className="space-y-2">
             {filteredProducts.length > 0 ? (
-              filteredProducts.map((product, idx) => (
-                <ProductRow
-                  key={product.id}
-                  product={product}
-                  isFirst={idx === 0}
-                  isLast={idx === filteredProducts.length - 1}
-                  onMoveUp={() => move(product.id, -1)}
-                  onMoveDown={() => move(product.id, 1)}
-                  onEdit={() => setModal({ open: true, editing: product })}
-                  onDelete={() => deleteProduct(product.id)}
-                />
-              ))
+              filteredProducts.map((product, idx) => {
+                const fromIdx = dragFromProductId ? filteredProducts.findIndex((p) => p.id === dragFromProductId) : -1;
+                const isOver = dragOverProductId === product.id && fromIdx !== -1 && fromIdx !== idx;
+                const insertAbove = isOver && fromIdx > idx;
+                const insertBelow = isOver && fromIdx < idx;
+                return (
+                <div key={product.id}>
+                  {insertAbove && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
+                  <ProductRow
+                    product={product}
+                    onEdit={() => setModal({ open: true, editing: product })}
+                    onDelete={() => deleteProduct(product.id)}
+                    onDragStart={() => { dragProductId.current = product.id; setDragFromProductId(product.id); }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOverProductId(product.id); }}
+                    onDrop={() => handleProductDrop(product.id)}
+                    onDragEnd={() => { dragProductId.current = null; setDragFromProductId(null); setDragOverProductId(null); }}
+                    isDragOver={false}
+                    isDragging={dragFromProductId === product.id}
+                    showSection={sectionFilter === "all"}
+                  />
+                  {insertBelow && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
+                </div>
+                );
+              })
             ) : (
               <div className="rounded-2xl border-2 border-dashed border-[#f0f0f0] py-12 text-center text-[14px] text-[#bbb]">
                 상품이 없습니다. 상품을 추가해 주세요.
               </div>
             )}
           </div>
+          </>}
         </>
       )}
 
@@ -750,6 +1222,15 @@ export default function ProductAdmin() {
           categories={categories}
           onSave={addOrEdit}
           onClose={() => setModal({ open: false, editing: null })}
+        />
+      )}
+
+      {excelModal && (
+        <ExcelUploadModal
+          section={section}
+          categories={categories}
+          onImport={importFromExcel}
+          onClose={() => setExcelModal(false)}
         />
       )}
     </div>

@@ -2,11 +2,46 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
-import { productStore, type ManagedProduct } from "@/lib/productStore";
+import {
+  productStore,
+  type ManagedProduct,
+  type PeriodPrice,
+  type CareServiceItem,
+  type ColorItem,
+} from "@/lib/productStore";
 import { adminStore } from "@/lib/adminStore";
 import { LuSearch, LuX, LuPlus, LuCheck } from "react-icons/lu";
+
+function getPeriodPrices(p: ManagedProduct): PeriodPrice[] {
+  if (p.periodPrices && p.periodPrices.length > 0) return p.periodPrices;
+  const pp: PeriodPrice[] = [];
+  if (p.monthlyPrice) pp.push({ label: "72개월", price: p.monthlyPrice });
+  if (p.price60 != null) pp.push({ label: "60개월", price: p.price60 });
+  if (p.price48 != null) pp.push({ label: "48개월", price: p.price48 });
+  if (p.price36 != null) pp.push({ label: "36개월", price: p.price36 });
+  return pp;
+}
+
+function getCareServiceItems(p: ManagedProduct): CareServiceItem[] {
+  if (p.careServiceItems && p.careServiceItems.length > 0) return p.careServiceItems;
+  if (p.careService || p.manageCycle) return [{ label: p.careService ?? "", cycle: p.manageCycle ?? "" }];
+  return [];
+}
+
+function getColorItems(p: ManagedProduct): ColorItem[] {
+  if (p.colorItems && p.colorItems.length > 0) return p.colorItems;
+  if (p.color) return [{ name: p.color, image: p.image ?? "" }];
+  return [];
+}
+
+type ProductSelection = {
+  periodPriceIdx: number | null;
+  careServiceIdx: number | null;
+  colorIdx: number | null;
+};
+
+const DEFAULT_SEL: ProductSelection = { periodPriceIdx: null, careServiceIdx: null, colorIdx: null };
 
 export default function ConsultForm() {
   const searchParams = useSearchParams();
@@ -14,6 +49,7 @@ export default function ConsultForm() {
   const [submitted, setSubmitted] = useState(false);
   const [allProducts, setAllProducts] = useState<ManagedProduct[]>([]);
   const [selected, setSelected] = useState<ManagedProduct[]>([]);
+  const [productSelections, setProductSelections] = useState<Record<string, ProductSelection>>({});
   const [careType, setCareType] = useState("방문관리");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,23 +77,49 @@ export default function ConsultForm() {
     });
   }, [initialIds]);
 
-  const toggleSelect = (product: ManagedProduct) => {
-    setSelected((prev) => (prev.find((p) => p.id === product.id) ? prev.filter((p) => p.id !== product.id) : [...prev, product]));
+  const setSel = (productId: string, key: keyof ProductSelection, idx: number | null) => {
+    setProductSelections((prev) => ({
+      ...prev,
+      [productId]: { ...(prev[productId] ?? DEFAULT_SEL), [key]: idx },
+    }));
   };
 
-  const filtered = allProducts.filter((p) => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.model.toLowerCase().includes(search.toLowerCase()));
+  const toggleSelect = (product: ManagedProduct) => {
+    setSelected((prev) => {
+      if (prev.find((p) => p.id === product.id)) {
+        setProductSelections((ps) => { const next = { ...ps }; delete next[product.id]; return next; });
+        return prev.filter((p) => p.id !== product.id);
+      }
+      return [...prev, product];
+    });
+  };
+
+  const filtered = allProducts.filter(
+    (p) => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.model.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selected.length === 0) {
-      alert("제품을 1개 이상 선택해주세요.");
-      return;
-    }
+    if (selected.length === 0) { alert("제품을 1개 이상 선택해주세요."); return; }
     await adminStore.consult.add({
       id: Date.now().toString(),
       name,
       phone,
-      selectedProducts: selected.map((p) => ({ id: p.id, name: p.name, model: p.model, image: p.image })),
+      selectedProducts: selected.map((p) => {
+        const sel = productSelections[p.id] ?? DEFAULT_SEL;
+        const colorItems = getColorItems(p);
+        const periodPrices = getPeriodPrices(p);
+        const careItems = getCareServiceItems(p);
+        return {
+          id: p.id,
+          name: p.name,
+          model: p.model,
+          image: sel.colorIdx != null && colorItems[sel.colorIdx] ? colorItems[sel.colorIdx].image : p.image,
+          selectedPeriodPrice: sel.periodPriceIdx != null ? periodPrices[sel.periodPriceIdx] : undefined,
+          selectedCareService: sel.careServiceIdx != null ? careItems[sel.careServiceIdx] : undefined,
+          selectedColor: sel.colorIdx != null ? colorItems[sel.colorIdx] : undefined,
+        };
+      }),
       careType,
       availableTime,
       extra,
@@ -102,21 +164,126 @@ export default function ConsultForm() {
                   제품 선택하기
                 </button>
               ) : (
-                <div className="space-y-3">
-                  {selected.map((p) => (
-                    <div key={p.id} className="flex items-center gap-3 rounded-xl border border-[#f0f0f0] p-3">
-                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f7f7f7]">
-                        <Image src={p.image} alt={p.name} fill className="object-contain p-1" unoptimized />
+                <div className="space-y-4">
+                  {selected.map((p) => {
+                    const sel = productSelections[p.id] ?? DEFAULT_SEL;
+                    const colorItems = getColorItems(p);
+                    const periodPrices = getPeriodPrices(p);
+                    const careItems = getCareServiceItems(p);
+                    const thumbImg =
+                      sel.colorIdx != null && colorItems[sel.colorIdx]?.image
+                        ? colorItems[sel.colorIdx].image
+                        : p.image;
+
+                    return (
+                      <div key={p.id} className="rounded-xl border border-[#f0f0f0] overflow-hidden">
+                        {/* 제품 기본 정보 */}
+                        <div className="flex items-center gap-3 p-3">
+                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f7f7f7] flex items-center justify-center">
+                            <img
+                              src={thumbImg}
+                              alt={p.name}
+                              className="h-full w-full object-contain p-1"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="line-clamp-2 text-[12px] leading-normal text-[#333]">{p.name}</p>
+                            <p className="text-[11px] text-[#999]">{p.model}</p>
+                          </div>
+                          <button type="button" onClick={() => toggleSelect(p)} className="shrink-0 p-1 text-[#bbb] hover:text-[#c90f45]">
+                            <LuX size={16} />
+                          </button>
+                        </div>
+
+                        {/* 옵션 선택 영역 */}
+                        {(colorItems.length > 0 || periodPrices.length > 0 || careItems.length > 0) && (
+                          <div className="border-t border-[#f5f5f5] px-3 pb-3 pt-2.5 space-y-3">
+
+                            {/* 색상 */}
+                            {colorItems.length > 0 && (
+                              <div>
+                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">색상</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {colorItems.map((ci, i) => {
+                                    const active = sel.colorIdx === i;
+                                    return (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setSel(p.id, "colorIdx", active ? null : i)}
+                                        className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                                          active
+                                            ? "border-[#c90f45] bg-[#fdf3f5] text-[#c90f45]"
+                                            : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
+                                        }`}
+                                      >
+                                        {ci.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 계약기간별 구독료 */}
+                            {periodPrices.length > 0 && (
+                              <div>
+                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">계약기간별 구독료</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {periodPrices.map((pp, i) => {
+                                    const active = sel.periodPriceIdx === i;
+                                    return (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setSel(p.id, "periodPriceIdx", active ? null : i)}
+                                        className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                                          active
+                                            ? "border-[#c90f45] bg-[#fdf3f5] text-[#c90f45]"
+                                            : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
+                                        }`}
+                                      >
+                                        {pp.label} {pp.price.toLocaleString()}원
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 케어서비스 주기 */}
+                            {careItems.length > 0 && (
+                              <div>
+                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">케어서비스 주기</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {careItems.map((ci, i) => {
+                                    const active = sel.careServiceIdx === i;
+                                    return (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setSel(p.id, "careServiceIdx", active ? null : i)}
+                                        className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                                          active
+                                            ? "border-[#c90f45] bg-[#fdf3f5] text-[#c90f45]"
+                                            : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
+                                        }`}
+                                      >
+                                        {[ci.label, ci.cycle].filter(Boolean).join(" / ")}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 text-[12px] leading-normal text-[#333]">{p.name}</p>
-                        <p className="text-[11px] text-[#999]">{p.model}</p>
-                      </div>
-                      <button type="button" onClick={() => toggleSelect(p)} className="shrink-0 p-1 text-[#bbb] hover:text-[#c90f45]">
-                        <LuX size={16} />
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
+
                   <button type="button" onClick={() => setPickerOpen(true)} className="flex h-9 items-center gap-1.5 rounded-full border border-dashed border-[#ddd] px-4 text-[12px] text-[#999]">
                     <LuPlus size={13} />
                     제품 추가
@@ -139,14 +306,6 @@ export default function ConsultForm() {
                 </label>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* 사용기간 */}
-        <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
-            <span className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">사용기간</span>
-            <span className="text-[14px] text-[#333]">{careType === "방문관리" ? "의무사용 6년 / 계약기간 6년" : "의무사용 3년 / 계약기간 3년"}</span>
           </div>
         </div>
 
@@ -280,8 +439,13 @@ export default function ConsultForm() {
                           <LuCheck size={11} className="text-white" />
                         </div>
                       )}
-                      <div className="relative mb-2 aspect-square w-full overflow-hidden rounded-lg bg-[#f7f7f7]">
-                        <Image src={p.image} alt={p.name} fill className="object-contain p-2" unoptimized />
+                      <div className="mb-2 aspect-square w-full overflow-hidden rounded-lg bg-[#f7f7f7] flex items-center justify-center">
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="h-full w-full object-contain p-2"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
                       </div>
                       <p className="line-clamp-2 text-[11px] leading-[1.4] text-[#333]">{p.name}</p>
                       <p className="mt-0.5 text-[10px] text-[#aaa]">{p.model}</p>

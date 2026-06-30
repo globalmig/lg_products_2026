@@ -16,8 +16,6 @@ import {
 } from "react-icons/lu";
 
 
-const CONTRACT_MONTHS = [72, 60, 48, 36];
-
 export type DetailProduct = {
   id: string | number;
   category: string;
@@ -28,6 +26,9 @@ export type DetailProduct = {
   price60?: number | null;
   price48?: number | null;
   price36?: number | null;
+  periodPrices?: { label: string; price: number }[];
+  careServiceItems?: { label: string; cycle: string }[];
+  colorItems?: { name: string; image: string }[];
   image: string;
   detailImage?: string;
   detailImages?: string[];
@@ -53,20 +54,35 @@ const benefits = [
 
 export default function ProductDetailPage({ product, breadcrumb, section }: Props) {
   const [imgError, setImgError] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState(72);
+  const hasPeriodPrices = (product.periodPrices?.length ?? 0) > 0;
+  const defaultPeriod = hasPeriodPrices ? product.periodPrices![0].label : "72개월";
+  const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
+  const [selectedColorIdx, setSelectedColorIdx] = useState(0);
+  const [selectedCareIdx, setSelectedCareIdx] = useState(0);
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [cards, setCards] = useState<CardDiscount[]>([]);
 
   useEffect(() => { adminStore.cardDiscounts.get().then(setCards); }, []);
+  useEffect(() => { setImgError(false); }, [selectedColorIdx]);
 
   const selectedCard = selectedCardIdx !== null ? cards[selectedCardIdx] : null;
 
-  const basePrice =
-    selectedPeriod === 60 && product.price60 != null ? product.price60 :
-    selectedPeriod === 48 && product.price48 != null ? product.price48 :
-    selectedPeriod === 36 && product.price36 != null ? product.price36 :
-    product.monthlyPrice;
+  const basePrice = (() => {
+    if (hasPeriodPrices) {
+      return product.periodPrices!.find((p) => p.label === selectedPeriod)?.price ?? product.monthlyPrice;
+    }
+    const m = parseInt(selectedPeriod);
+    if (m === 60 && product.price60 != null) return product.price60;
+    if (m === 48 && product.price48 != null) return product.price48;
+    if (m === 36 && product.price36 != null) return product.price36;
+    return product.monthlyPrice;
+  })();
+
+  const hasColorItems = (product.colorItems?.length ?? 0) > 0;
+  const displayImage = (hasColorItems && product.colorItems![selectedColorIdx]?.image)
+    ? product.colorItems![selectedColorIdx].image
+    : product.image;
 
   const cardPrice = selectedCard ? Math.max(0, basePrice - selectedCard.discount) : null;
 
@@ -98,7 +114,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f7f7f7]">
               {!imgError ? (
                 <Image
-                  src={product.image}
+                  src={displayImage}
                   alt={product.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 460px"
@@ -132,45 +148,94 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             {/* 계약기간 */}
             <div className="mb-5">
               <p className="mb-2 text-[13px] font-semibold text-[#333]">계약기간</p>
-              <div className="grid grid-cols-4 gap-2">
-                {CONTRACT_MONTHS.map((m) => (
+              <div className="flex flex-wrap gap-2">
+                {(hasPeriodPrices
+                  ? product.periodPrices!
+                  : [72, 60, 48, 36].map((m) => ({ label: `${m}개월`, price: m === 72 ? product.monthlyPrice : m === 60 ? (product.price60 ?? product.monthlyPrice) : m === 48 ? (product.price48 ?? product.monthlyPrice) : (product.price36 ?? product.monthlyPrice) }))
+                ).map((period) => (
                   <button
-                    key={m}
+                    key={period.label}
                     type="button"
-                    onClick={() => setSelectedPeriod(m)}
-                    className={`rounded-lg border py-3 text-[14px] font-semibold transition-colors ${
-                      selectedPeriod === m
+                    onClick={() => setSelectedPeriod(period.label)}
+                    className={`rounded-lg border px-5 py-3 text-[14px] font-semibold transition-colors ${
+                      selectedPeriod === period.label
                         ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
                         : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
                     }`}
                   >
-                    {m}개월
+                    {period.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 옵션 행 */}
-            {[
-              { label: "케어서비스 주기", value: product.careService },
-              { label: "관리주기", value: product.manageCycle },
-              { label: "색상", value: product.color },
-              { label: "크기", value: product.size },
-            ].filter((r) => r.value).map(({ label, value }) => (
-              <div key={label} className="mb-3">
-                <p className="mb-1.5 text-[13px] font-semibold text-[#333]">{label}</p>
-                <div className="flex items-center justify-center rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#555]">
-                  {value}
+            {/* 케어서비스 주기 */}
+            {(product.careServiceItems?.length ?? 0) > 0 ? (
+              <div className="mb-3">
+                <p className="mb-2 text-[13px] font-semibold text-[#333]">케어서비스 주기</p>
+                <div className="flex flex-wrap gap-2">
+                  {product.careServiceItems!.map((cs, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSelectedCareIdx(i)}
+                      className={`rounded-lg border px-4 py-2.5 text-left transition-colors ${
+                        selectedCareIdx === i
+                          ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                          : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
+                      }`}
+                    >
+                      <span className="block text-[14px] font-semibold">{cs.label}</span>
+                      {cs.cycle && <span className={`block text-[12px] ${selectedCareIdx === i ? "text-white/70" : "text-[#999]"}`}>{cs.cycle}</span>}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
+            ) : (product.careService || product.manageCycle) ? (
+              <div className="mb-3">
+                <p className="mb-2 text-[13px] font-semibold text-[#333]">케어서비스 주기</p>
+                <div className="rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#555]">
+                  {product.careService}{product.manageCycle ? ` / ${product.manageCycle}` : ""}
+                </div>
+              </div>
+            ) : null}
+
+            {/* 색상 */}
+            {hasColorItems ? (
+              <div className="mb-3">
+                <p className="mb-1.5 text-[13px] font-semibold text-[#333]">색상</p>
+                <div className="flex flex-wrap gap-2">
+                  {product.colorItems!.map((ci, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSelectedColorIdx(i)}
+                      className={`rounded-lg border px-4 py-2.5 text-[14px] font-semibold transition-colors ${
+                        selectedColorIdx === i
+                          ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                          : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
+                      }`}
+                    >
+                      {ci.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : product.color ? (
+              <div className="mb-3">
+                <p className="mb-1.5 text-[13px] font-semibold text-[#333]">색상</p>
+                <div className="flex items-center justify-center rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#555]">
+                  {product.color}
+                </div>
+              </div>
+            ) : null}
 
             {/* 이용요금 / 제휴카드가 */}
             <div className="mb-4 mt-6 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
                 <span className="text-[14px] text-[#555]">
-                  {selectedPeriod}개월 기준{" "}
+                  {selectedPeriod} 기준{" "}
                   <span className="text-[20px] font-black text-[#1a1a1a]">
                     월 {basePrice.toLocaleString()}
                   </span>

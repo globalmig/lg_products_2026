@@ -24,7 +24,15 @@ export interface ConsultSubmission {
   channels?: string[];
   model?: string;
   // New subscription form fields
-  selectedProducts?: { id: string; name: string; model: string; image: string }[];
+  selectedProducts?: {
+    id: string;
+    name: string;
+    model: string;
+    image: string;
+    selectedPeriodPrice?: { label: string; price: number };
+    selectedCareService?: { label: string; cycle: string };
+    selectedColor?: { name: string; image: string };
+  }[];
   careType?: string;
   availableTime?: string;
   extra?: string;

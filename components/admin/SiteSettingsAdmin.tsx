@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
+import AdminLoading from "./AdminLoading";
 import { adminStore } from "@/lib/adminStore";
 import { DEFAULT_PRIVACY, DEFAULT_TERMS } from "@/lib/siteDefaults";
 import ConfirmDialog from "./ConfirmDialog";
 
-type Section = "basic" | "consultBanner" | "footerInfo" | "privacy" | "terms";
+type Section = "basic" | "consultBanner" | "privacy" | "terms";
 
 interface FooterInfoItem {
   id: string;
@@ -33,6 +35,7 @@ export default function SiteSettingsAdmin() {
   const [newValue, setNewValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => {
@@ -41,6 +44,7 @@ export default function SiteSettingsAdmin() {
       if (s.termsContent) setTermsContent(s.termsContent);
       setFooterInfo(s.footerInfo ?? []);
       if (s.consultBanner) setConsultBanner(s.consultBanner);
+      setLoading(false);
     });
   }, []);
 
@@ -78,23 +82,26 @@ export default function SiteSettingsAdmin() {
   const TABS: { id: Section; label: string }[] = [
     { id: "basic", label: "기본 정보" },
     { id: "consultBanner", label: "상담 배너" },
-    { id: "footerInfo", label: "사업자 정보" },
     { id: "privacy", label: "개인정보처리방침" },
     { id: "terms", label: "이용약관" },
   ];
 
+  if (loading) return <AdminLoading />;
+
   return (
     <>
-    <div className="max-w-2xl space-y-4">
+    <div className="max-w-2xl space-y-6">
       {/* 탭 */}
-      <div className="flex flex-wrap gap-1 rounded-2xl bg-[#f5f5f5] p-1">
+      <div className="flex border-b border-[#e8e8e8]">
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActiveSection(id)}
-            className={`rounded-xl px-3 py-2 text-[13px] font-semibold transition-colors outline-none ${
-              activeSection === id ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#888] hover:text-[#555]"
+            className={`relative flex-1 py-2.5 text-[13px] font-semibold transition-colors outline-none after:absolute after:-bottom-px after:left-0 after:h-0.5 after:w-full after:transition-colors ${
+              activeSection === id
+                ? "text-[#c90f45] after:bg-[#c90f45]"
+                : "text-[#aaa] after:bg-transparent hover:text-[#555]"
             }`}
           >
             {label}
@@ -102,11 +109,11 @@ export default function SiteSettingsAdmin() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-[#f0f0f0] bg-white p-6 space-y-4">
-        {/* 기본 정보 */}
+      <div className="space-y-4">
+        {/* 기본 정보 + 사업자 정보 */}
         {activeSection === "basic" && (
           <>
-            <h2 className="text-[15px] font-bold text-[#1a1a1a]">헤더 / 푸터 기본 정보</h2>
+            <h2 className="text-[15px] font-bold text-[#1a1a1a]">기본 정보</h2>
             <div>
               <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">매장명</label>
               <p className="mb-2 text-[11px] text-[#bbb]">헤더와 푸터 로고 옆에 표시됩니다.</p>
@@ -116,6 +123,61 @@ export default function SiteSettingsAdmin() {
                 placeholder="예: 용산전자상가점"
                 className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
               />
+            </div>
+
+            <div className="border-t border-[#f0f0f0] pt-4">
+              <h2 className="mb-1 text-[15px] font-bold text-[#1a1a1a]">사업자 정보</h2>
+              <p className="mb-3 text-[11px] text-[#bbb]">푸터 하단에 표시됩니다. 항목을 추가·수정·삭제할 수 있습니다.</p>
+              <div className="space-y-2">
+                {footerInfo.length === 0 && (
+                  <p className="text-[12px] text-[#ccc]">등록된 항목이 없습니다.</p>
+                )}
+                {footerInfo.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2 rounded-xl border border-[#f0f0f0] bg-[#fafafa] px-3 py-2.5">
+                    {editingItem?.id === item.id ? (
+                      <>
+                        <input
+                          value={editingItem.label}
+                          onChange={(e) => setEditingItem({ ...editingItem, label: e.target.value })}
+                          placeholder="항목명"
+                          className="h-8 w-24 rounded-lg border border-[#e8e8e8] px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                        />
+                        <input
+                          value={editingItem.value}
+                          onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
+                          placeholder="내용"
+                          className="h-8 flex-1 rounded-lg border border-[#e8e8e8] px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                        />
+                        <button type="button" onClick={saveEdit} className="h-8 rounded-lg bg-[#c90f45] px-3 text-[11px] font-bold text-white">완료</button>
+                        <button type="button" onClick={() => setEditingItem(null)} className="h-8 rounded-lg bg-[#f0f0f0] px-3 text-[11px] text-[#555]">취소</button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-24 text-[12px] font-semibold text-[#888]">{item.label}</span>
+                        <span className="flex-1 text-[12px] text-[#333]">{item.value || <span className="text-[#ccc]">미입력</span>}</span>
+                        <button type="button" onClick={() => setEditingItem({ ...item })} className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#555] hover:bg-[#eee]" title="수정"><LuPencil size={13} /></button>
+                        <button type="button" onClick={() => setConfirmId(item.id)} className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#fff0f3] text-[#c90f45] hover:bg-[#ffe0e7]" title="삭제"><LuTrash2 size={13} /></button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="항목명 (예: 대표자)"
+                  className="h-9 w-28 rounded-xl border border-[#e8e8e8] px-2.5 text-[12px] outline-none focus:border-[#c90f45]"
+                />
+                <input
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addItem()}
+                  placeholder="내용"
+                  className="h-9 flex-1 rounded-xl border border-[#e8e8e8] px-2.5 text-[12px] outline-none focus:border-[#c90f45]"
+                />
+                <button type="button" onClick={addItem} className="h-9 rounded-xl bg-[#f5f5f5] px-4 text-[12px] font-semibold text-[#555] hover:bg-[#eee]">추가</button>
+              </div>
             </div>
           </>
         )}
@@ -142,101 +204,6 @@ export default function SiteSettingsAdmin() {
                 />
               </div>
             ))}
-          </>
-        )}
-
-        {/* 사업자 정보 */}
-        {activeSection === "footerInfo" && (
-          <>
-            <h2 className="text-[15px] font-bold text-[#1a1a1a]">사업자 정보</h2>
-            <p className="text-[11px] text-[#bbb]">푸터 하단에 사업자 정보가 표시됩니다. 항목을 추가·수정·삭제할 수 있습니다.</p>
-
-            {/* 현재 항목 목록 */}
-            <div className="space-y-2">
-              {footerInfo.length === 0 && (
-                <p className="text-[12px] text-[#ccc]">등록된 항목이 없습니다.</p>
-              )}
-              {footerInfo.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 rounded-xl border border-[#f0f0f0] bg-[#fafafa] px-3 py-2.5">
-                  {editingItem?.id === item.id ? (
-                    <>
-                      <input
-                        value={editingItem.label}
-                        onChange={(e) => setEditingItem({ ...editingItem, label: e.target.value })}
-                        placeholder="항목명"
-                        className="h-8 w-24 rounded-lg border border-[#e8e8e8] px-2 text-[12px] outline-none focus:border-[#c90f45]"
-                      />
-                      <input
-                        value={editingItem.value}
-                        onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
-                        placeholder="내용"
-                        className="h-8 flex-1 rounded-lg border border-[#e8e8e8] px-2 text-[12px] outline-none focus:border-[#c90f45]"
-                      />
-                      <button
-                        type="button"
-                        onClick={saveEdit}
-                        className="h-8 rounded-lg bg-[#c90f45] px-3 text-[11px] font-bold text-white"
-                      >
-                        완료
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditingItem(null)}
-                        className="h-8 rounded-lg bg-[#f0f0f0] px-3 text-[11px] text-[#555]"
-                      >
-                        취소
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="w-24 text-[12px] font-semibold text-[#888]">{item.label}</span>
-                      <span className="flex-1 text-[12px] text-[#333]">{item.value || <span className="text-[#ccc]">미입력</span>}</span>
-                      <button
-                        type="button"
-                        onClick={() => setEditingItem({ ...item })}
-                        className="h-7 rounded-lg bg-[#f5f5f5] px-3 text-[11px] text-[#555] hover:bg-[#eee]"
-                      >
-                        수정
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmId(item.id)}
-                        className="h-7 rounded-lg bg-[#fff0f3] px-3 text-[11px] text-[#c90f45] hover:bg-[#ffe0e7]"
-                      >
-                        삭제
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* 새 항목 추가 */}
-            <div className="border-t border-[#f5f5f5] pt-4">
-              <p className="mb-2 text-[12px] font-semibold text-[#555]">항목 추가</p>
-              <div className="flex gap-2">
-                <input
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder="항목명 (예: 대표자)"
-                  className="h-9 w-28 rounded-xl border border-[#e8e8e8] px-2.5 text-[12px] outline-none focus:border-[#c90f45]"
-                />
-                <input
-                  value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addItem()}
-                  placeholder="내용"
-                  className="h-9 flex-1 rounded-xl border border-[#e8e8e8] px-2.5 text-[12px] outline-none focus:border-[#c90f45]"
-                />
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="h-9 rounded-xl bg-[#f5f5f5] px-4 text-[12px] font-semibold text-[#555] hover:bg-[#eee]"
-                >
-                  추가
-                </button>
-              </div>
-            </div>
           </>
         )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LuPencil, LuTrash2 } from "react-icons/lu";
 import Image from "next/image";
 import { adminStore, type MainCategoryItem } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
@@ -178,15 +179,8 @@ export default function MainCategoryAdmin() {
                   </div>
 
                   <div className="flex shrink-0 gap-2">
-                    <button type="button"
-                      onClick={() => { setEditing({ ...item }); setAdding(false); }}
-                      className="h-8 rounded-lg border border-[#e8e8e8] px-3 text-[12px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]">
-                      수정
-                    </button>
-                    <button type="button" onClick={() => handleDelete(item.id)}
-                      className="h-8 rounded-lg border border-[#e8e8e8] px-3 text-[12px] text-[#999] hover:border-red-300 hover:text-red-500">
-                      삭제
-                    </button>
+                    <button type="button" onClick={() => { setEditing({ ...item }); setAdding(false); }} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
+                    <button type="button" onClick={() => handleDelete(item.id)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#999] hover:border-red-300 hover:text-red-500" title="삭제"><LuTrash2 size={14} /></button>
                   </div>
                 </div>
               )}
