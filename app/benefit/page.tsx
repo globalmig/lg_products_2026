@@ -23,12 +23,8 @@ export default function BenefitNewsPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
         <div className="relative z-10 mx-auto flex min-h-[250px] max-w-[1180px] flex-col justify-end">
           <p className="mb-4 text-[14px] font-bold tracking-[0.16em] text-white/75">BENEFIT & NEWS</p>
-          <h1 className="max-w-[720px] text-[38px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[56px]">
-            혜택 & 이달의 소식
-          </h1>
-          <p className="mt-5 max-w-[620px] break-keep text-[16px] leading-[1.8] text-white/82 sm:text-[18px]">
-            LG전자 베스트샵 용산점에서 진행 중인 프로모션, 이벤트, 매장 소식을 한눈에 확인하세요.
-          </p>
+          <h1 className="max-w-[720px] text-[38px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[56px]">혜택 & 이달의 소식</h1>
+          <p className="mt-5 max-w-[620px] break-keep text-[16px] leading-[1.8] text-white/82 sm:text-[18px]">LG전자 베스트샵 용산점에서 진행 중인 프로모션, 이벤트, 매장 소식을 한눈에 확인하세요.</p>
         </div>
       </section>
 
@@ -39,7 +35,7 @@ export default function BenefitNewsPage() {
               <p className="mb-2 text-[13px] font-bold text-[#c90f45]">LIST</p>
               <h2 className="text-[30px] font-black tracking-[-0.04em] sm:text-[36px]">진행 중인 소식</h2>
             </div>
-            <p className="text-[14px] text-[#777]">썸네일 없이 핵심 내용만 정리했습니다.</p>
+            {/* <p className="text-[14px] text-[#777]">썸네일 없이 핵심 내용만 정리했습니다.</p> */}
           </div>
 
           {loading ? (
@@ -58,15 +54,14 @@ export default function BenefitNewsPage() {
                         </time>
                       </div>
                       <div>
-                        <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors">
-                          {post.title}
-                        </h3>
+                        <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors">{post.title}</h3>
                         <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666] line-clamp-2">
-                          {post.content.replace(/[#*>\-|]/g, "").trim().slice(0, 120)}
+                          {post.content
+                            .replace(/[#*>\-|]/g, "")
+                            .trim()
+                            .slice(0, 120)}
                         </p>
-                        <span className="mt-4 inline-block text-[13px] font-semibold text-[#c90f45] opacity-0 group-hover:opacity-100 transition-opacity">
-                          자세히 보기 →
-                        </span>
+                        <span className="mt-4 inline-block text-[13px] font-semibold text-[#c90f45] opacity-0 group-hover:opacity-100 transition-opacity">자세히 보기 →</span>
                       </div>
                     </article>
                   </Link>

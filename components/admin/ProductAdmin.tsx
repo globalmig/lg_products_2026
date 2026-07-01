@@ -984,10 +984,23 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     productStore.categories.setForSection(section, next);
   };
 
-  /* 상품 저장 */
-  const saveProducts = (next: ManagedProduct[]) => {
+  /* 상품 저장 — 실제 section 값 기준으로 그룹핑해서 저장 (전체 탭에서 섹션이 섞이는 것 방지) */
+  const persistProducts = (next: ManagedProduct[]) => {
     setProductsState([...next].sort((a, b) => a.order - b.order));
-    productStore.products.setForSection(section, next);
+    const bySection = new Map<Section, ManagedProduct[]>();
+    next.forEach((p) => {
+      if (!bySection.has(p.section)) bySection.set(p.section, []);
+      bySection.get(p.section)!.push(p);
+    });
+    return Promise.all(
+      Array.from(bySection.entries()).map(([sec, items]) =>
+        productStore.products.setForSection(sec, items.map((p, i) => ({ ...p, order: i })))
+      )
+    );
+  };
+
+  const saveProducts = (next: ManagedProduct[]) => {
+    persistProducts(next);
   };
 
   const addOrEdit = async (form: Omit<ManagedProduct, "id" | "order">) => {
@@ -996,10 +1009,10 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       next = products.map((p) => p.id === modal.editing!.id ? { ...p, ...form } : p);
     } else {
       const maxOrder = products.length ? Math.max(...products.map((p) => p.order)) + 1 : 0;
-      next = [...products, { ...form, id: `${section}_${Date.now()}`, order: maxOrder }];
+      next = [...products, { ...form, id: `${form.section}_${Date.now()}`, order: maxOrder }];
     }
     setModal({ open: false, editing: null });
-    await productStore.products.setForSection(section, next);
+    await persistProducts(next);
     reload();
   };
 
@@ -1007,10 +1020,10 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     const maxOrder = products.length ? Math.max(...products.map((p) => p.order)) + 1 : 0;
     const toAdd: ManagedProduct[] = newProducts.map((p, i) => ({
       ...p,
-      id: `${section}_excel_${Date.now()}_${i}`,
+      id: `${p.section}_excel_${Date.now()}_${i}`,
       order: maxOrder + i,
     }));
-    await productStore.products.setForSection(section, [...products, ...toAdd]);
+    await persistProducts([...products, ...toAdd]);
     reload();
   };
 
