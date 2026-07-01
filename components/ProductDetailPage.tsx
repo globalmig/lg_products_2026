@@ -316,7 +316,14 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
             {/* 구독신청 버튼 */}
             <Link
-              href={section ? `/consult?ids=${section}_${product.id}` : "/consult"}
+              href={(() => {
+                const params = new URLSearchParams();
+                if (section) params.set("ids", `${section}_${product.id}`);
+                params.set("period", selectedPeriod);
+                if (selectedCard) params.set("cardId", String(selectedCard.id));
+                const qs = params.toString();
+                return qs ? `/consult?${qs}` : "/consult";
+              })()}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#c90f45] text-[16px] font-black text-white transition-opacity hover:opacity-90"
             >
               <LuMessageCircle size={20} />

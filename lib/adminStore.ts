@@ -32,6 +32,7 @@ export interface ConsultSubmission {
     selectedPeriodPrice?: { label: string; price: number };
     selectedCareService?: { label: string; cycle: string };
     selectedColor?: { name: string; image: string };
+    selectedCard?: { name: string; discount: number; image?: string };
   }[];
   careType?: string;
   availableTime?: string;

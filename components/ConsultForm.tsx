@@ -10,7 +10,7 @@ import {
   type CareServiceItem,
   type ColorItem,
 } from "@/lib/productStore";
-import { adminStore } from "@/lib/adminStore";
+import { adminStore, type CardDiscount } from "@/lib/adminStore";
 import { LuSearch, LuX, LuPlus, LuCheck } from "react-icons/lu";
 
 function getPeriodPrices(p: ManagedProduct): PeriodPrice[] {
@@ -46,10 +46,17 @@ const DEFAULT_SEL: ProductSelection = { periodPriceIdx: null, careServiceIdx: nu
 export default function ConsultForm() {
   const searchParams = useSearchParams();
   const initialIds = searchParams.get("ids") ?? "";
+  const initialPeriod = searchParams.get("period") ?? "";
+  const initialCardId = searchParams.get("cardId") ?? "";
+  const [initialIdSet] = useState(
+    () => new Set(initialIds.split(",").map((s) => s.trim()).filter(Boolean))
+  );
   const [submitted, setSubmitted] = useState(false);
   const [allProducts, setAllProducts] = useState<ManagedProduct[]>([]);
   const [selected, setSelected] = useState<ManagedProduct[]>([]);
   const [productSelections, setProductSelections] = useState<Record<string, ProductSelection>>({});
+  const [cards, setCards] = useState<CardDiscount[]>([]);
+  const selectedCard = initialCardId ? cards.find((c) => c.id === initialCardId) ?? null : null;
   const [careType, setCareType] = useState("방문관리");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -59,6 +66,8 @@ export default function ConsultForm() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => { adminStore.cardDiscounts.get().then(setCards); }, []);
 
   useEffect(() => {
     Promise.all([
@@ -73,9 +82,19 @@ export default function ConsultForm() {
         const ids = initialIds.split(",").map((s) => s.trim()).filter(Boolean);
         const pre = ids.map((id) => all.find((p) => p.id === id)).filter(Boolean) as ManagedProduct[];
         setSelected(pre);
+        if (initialPeriod) {
+          setProductSelections((prev) => {
+            const next = { ...prev };
+            pre.forEach((p) => {
+              const idx = getPeriodPrices(p).findIndex((pp) => pp.label === initialPeriod);
+              if (idx !== -1) next[p.id] = { ...(next[p.id] ?? DEFAULT_SEL), periodPriceIdx: idx };
+            });
+            return next;
+          });
+        }
       }
     });
-  }, [initialIds]);
+  }, [initialIds, initialPeriod]);
 
   const setSel = (productId: string, key: keyof ProductSelection, idx: number | null) => {
     setProductSelections((prev) => ({
@@ -118,6 +137,9 @@ export default function ConsultForm() {
           selectedPeriodPrice: sel.periodPriceIdx != null ? periodPrices[sel.periodPriceIdx] : undefined,
           selectedCareService: sel.careServiceIdx != null ? careItems[sel.careServiceIdx] : undefined,
           selectedColor: sel.colorIdx != null ? colorItems[sel.colorIdx] : undefined,
+          selectedCard: selectedCard && initialIdSet.has(p.id)
+            ? { name: selectedCard.name, discount: selectedCard.discount, image: selectedCard.image_key }
+            : undefined,
         };
       }),
       careType,
@@ -197,7 +219,7 @@ export default function ConsultForm() {
                         </div>
 
                         {/* 옵션 선택 영역 */}
-                        {(colorItems.length > 0 || periodPrices.length > 0 || careItems.length > 0) && (
+                        {(colorItems.length > 0 || periodPrices.length > 0 || careItems.length > 0 || (selectedCard && initialIdSet.has(p.id))) && (
                           <div className="border-t border-[#f5f5f5] px-3 pb-3 pt-2.5 space-y-3">
 
                             {/* 색상 */}
@@ -275,6 +297,16 @@ export default function ConsultForm() {
                                     );
                                   })}
                                 </div>
+                              </div>
+                            )}
+
+                            {/* 제휴카드 (상품 상세페이지에서 선택한 값) */}
+                            {selectedCard && initialIdSet.has(p.id) && (
+                              <div>
+                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">제휴카드</p>
+                                <span className="inline-block rounded-full border border-[#c90f45] bg-[#fdf3f5] px-3 py-1 text-[11px] font-medium text-[#c90f45]">
+                                  {selectedCard.name} (-{selectedCard.discount.toLocaleString()}원)
+                                </span>
                               </div>
                             )}
 
