@@ -6,29 +6,32 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { search, type SearchResult } from "@/data/searchIndex";
 import { adminStore } from "@/lib/adminStore";
-import { productStore, type ManagedCategory } from "@/lib/productStore";
+import { productStore, type ManagedCategory, type ManagedSection } from "@/lib/productStore";
 
 type SubItem = { label: string; href: string };
 type NavItem = { label: string; href: string; sub?: SubItem[] };
 
-const SECTION_NAV: { section: string; label: string; href: string }[] = [
-  { section: "kitchen", label: "주방가전", href: "/products/kitchen" },
-  { section: "tv",      label: "TV",      href: "/products/tv" },
-  { section: "living",  label: "생활가전", href: "/products/living" },
-  { section: "air",     label: "에어케어", href: "/products/air" },
+const DEFAULT_SECTIONS: ManagedSection[] = [
+  { id: "kitchen", label: "주방가전", order: 0 },
+  { id: "tv", label: "TV", order: 1 },
+  { id: "living", label: "생활가전", order: 2 },
+  { id: "air", label: "에어케어", order: 3 },
 ];
 
-function buildNavItems(categories: ManagedCategory[]): NavItem[] {
-  const productNavItems: NavItem[] = SECTION_NAV.map(({ section, label, href }) => {
-    const cats = categories
-      .filter((c) => c.section === section)
-      .sort((a, b) => a.order - b.order);
-    return {
-      label,
-      href,
-      sub: cats.length > 0 ? cats.map((c) => ({ label: c.name, href: `${href}?category=${encodeURIComponent(c.name)}` })) : undefined,
-    };
-  });
+function buildNavItems(categories: ManagedCategory[], sections: ManagedSection[]): NavItem[] {
+  const productNavItems: NavItem[] = [...sections]
+    .sort((a, b) => a.order - b.order)
+    .map(({ id, label }) => {
+      const href = `/products/${id}`;
+      const cats = categories
+        .filter((c) => c.section === id)
+        .sort((a, b) => a.order - b.order);
+      return {
+        label,
+        href,
+        sub: cats.length > 0 ? cats.map((c) => ({ label: c.name, href: `${href}?category=${encodeURIComponent(c.name)}` })) : undefined,
+      };
+    });
   return [
     { label: "6월 행사", href: "/benefit" },
     ...productNavItems,
@@ -50,12 +53,18 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [storeName, setStoreName] = useState("");
-  const [navItems, setNavItems] = useState<NavItem[]>(buildNavItems([]));
+  const [storeNameMobile, setStoreNameMobile] = useState("");
+  const [navItems, setNavItems] = useState<NavItem[]>(buildNavItems([], DEFAULT_SECTIONS));
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    adminStore.siteSettings.get().then((s) => setStoreName(s.storeName));
-    productStore.categories.get().then((cats) => setNavItems(buildNavItems(cats)));
+    adminStore.siteSettings.get().then((s) => {
+      setStoreName(s.storeName);
+      setStoreNameMobile(s.storeNameMobile);
+    });
+    Promise.all([productStore.categories.get(), productStore.sections.get()]).then(
+      ([cats, sections]) => setNavItems(buildNavItems(cats, sections))
+    );
   }, []);
 
   useEffect(() => {
@@ -104,13 +113,18 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-30 border-b border-[#e8e8e8] bg-white">
         <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-5">
-          <Link href="/" aria-label="LG전자 BEST SHOP 홈" className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
+          <Link href="/" aria-label="LG전자 BEST SHOP 홈" className="flex min-w-0 flex-1 items-center gap-2 min-[861px]:flex-none">
             <Image src="/images/logo2.png" alt="LG전자 BEST SHOP" width={24} height={24} priority className="shrink-0" />
-            {storeName && <span className="truncate text-[14px] font-black text-[#777] sm:text-[16px]">{storeName}</span>}
+            {(storeNameMobile || storeName) && (
+              <span className="text-[14px] font-black text-[#777] sm:text-[16px] min-[861px]:hidden">{storeNameMobile || storeName}</span>
+            )}
+            {storeName && (
+              <span className="hidden max-w-45 truncate text-[16px] font-black text-[#777] min-[861px]:inline lg:max-w-60">{storeName}</span>
+            )}
           </Link>
 
           {/* 데스크톱 GNB */}
-          <nav className="hidden h-full items-center gap-1 md:flex" aria-label="주요 메뉴">
+          <nav className="hidden h-full items-center gap-1 min-[861px]:flex" aria-label="주요 메뉴">
             {navItems.map(({ label, href, sub }) => {
               const isActive = pathname.startsWith("/subscription") && href.startsWith("/subscription?tab=") ? false : href !== "/" && pathname.startsWith(href.split("?")[0]);
               const isOpen = activeNav === label;

@@ -16,6 +16,7 @@ function buildDetailJson(form: DetailForm): CardDetailJson {
     minSpend: form.minSpend || undefined,
     maxDiscount: form.maxDiscount || undefined,
     benefitPeriod: form.benefitPeriod || undefined,
+    officialUrl: form.officialUrl || undefined,
     annualFee: {
       domestic: form.annualFeeDomestic,
       overseas: form.annualFeeOverseas || undefined,
@@ -37,6 +38,7 @@ interface DetailForm {
   minSpend: string;
   maxDiscount: string;
   benefitPeriod: string;
+  officialUrl: string;
   annualFeeDomestic: string;
   annualFeeOverseas: string;
   annualFeeBrand: string;
@@ -60,6 +62,7 @@ function initDetailForm(card: CardDiscount | null, cardId: string): DetailForm {
     minSpend: src.minSpend ?? "",
     maxDiscount: src.maxDiscount ?? "",
     benefitPeriod: src.benefitPeriod ?? "",
+    officialUrl: src.officialUrl ?? "",
     annualFeeDomestic: src.annualFee?.domestic ?? "",
     annualFeeOverseas: src.annualFee?.overseas ?? "",
     annualFeeBrand: src.annualFee?.brand ?? "",
@@ -256,6 +259,11 @@ function CardModal({
                       <label className={labelCls}>혜택 기간</label>
                       <input value={detailForm.benefitPeriod} onChange={(e) => setDetail("benefitPeriod", e.target.value)}
                         className={inputCls} placeholder="예: 2026.05.01~2026.05.31" />
+                    </div>
+                    <div>
+                      <label className={labelCls}>카드 공식 사이트 링크 <span className="font-normal text-[#aaa]">("카드 정보 자세히 보기" 버튼에 연결됩니다)</span></label>
+                      <input value={detailForm.officialUrl} onChange={(e) => setDetail("officialUrl", e.target.value)}
+                        className={inputCls} placeholder="예: https://www.shinhancard.com" />
                     </div>
                   </div>
                 </div>

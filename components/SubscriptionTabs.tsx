@@ -15,7 +15,7 @@ export default function SubscriptionTabs() {
 
   return (
     <nav className="border-b border-[#e8e8e8] bg-white">
-      <div className="mx-auto flex max-w-[1080px]">
+      <div className="mx-auto flex max-w-[1080px] px-5">
         {tabs.map((tab) => {
           const isActive = current === tab.value;
           return (

@@ -9,7 +9,7 @@ import ConfirmDialog from "./ConfirmDialog";
 
 type SlideWithKey = Slide & { image_key: string };
 
-const EMPTY = { image: "", image_key: "", subtitle: "", title: "" };
+const EMPTY = { image: "", image_key: "", subtitle: "", title: "", link: "" };
 
 export default function HeroAdmin() {
   const [slides, setSlides] = useState<SlideWithKey[]>([]);
@@ -42,6 +42,7 @@ export default function HeroAdmin() {
       image_key: editing.image_key,
       subtitle: editing.subtitle,
       title: editing.title,
+      link: editing.link ?? "",
       sort_order: slides.findIndex((s) => s.id === editing.id),
     });
     setSlides((prev) => prev.map((s) => (s.id === editing.id ? editing : s)));
@@ -53,10 +54,11 @@ export default function HeroAdmin() {
       image_key: form.image_key,
       subtitle: form.subtitle,
       title: form.title,
+      link: form.link,
       sort_order: slides.length,
     });
     const { id } = result as { id: number };
-    setSlides((prev) => [...prev, { id, image: form.image, image_key: form.image_key, subtitle: form.subtitle, title: form.title }]);
+    setSlides((prev) => [...prev, { id, image: form.image, image_key: form.image_key, subtitle: form.subtitle, title: form.title, link: form.link }]);
     setForm(EMPTY);
     setAdding(false);
   };
@@ -77,8 +79,8 @@ export default function HeroAdmin() {
     [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
     setSlides(next);
     await Promise.all([
-      adminStore.slides.update(next[idx].id, { image_key: next[idx].image_key, subtitle: next[idx].subtitle, title: next[idx].title, sort_order: idx }),
-      adminStore.slides.update(next[swapIdx].id, { image_key: next[swapIdx].image_key, subtitle: next[swapIdx].subtitle, title: next[swapIdx].title, sort_order: swapIdx }),
+      adminStore.slides.update(next[idx].id, { image_key: next[idx].image_key, subtitle: next[idx].subtitle, title: next[idx].title, link: next[idx].link ?? "", sort_order: idx }),
+      adminStore.slides.update(next[swapIdx].id, { image_key: next[swapIdx].image_key, subtitle: next[swapIdx].subtitle, title: next[swapIdx].title, link: next[swapIdx].link ?? "", sort_order: swapIdx }),
     ]);
   };
 
@@ -116,6 +118,7 @@ export default function HeroAdmin() {
                     <p className="mb-0.5 text-[11px] text-[#aaa]">슬라이드 {slide.id}</p>
                     <p className="text-[13px] text-[#888]">{slide.subtitle}</p>
                     <p className="text-[15px] font-black text-[#1a1a1a]">{slide.title.replace(/\n/g, " / ")}</p>
+                    {slide.link && <p className="truncate text-[11px] text-[#c90f45]">{slide.link}</p>}
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
@@ -130,7 +133,7 @@ export default function HeroAdmin() {
 
       {adding && (
         <Modal title="슬라이드 추가" onClose={() => setAdding(false)}>
-          <SlideForm data={{ id: 0, ...form }} onChange={(v) => setForm({ image: v.image, image_key: v.image_key, subtitle: v.subtitle, title: v.title })} onSave={handleAdd} onCancel={() => setAdding(false)} saveLabel="추가" />
+          <SlideForm data={{ id: 0, ...form }} onChange={(v) => setForm({ image: v.image, image_key: v.image_key, subtitle: v.subtitle, title: v.title, link: v.link ?? "" })} onSave={handleAdd} onCancel={() => setAdding(false)} saveLabel="추가" />
         </Modal>
       )}
     </div>
@@ -191,6 +194,10 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
       <Field label="제목 (줄바꿈: \n)">
         <textarea value={data.title} onChange={(e) => onChange({ ...data, title: e.target.value })} rows={2}
           className="w-full resize-none rounded-lg border border-[#e8e8e8] px-3 py-2 text-[13px] outline-none focus:border-[#c90f45]" />
+      </Field>
+      <Field label="링크 (선택, 클릭 시 새 탭으로 이동)">
+        <input value={data.link ?? ""} onChange={(e) => onChange({ ...data, link: e.target.value })} placeholder="https://..."
+          className="h-10 w-full rounded-lg border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" />
       </Field>
       <div className="flex gap-2">
         <button onClick={onSave} disabled={uploading} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white disabled:opacity-50">{saveLabel}</button>

@@ -25,7 +25,7 @@ export default function FeatureBannerSection() {
 
   const content = (
     <div
-      className="relative mx-5 overflow-hidden rounded-2xl lg:mx-auto lg:max-w-360"
+      className="relative overflow-hidden rounded-2xl"
       style={{ minHeight: "260px" }}
     >
       {/* 배경 이미지 */}
@@ -59,15 +59,17 @@ export default function FeatureBannerSection() {
 
   return (
     <section className="py-8">
-      {isExternal ? (
-        <a href={banner.href} target="_blank" rel="noopener noreferrer" className="block">
-          {content}
-        </a>
-      ) : (
-        <Link href={banner.href} className="block">
-          {content}
-        </Link>
-      )}
+      <div className="mx-auto max-w-360 px-5">
+        {isExternal ? (
+          <a href={banner.href} target="_blank" rel="noopener noreferrer" className="block">
+            {content}
+          </a>
+        ) : (
+          <Link href={banner.href} className="block">
+            {content}
+          </Link>
+        )}
+      </div>
     </section>
   );
 }

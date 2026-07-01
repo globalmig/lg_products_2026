@@ -8,34 +8,33 @@ import { adminStore, imageUrl, type EventPost } from "@/lib/adminStore";
 function EventCard({ post }: { post: EventPost }) {
   const img = imageUrl(post.image_key);
   const card = (
-    <div className="w-64 shrink-0 overflow-hidden rounded-2xl bg-[#f7f7f7] sm:w-72">
-      {img ? (
-        <div className="relative aspect-2/1 overflow-hidden">
+    <div className="flex w-70 shrink-0 flex-col rounded-xl border border-[#e8e8e8] p-6 transition-colors sm:w-80 sm:p-7 group-hover:border-[#c90f45]">
+      <div className="mb-4 overflow-hidden rounded-lg">
+        {img ? (
           <Image
             src={img}
             alt={post.title}
-            fill
-            sizes="288px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            width={400}
+            height={240}
+            className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            style={{ maxHeight: "200px" }}
             unoptimized
           />
-        </div>
-      ) : (
-        <div className="flex aspect-2/1 items-center justify-center bg-[#f0f0f0]">
-          <span className="text-[13px] text-[#bbb]">이미지 준비중</span>
-        </div>
-      )}
-      <div className="px-5 py-4">
-        <p className="line-clamp-1 text-[15px] font-bold tracking-tighter text-[#1a1a1a] transition-colors group-hover:text-[#c90f45]">
-          {post.title}
-        </p>
-        {post.subtitle && (
-          <p className="mt-1 line-clamp-1 text-[13px] text-[#777]">{post.subtitle}</p>
-        )}
-        {post.created_at && (
-          <p className="mt-2 text-[11px] text-[#bbb]">{post.created_at}</p>
+        ) : (
+          <div className="flex h-50 items-center justify-center bg-[#f5f5f5]">
+            <span className="text-[13px] text-[#bbb]">이미지 준비중</span>
+          </div>
         )}
       </div>
+      <p className="line-clamp-1 text-[15px] font-bold tracking-tighter text-[#1a1a1a] transition-colors group-hover:text-[#c90f45]">
+        {post.title}
+      </p>
+      {post.subtitle && (
+        <p className="mt-1 line-clamp-1 text-[13px] text-[#777]">{post.subtitle}</p>
+      )}
+      {post.created_at && (
+        <p className="mt-2 text-[11px] text-[#bbb]">{post.created_at}</p>
+      )}
     </div>
   );
 

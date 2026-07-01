@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { env } = await getCloudflareContext();
   const { id } = await params;
-  const { image_key, subtitle, title, sort_order } = await req.json();
+  const { image_key, subtitle, title, link = "", sort_order } = await req.json();
   await env.lg_product_db
-    .prepare("UPDATE hero_slides SET image_key=?, subtitle=?, title=?, sort_order=? WHERE id=?")
-    .bind(image_key, subtitle, title, sort_order, id)
+    .prepare("UPDATE hero_slides SET image_key=?, subtitle=?, title=?, link=?, sort_order=? WHERE id=?")
+    .bind(image_key, subtitle, title, link, sort_order, id)
     .run();
   return NextResponse.json({ ok: true });
 }

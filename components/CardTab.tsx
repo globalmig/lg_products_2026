@@ -71,17 +71,17 @@ export default function CardTab() {
   const active = getCard(baseActive);
 
   return (
-    <section className="bg-white py-16">
-      <div className="mx-auto w-full max-w-[1440px]  px-5">
+    <section className="bg-white py-16 sm:py-20">
+      <div className="mx-auto w-full max-w-[1440px] px-5">
         {/* Header */}
-        <div className="mb-10 text-center">
-          <p className="mb-3 text-[13px] font-medium text-[#c90f45]">제휴 카드 혜택도 있나요?</p>
-          <h2 className="mb-4 text-[32px] font-black leading-[1.35] tracking-tighter text-[#1a1a1a]">
+        <div className="mb-12 text-center">
+          <p className="mb-3 break-keep text-[13px] font-medium text-[#c90f45]">제휴 카드 혜택도 있나요?</p>
+          <h2 className="mb-4 break-keep text-[20px] sm:text-[26px] md:text-[32px] font-black leading-[1.35] tracking-tighter text-[#1a1a1a]">
             다양한 제휴카드로 월 구독료 할인을
             <br />
             받을 수 있습니다
           </h2>
-          <p className="text-[14px] leading-[1.7] text-[#c90f45]">전월 실적에 따라 월 1회 할인이 적용되며, 다른 가전 추가 구독 시 다른 카드사의 제휴카드를 이용해야만 할인이 적용됩니다.</p>
+          <p className="break-keep text-[12px] sm:text-[14px] leading-[1.7] text-[#c90f45]">전월 실적에 따라 월 1회 할인이 적용되며, 다른 가전 추가 구독 시 다른 카드사의 제휴카드를 이용해야만 할인이 적용됩니다.</p>
         </div>
 
         {/* Card Tab Selector */}
@@ -108,12 +108,12 @@ export default function CardTab() {
                   >
                     {card.company}
                   </span>
-                  <span className="h-4 text-[10px] text-[#888]">{card.label ?? ""}</span>
+                  <span className="h-4 break-keep text-[10px] text-[#888]">{card.label ?? ""}</span>
                   <CardVisual card={card} imgSrc={card.image} size="sm" />
                   <div className="text-center">
-                    <p className="text-[11px] text-[#888]">{card.minSpend} 사용 시</p>
-                    <p className="text-[11px] text-[#888]">월 최대 할인</p>
-                    <p className="text-[14px] font-black text-[#1a1a1a]">{card.maxDiscount}</p>
+                    <p className="break-keep text-[10px] text-[#888] sm:text-[11px]">{card.minSpend} 사용 시</p>
+                    <p className="break-keep text-[10px] text-[#888] sm:text-[11px]">월 최대 할인</p>
+                    <p className="break-keep text-[13px] font-black text-[#1a1a1a] sm:text-[14px]">{card.maxDiscount}</p>
                   </div>
                 </button>
               );
@@ -123,50 +123,57 @@ export default function CardTab() {
 
         {/* Selected Card Detail */}
         <div className="mb-0 rounded-t-2xl border border-b-0 border-[#e8e8e8] bg-white ">
-          <div className="p-8">
-            <h3 className="mb-8 text-[22px] font-black tracking-[-0.04em] text-[#1a1a1a]">{active.fullName}</h3>
+          <div className="p-5 sm:p-8">
+            <h3 className="mb-6 break-keep text-[17px] font-black tracking-[-0.04em] text-[#1a1a1a] sm:mb-8 sm:text-[22px]">{active.fullName}</h3>
             <div className="flex flex-col gap-6 sm:flex-row sm:gap-10 lg:gap-20">
               {/* Left: card image */}
               <div className="flex shrink-0 flex-col items-center gap-3">
                 <CardVisual card={active} imgSrc={active.image} size="lg" />
-                <button type="button" className="text-[13px] text-[#555] hover:text-[#1a1a1a]">
-                  카드 정보 자세히 보기 &gt;
-                </button>
+                {active.officialUrl && (
+                  <a
+                    href={active.officialUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[12px] text-[#555] hover:text-[#1a1a1a] sm:text-[13px]"
+                  >
+                    카드 정보 자세히 보기 &gt;
+                  </a>
+                )}
               </div>
 
               {/* Right: tiers */}
               <div className="flex flex-1 flex-col gap-3">
                 {active.benefitPeriod && (
-                  <div className="flex gap-4 rounded-xl bg-[#fafafa] p-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f0f0] text-[20px]">📅</div>
+                  <div className="flex gap-3 rounded-xl bg-[#fafafa] p-3 sm:gap-4 sm:p-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f0f0f0] text-[16px] sm:h-10 sm:w-10 sm:text-[20px]">📅</div>
                     <div>
-                      <p className="text-[13px] text-[#666]">혜택 기간</p>
-                      <p className="text-[16px] font-black text-[#1a1a1a]">{active.benefitPeriod}</p>
+                      <p className="break-keep text-[12px] text-[#666] sm:text-[13px]">혜택 기간</p>
+                      <p className="break-keep text-[14px] font-black text-[#1a1a1a] sm:text-[16px]">{active.benefitPeriod}</p>
                     </div>
                   </div>
                 )}
                 {active.tiers.map((tier, i) => (
-                  <div key={i} className="flex gap-4 rounded-xl bg-[#fafafa] p-4">
+                  <div key={i} className="flex gap-3 rounded-xl bg-[#fafafa] p-3 sm:gap-4 sm:p-4">
                     <CoinIcon />
                     <div>
-                      <p className="text-[13px] text-[#666]">{tier.spend}</p>
-                      <p className="text-[16px] font-black text-[#1a1a1a]">{tier.discount}</p>
-                      {tier.note && <p className="mt-1 text-[11px] leading-[1.5] text-[#999]">*{tier.note}</p>}
+                      <p className="break-keep text-[12px] text-[#666] sm:text-[13px]">{tier.spend}</p>
+                      <p className="break-keep text-[14px] font-black text-[#1a1a1a] sm:text-[16px]">{tier.discount}</p>
+                      {tier.note && <p className="mt-1 break-keep text-[10px] leading-normal text-[#999] sm:text-[11px]">*{tier.note}</p>}
                     </div>
                   </div>
                 ))}
 
                 {/* Annual fee */}
-                <div className="flex gap-4 rounded-xl bg-[#fafafa] p-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8e8e8]">
-                    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" xmlns="http://www.w3.org/2000/svg">
+                <div className="flex gap-3 rounded-xl bg-[#fafafa] p-3 sm:gap-4 sm:p-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8e8e8] sm:h-10 sm:w-10">
+                    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg">
                       <rect x="3" y="6" width="18" height="13" rx="2" stroke="#888" strokeWidth="1.5" />
                       <path d="M3 10h18" stroke="#888" strokeWidth="1.5" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[13px] text-[#666]">연회비</p>
-                    <p className="text-[14px] font-bold text-[#1a1a1a]">
+                    <p className="break-keep text-[12px] text-[#666] sm:text-[13px]">연회비</p>
+                    <p className="break-keep text-[13px] font-bold text-[#1a1a1a] sm:text-[14px]">
                       국내전용 : {active.annualFee.domestic}
                       {active.annualFee.overseas && (
                         <>
@@ -199,7 +206,7 @@ export default function CardTab() {
               {/* Info rows */}
               <div className="mb-6 space-y-2">
                 {active.detail.features && active.detail.features.length > 0 && (
-                  <div className="flex gap-2 text-[13px] sm:text-[14px]">
+                  <div className="flex gap-2 break-keep text-[12px] sm:text-[14px]">
                     <span className="w-14 shrink-0 font-bold text-[#1a1a1a] sm:w-16">특장점</span>
                     <div className="text-[#555]">
                       {active.detail.features.map((f, i) => <p key={i}>· {f}</p>)}
@@ -207,25 +214,25 @@ export default function CardTab() {
                   </div>
                 )}
                 {active.detail.targetCard && (
-                  <div className="flex gap-2 text-[13px] sm:text-[14px]">
+                  <div className="flex gap-2 break-keep text-[12px] sm:text-[14px]">
                     <span className="w-14 shrink-0 font-bold text-[#1a1a1a] sm:w-16">대상카드</span>
                     <span className="text-[#555]">· {active.detail.targetCard}</span>
                   </div>
                 )}
                 {active.detail.period && (
-                  <div className="flex gap-2 text-[13px] sm:text-[14px]">
+                  <div className="flex gap-2 break-keep text-[12px] sm:text-[14px]">
                     <span className="w-14 shrink-0 font-bold text-[#1a1a1a] sm:w-16">기간</span>
                     <span className="text-[#555]">· {active.detail.period}</span>
                   </div>
                 )}
                 {active.detail.benefit && (
-                  <div className="flex gap-2 text-[13px] sm:text-[14px]">
+                  <div className="flex gap-2 break-keep text-[12px] sm:text-[14px]">
                     <span className="w-14 shrink-0 font-bold text-[#1a1a1a] sm:w-16">혜택</span>
                     <span className="text-[#555]">· {active.detail.benefit}</span>
                   </div>
                 )}
                 {active.detail.showAnnualFeeInDetail && (
-                  <div className="flex gap-2 text-[13px] sm:text-[14px]">
+                  <div className="flex gap-2 break-keep text-[12px] sm:text-[14px]">
                     <span className="w-14 shrink-0 font-bold text-[#1a1a1a] sm:w-16">연회비</span>
                     <div className="text-[#555]">
                       <p>· 국내전용 : {active.annualFee.domestic}</p>
@@ -362,7 +369,7 @@ export default function CardTab() {
               </div>
 
               {active.detail.tableNotes.map((note, i) => (
-                <p key={i} className="mb-3 text-[11px] leading-[1.6] text-[#888] sm:text-[12px]">
+                <p key={i} className="mb-3 break-keep text-[10px] leading-[1.6] text-[#888] sm:text-[12px]">
                   {note}
                 </p>
               ))}
@@ -370,10 +377,10 @@ export default function CardTab() {
               {/* Excluded items */}
               {active.detail.excludedItems.length > 0 && (
                 <div className="mt-4">
-                  <p className="mb-2 text-[13px] font-bold text-[#1a1a1a]">* 전월 실적 제외항목</p>
+                  <p className="mb-2 break-keep text-[12px] font-bold text-[#1a1a1a] sm:text-[13px]">* 전월 실적 제외항목</p>
                   <div className="space-y-1">
                     {active.detail.excludedItems.map((item, i) => (
-                      <p key={i} className="text-[11px] leading-[1.7] text-[#666] sm:text-[12px]">
+                      <p key={i} className="break-keep text-[10px] leading-[1.7] text-[#666] sm:text-[12px]">
                         - {item}
                       </p>
                     ))}
@@ -399,7 +406,7 @@ export default function CardTab() {
             <div className="border-t border-[#e8e8e8] px-4 py-4 sm:px-8 sm:py-6">
               <ul className="space-y-2">
                 {active.notes.map((note, i) => (
-                  <li key={i} className="flex gap-2 text-[13px] leading-[1.7] text-[#555]">
+                  <li key={i} className="flex gap-2 break-keep text-[12px] leading-[1.7] text-[#555] sm:text-[13px]">
                     <span className="mt-0.75 shrink-0 text-[#888]">·</span>
                     <span>{note}</span>
                   </li>

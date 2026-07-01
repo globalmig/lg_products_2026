@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { adminStore, type MainCategoryItem } from "@/lib/adminStore";
 
 const DEFAULT_ITEMS: MainCategoryItem[] = [
@@ -23,6 +23,8 @@ const DEFAULT_ITEMS: MainCategoryItem[] = [
 
 export default function CategorySection() {
   const [items, setItems] = useState<MainCategoryItem[]>(DEFAULT_ITEMS);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     adminStore.mainCategories.get().then((data) => {
@@ -30,32 +32,103 @@ export default function CategorySection() {
     });
   }, []);
 
+  // 자동 무한 스크롤 (복제된 목록의 절반 지점에서 이음매 없이 되감기)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let raf = 0;
+    const tick = () => {
+      if (!pausedRef.current) {
+        el.scrollLeft += 0.5;
+        const half = el.scrollWidth / 2;
+        if (el.scrollLeft >= half) el.scrollLeft -= half;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [items]);
+
+  // 마우스 드래그로 직접 스크롤 (터치는 overflow-x-auto가 기본 지원)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let dragging = false;
+    let dragged = false;
+    let startX = 0;
+    let startScroll = 0;
+
+    const onPointerDown = (e: PointerEvent) => {
+      dragging = true;
+      dragged = false;
+      pausedRef.current = true;
+      startX = e.clientX;
+      startScroll = el.scrollLeft;
+      el.setPointerCapture(e.pointerId);
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 5) dragged = true;
+      el.scrollLeft = startScroll - dx;
+    };
+    const endDrag = () => {
+      dragging = false;
+      pausedRef.current = false;
+    };
+    const onClickCapture = (e: MouseEvent) => {
+      if (dragged) {
+        e.preventDefault();
+        e.stopPropagation();
+        dragged = false;
+      }
+    };
+
+    el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup", endDrag);
+    el.addEventListener("pointercancel", endDrag);
+    el.addEventListener("click", onClickCapture, true);
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("pointermove", onPointerMove);
+      el.removeEventListener("pointerup", endDrag);
+      el.removeEventListener("pointercancel", endDrag);
+      el.removeEventListener("click", onClickCapture, true);
+    };
+  }, []);
+
   return (
     <section className="border-b border-[#f1f1f1] bg-white py-10">
-      <div className="mx-auto max-w-300 px-5">
+      <div className="mx-auto max-w-360 px-5">
         <h2 className="mb-8 text-[20px] font-black tracking-[-0.04em] text-[#1a1a1a]">
           카테고리
         </h2>
-        <div className="overflow-hidden">
-          <div
-            className="flex w-max animate-marquee gap-4 sm:gap-6"
-            style={{ "--marquee-duration": `${items.length * 2.5}s` } as React.CSSProperties}
-          >
-            {[...items, ...items].map((item, i) => (
-              <Link key={`${item.id}-${i}`} href={item.href} className="group flex shrink-0 flex-col items-center gap-2">
-                <div
-                  className="relative h-22 w-22 overflow-hidden rounded-full transition-shadow duration-200 group-hover:shadow-md sm:h-25 sm:w-25"
-                  style={{ backgroundColor: item.bg }}
-                >
-                  <Image src={item.image} alt={item.label} fill sizes="100px"
-                    className="object-contain p-3 transition-transform duration-300 group-hover:scale-110" unoptimized />
-                </div>
-                <span className="text-[12px] font-medium tracking-[-0.02em] text-[#333] group-hover:text-[#c90f45] sm:text-[13px]">
-                  {item.label}
-                </span>
-              </Link>
-            ))}
-          </div>
+        <div
+          ref={scrollRef}
+          onMouseEnter={() => { pausedRef.current = true; }}
+          onMouseLeave={() => { pausedRef.current = false; }}
+          className="flex cursor-grab select-none gap-4 overflow-x-auto scrollbar-hide active:cursor-grabbing sm:gap-6"
+        >
+          {[...items, ...items].map((item, i) => (
+            <Link
+              key={`${item.id}-${i}`}
+              href={item.href}
+              draggable={false}
+              className="group flex shrink-0 flex-col items-center gap-2"
+            >
+              <div
+                className="relative h-22 w-22 overflow-hidden rounded-full transition-shadow duration-200 group-hover:shadow-md sm:h-25 sm:w-25"
+                style={{ backgroundColor: item.bg }}
+              >
+                <Image src={item.image} alt={item.label} fill sizes="100px"
+                  className="pointer-events-none object-contain p-3 transition-transform duration-300 group-hover:scale-110" unoptimized />
+              </div>
+              <span className="text-[12px] font-medium tracking-[-0.02em] text-[#333] group-hover:text-[#c90f45] sm:text-[13px]">
+                {item.label}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

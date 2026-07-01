@@ -20,6 +20,7 @@ export interface CardDetailJson {
   minSpend?: string;
   maxDiscount?: string;
   benefitPeriod?: string;
+  officialUrl?: string;
   annualFee?: {
     domestic: string;
     overseas?: string;
@@ -67,6 +68,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[신한] LG전자 The 구독케어 신한카드",
     minSpend: "130만원 이상",
     maxDiscount: "30,000원",
+    officialUrl: "https://www.shinhancard.com/pconts/html/card/apply/credit/1234346_2207.html",
     image: "/images/card/신한카드.jpg",
     annualFee: { domestic: "22,000원", overseas: "25,000원", brand: "Mastercard" },
     tiers: [
@@ -119,6 +121,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[롯데] LG구독엔로카",
     minSpend: "160만원 이상",
     maxDiscount: "26,000원",
+    officialUrl: "https://www.lottecard.co.kr",
     image: "/images/card/롯데카드.jpg",
     annualFee: { domestic: "20,000원", overseas: "20,000원", brand: "AMEX, Mastercard" },
     benefitPeriod: "2026.05.01~2026.05.31",
@@ -170,6 +173,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[KB국민] LG전자 KB국민",
     minSpend: "80만원 이상",
     maxDiscount: "22,000원",
+    officialUrl: "https://card.kbcard.com/CXPRICAC0076.cms?mainCC=a&cooperationcode=04425&categoryCode=L0061&sGroupCode=1",
     image: "/images/card/KB국민카드.jpg",
     annualFee: { domestic: "15,000원", overseas: "15,000원" },
     benefitPeriod: "2026.05.01~2026.05.31",
@@ -219,6 +223,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[우리] LG전자 우리카드",
     minSpend: "120만원 이상",
     maxDiscount: "24,000원",
+    officialUrl: "https://www.wooricard.com",
     image: "/images/card/우리카드.jpg",
     annualFee: { domestic: "15,000원", overseas: "15,000원", brand: "Mastercard" },
     benefitPeriod: "2026.05.01~2026.05.31",
@@ -269,6 +274,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[우리] LG전자 우리카드",
     minSpend: "200만원 이상",
     maxDiscount: "42,000원",
+    officialUrl: "https://m.wooricard.com/dcmw/yh1/crd/crd01/M1CRD101S02.do?recomNo=104169",
     image: "/images/card/우리카드(platinum).jpg",
     annualFee: { domestic: "25,000원", overseas: "25,000원", brand: "VISA" },
     benefitPeriod: "2026.05.01~2026.05.31",
@@ -319,6 +325,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[NH] 올원 LG전자 BEST",
     minSpend: "100만원 이상",
     maxDiscount: "20,000원",
+    officialUrl: "https://card.nonghyup.com/index_cardProd.html?SERVICE_ID=IPCC2111R&NAVIGATE_TYPE=1&wrs_tup_c=P21030&cd_wrs_sqno=90000369",
     image: "/images/card/농협카드.jpg",
     annualFee: { domestic: "15,000원", overseas: "17,000원", brand: "Mastercard" },
     tiers: [
@@ -354,6 +361,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[현대] LG전자 현대카드",
     minSpend: "120만원 이상",
     maxDiscount: "19,000원",
+    officialUrl: "https://www.hyundaicard.com/m/lg_ed3l.html",
     image: "/images/card/현대카드.jpg",
     annualFee: { domestic: "20,000원", overseas: "20,000원", brand: "Visa Platinum" },
     tiers: [
@@ -405,6 +413,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[전북] 베스트케어",
     minSpend: "100만원 이상",
     maxDiscount: "20,000원",
+    officialUrl: "https://www.jbbank.co.kr/CRCD_SOCP_WMAN_01.act",
     image: "/images/card/전북카드.jpg",
     annualFee: { domestic: "14,000원", overseas: "15,000원", overseasLabel: "Mastercard" },
     tiers: [
@@ -438,6 +447,7 @@ export const CARD_DEFAULTS: CardData[] = [
     fullName: "[광주] 베스트케어",
     minSpend: "100만원 이상",
     maxDiscount: "20,000원",
+    officialUrl: "https://m.kjbank.com/mweb/spa/goodsDetail/?pick=C019",
     image: "/images/card/광주카드.jpg",
     annualFee: { domestic: "14,000원", overseas: "15,000원", overseasLabel: "Mastercard" },
     tiers: [

@@ -20,6 +20,7 @@ const EMPTY_ICON: Omit<ChannelIcon, "id"> = { label: "", imageKey: "", href: "",
 export default function SiteSettingsAdmin() {
   const [activeSection, setActiveSection] = useState<Section>("basic");
   const [storeName, setStoreName] = useState("");
+  const [storeNameMobile, setStoreNameMobile] = useState("");
 
   const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
   const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
@@ -43,10 +44,14 @@ export default function SiteSettingsAdmin() {
   const [editingIcon, setEditingIcon] = useState<ChannelIcon | null>(null);
   const [addingIcon, setAddingIcon] = useState<Omit<ChannelIcon, "id"> | null>(null);
   const [confirmIconId, setConfirmIconId] = useState<string | null>(null);
+  const [dragFromIconId, setDragFromIconId] = useState<string | null>(null);
+  const [dragOverIconId, setDragOverIconId] = useState<string | null>(null);
+  const dragIconId = useRef<string | null>(null);
 
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => {
       setStoreName(s.storeName);
+      setStoreNameMobile(s.storeNameMobile ?? "");
       if (s.privacyContent) setPrivacyContent(s.privacyContent);
       if (s.termsContent) setTermsContent(s.termsContent);
       setFooterInfo(s.footerInfo ?? []);
@@ -59,7 +64,7 @@ export default function SiteSettingsAdmin() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await adminStore.siteSettings.set({ storeName, privacyContent, termsContent, footerInfo, consultBanner, channelIcons });
+      await adminStore.siteSettings.set({ storeName, storeNameMobile, privacyContent, termsContent, footerInfo, consultBanner, channelIcons });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -83,6 +88,22 @@ export default function SiteSettingsAdmin() {
     if (!confirmIconId) return;
     setChannelIcons((prev) => prev.filter((i) => i.id !== confirmIconId));
     setConfirmIconId(null);
+  };
+
+  const handleIconDrop = (targetId: string) => {
+    const fromId = dragIconId.current;
+    dragIconId.current = null;
+    setDragFromIconId(null);
+    setDragOverIconId(null);
+    if (!fromId || fromId === targetId) return;
+    setChannelIcons((prev) => {
+      const next = [...prev];
+      const fromIdx = next.findIndex((i) => i.id === fromId);
+      const toIdx = next.findIndex((i) => i.id === targetId);
+      const [item] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, item);
+      return next;
+    });
   };
 
   const addItem = () => {
@@ -142,14 +163,29 @@ export default function SiteSettingsAdmin() {
           <>
             <h2 className="text-[15px] font-bold text-[#1a1a1a]">기본 정보</h2>
             <div>
-              <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">매장명</label>
-              <p className="mb-2 text-[11px] text-[#bbb]">헤더와 푸터 로고 옆에 표시됩니다.</p>
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">매장명 (PC)</label>
+              <p className="mb-2 text-[11px] text-[#bbb]">화면 너비 861px 이상(PC)의 헤더·푸터 로고 옆에 표시됩니다. 너무 길면 잘려 보일 수 있어 15자 이내를 권장합니다.</p>
               <input
                 value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
+                onChange={(e) => setStoreName(e.target.value.slice(0, 20))}
+                maxLength={20}
                 placeholder="예: 용산전자상가점"
                 className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
               />
+              <p className={`mt-1 text-right text-[11px] ${storeName.length > 15 ? "text-[#c90f45]" : "text-[#bbb]"}`}>{storeName.length}/20자</p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">매장명 (태블릿·모바일)</label>
+              <p className="mb-2 text-[11px] text-[#bbb]">화면 너비 860px 이하(태블릿·모바일)에 표시됩니다. 비워두면 PC용 매장명이 그대로 표시됩니다.</p>
+              <input
+                value={storeNameMobile}
+                onChange={(e) => setStoreNameMobile(e.target.value.slice(0, 20))}
+                maxLength={20}
+                placeholder="예: 용산점 (비워두면 PC용과 동일)"
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+              />
+              <p className={`mt-1 text-right text-[11px] ${storeNameMobile.length > 15 ? "text-[#c90f45]" : "text-[#bbb]"}`}>{storeNameMobile.length}/20자</p>
             </div>
 
             <div className="border-t border-[#f0f0f0] pt-4">
@@ -219,9 +255,24 @@ export default function SiteSettingsAdmin() {
               {channelIcons.length === 0 && (
                 <p className="text-[12px] text-[#ccc]">등록된 채널 아이콘이 없습니다.</p>
               )}
-              {channelIcons.map((icon) => (
-                <div key={icon.id} className="rounded-xl border border-[#f0f0f0] bg-[#fafafa] p-3">
-                  {editingIcon?.id === icon.id ? (
+              {channelIcons.map((icon, idx) => {
+                const fromIdx = dragFromIconId ? channelIcons.findIndex((i) => i.id === dragFromIconId) : -1;
+                const isOver = dragOverIconId === icon.id && fromIdx !== -1 && fromIdx !== idx;
+                const insertAbove = isOver && fromIdx > idx;
+                const insertBelow = isOver && fromIdx < idx;
+                const isEditing = editingIcon?.id === icon.id;
+                return (
+                <div key={icon.id}>
+                  {insertAbove && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
+                  <div
+                    draggable={!isEditing}
+                    onDragStart={() => { dragIconId.current = icon.id; setDragFromIconId(icon.id); }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOverIconId(icon.id); }}
+                    onDrop={() => handleIconDrop(icon.id)}
+                    onDragEnd={() => { dragIconId.current = null; setDragFromIconId(null); setDragOverIconId(null); }}
+                    className={`rounded-xl border border-[#f0f0f0] p-3 transition-all ${dragFromIconId === icon.id ? "opacity-40" : "bg-[#fafafa]"}`}
+                  >
+                  {isEditing ? (
                     <div className="space-y-2">
                       <IconImgUpload value={editingIcon.imageKey} onChange={(v) => setEditingIcon({ ...editingIcon, imageKey: v })} />
                       <input
@@ -247,6 +298,7 @@ export default function SiteSettingsAdmin() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
+                      <span className="cursor-grab shrink-0 text-[14px] text-[#ccc] active:cursor-grabbing">⠿</span>
                       {icon.imageKey
                         ? <img src={imageUrl(icon.imageKey)} alt="" className="h-10 w-10 shrink-0 rounded-lg object-contain bg-white border border-[#f0f0f0]" />
                         : <div className="h-10 w-10 shrink-0 rounded-lg bg-[#f0f0f0]" />}
@@ -258,8 +310,11 @@ export default function SiteSettingsAdmin() {
                       <button type="button" onClick={() => setConfirmIconId(icon.id)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#fff0f3] text-[#c90f45] hover:bg-[#ffe0e7]" title="삭제"><LuTrash2 size={13} /></button>
                     </div>
                   )}
+                  </div>
+                  {insertBelow && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {addingIcon ? (
@@ -399,6 +454,7 @@ function IconImgUpload({ value, onChange }: { value: string; onChange: (v: strin
         {value && (
           <button type="button" onClick={() => onChange("")} className="ml-2 text-[11px] text-[#bbb] hover:text-red-400">삭제</button>
         )}
+        <p className="mt-1 text-[10px] text-[#bbb]">권장 사이즈: 128×128px (정사각형, PNG)</p>
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </div>

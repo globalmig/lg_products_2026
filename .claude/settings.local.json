@@ -7,7 +7,8 @@
       "PowerShell(cd \"d:\\\\file_hyebinkim\\\\development\\\\lg_product26\"; npx tsc --noEmit 2>&1 | Where-Object { $_ -match \"ConsultForm|ConsultAdmin|adminStore|consult/page|ProductDetailPage|KitchenProduct|TVProduct|AirProduct|LivingProduct\" })",
       "Bash(git rm *)",
       "Bash(git stash *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "WebFetch(domain:m.wooricard.com)"
     ]
   }
 }

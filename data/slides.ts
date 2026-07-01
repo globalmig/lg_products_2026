@@ -4,6 +4,7 @@ export type Slide = {
   subtitle: string;
   title: string;
   description?: string;
+  link?: string;
 };
 
 export const slides: Slide[] = [

@@ -6,18 +6,16 @@ import AdminLoading from "./AdminLoading";
 import Image from "next/image";
 import {
   productStore,
-  SECTION_LABELS,
   type Section,
   type ManagedProduct,
   type ManagedCategory,
+  type ManagedSection,
   type PeriodPrice,
   type CareServiceItem,
   type ColorItem,
 } from "@/lib/productStore";
 import { uploadImage } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
-
-const SECTIONS: Section[] = ["kitchen", "tv", "air", "living"];
 
 const EMPTY_PRODUCT: Omit<ManagedProduct, "id" | "order"> = {
   section: "kitchen",
@@ -679,6 +677,143 @@ function CategoryManager({ section, categories, onChange }: {
   );
 }
 
+/* ────── 상위 카테고리(섹션) 관리 ────── */
+function SectionManager({ sections, onChange }: {
+  sections: ManagedSection[];
+  onChange: (next: ManagedSection[]) => void;
+}) {
+  const [newLabel, setNewLabel] = useState("");
+  const [newSlug, setNewSlug] = useState("");
+  const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [dragFromId, setDragFromId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const dragId = useRef<string | null>(null);
+
+  const add = () => {
+    const label = newLabel.trim();
+    const slug = newSlug.trim().toLowerCase();
+    if (!label || !slug) { setError("표시 이름과 URL 슬러그를 모두 입력해주세요."); return; }
+    if (!/^[a-z0-9-]{1,30}$/.test(slug)) { setError("URL 슬러그는 영문 소문자, 숫자, 하이픈만 사용할 수 있습니다."); return; }
+    if (sections.some((s) => s.id === slug)) { setError("이미 사용 중인 URL 슬러그입니다."); return; }
+    setError("");
+    onChange([...sections, { id: slug, label, order: sections.length }]);
+    setNewLabel("");
+    setNewSlug("");
+  };
+
+  const del = (id: string) => setConfirmId(id);
+
+  const doDelete = async () => {
+    if (!confirmId) return;
+    await Promise.all([
+      productStore.categories.setForSection(confirmId, []),
+      productStore.products.setForSection(confirmId, []),
+    ]);
+    onChange(sections.filter((s) => s.id !== confirmId).map((s, i) => ({ ...s, order: i })));
+    setConfirmId(null);
+  };
+
+  const save = (id: string) => {
+    onChange(sections.map((s) => s.id === id ? { ...s, label: editLabel } : s));
+    setEditingId(null);
+  };
+
+  const handleDrop = (targetId: string) => {
+    const fromId = dragId.current;
+    dragId.current = null;
+    setDragFromId(null);
+    setDragOverId(null);
+    if (!fromId || fromId === targetId) return;
+    const sorted = [...sections].sort((a, b) => a.order - b.order);
+    const fromIdx = sorted.findIndex((s) => s.id === fromId);
+    const toIdx = sorted.findIndex((s) => s.id === targetId);
+    const next = [...sorted];
+    const [item] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, item);
+    onChange(next.map((s, i) => ({ ...s, order: i })));
+  };
+
+  const sorted = [...sections].sort((a, b) => a.order - b.order);
+
+  return (
+    <div className="mb-6 rounded-2xl border border-[#f0f0f0] bg-white p-4">
+      {confirmId && (
+        <ConfirmDialog
+          message="이 섹션을 삭제하면 관련 카테고리와 상품이 모두 삭제됩니다. 계속하시겠습니까?"
+          onConfirm={doDelete}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
+      <p className="mb-3 text-[13px] font-bold text-[#1a1a1a]">상위 카테고리 관리</p>
+
+      {/* 추가 폼 */}
+      <div className="mb-2 flex gap-2">
+        <input
+          value={newLabel}
+          onChange={(e) => setNewLabel(e.target.value)}
+          className="h-9 flex-1 rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+          placeholder="표시 이름 (예: 정수기)"
+        />
+        <input
+          value={newSlug}
+          onChange={(e) => setNewSlug(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+          className="h-9 w-40 rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+          placeholder="URL 슬러그 (예: water)"
+        />
+        <button type="button" onClick={add} className="h-9 shrink-0 rounded-xl bg-[#c90f45] px-4 text-[13px] font-bold text-white hover:opacity-90">추가</button>
+      </div>
+      {error && <p className="mb-3 text-[12px] text-[#c90f45]">{error}</p>}
+
+      <div className="space-y-1">
+        {sorted.map((sec, idx) => {
+          const fromIdx = dragFromId ? sorted.findIndex((s) => s.id === dragFromId) : -1;
+          const isOver = dragOverId === sec.id && fromIdx !== -1 && fromIdx !== idx;
+          const insertAbove = isOver && fromIdx > idx;
+          const insertBelow = isOver && fromIdx < idx;
+          return (
+            <div key={sec.id}>
+              {insertAbove && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
+              <div
+                draggable
+                onDragStart={() => { dragId.current = sec.id; setDragFromId(sec.id); }}
+                onDragOver={(e) => { e.preventDefault(); setDragOverId(sec.id); }}
+                onDrop={() => handleDrop(sec.id)}
+                onDragEnd={() => { dragId.current = null; setDragFromId(null); setDragOverId(null); }}
+                className={`flex items-center gap-2 rounded-xl px-3 py-2 transition-all ${
+                  dragFromId === sec.id ? "opacity-40" : "bg-[#fafafa]"
+                }`}
+              >
+                <span className="cursor-grab text-[14px] text-[#ccc] active:cursor-grabbing">⠿</span>
+                {editingId === sec.id ? (
+                  <>
+                    <input value={editLabel} onChange={(e) => setEditLabel(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && save(sec.id)}
+                      className="flex-1 rounded-lg border border-[#c90f45] px-2 py-1 text-[13px] outline-none" autoFocus />
+                    <button type="button" onClick={() => save(sec.id)} className="text-[12px] font-bold text-[#c90f45]">저장</button>
+                    <button type="button" onClick={() => setEditingId(null)} className="text-[12px] text-[#999]">취소</button>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex-1 text-[13px] text-[#333]">{sec.label}</span>
+                    <span className="text-[11px] text-[#bbb]">/products/{sec.id}</span>
+                    <button type="button" onClick={() => { setEditingId(sec.id); setEditLabel(sec.label); }} className="text-[#aaa] hover:text-[#c90f45]" title="수정"><LuPencil size={13} /></button>
+                    <button type="button" onClick={() => del(sec.id)} className="text-[#ccc] hover:text-[#c90f45]" title="삭제"><LuTrash2 size={13} /></button>
+                  </>
+                )}
+              </div>
+              {insertBelow && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ────── 엑셀 템플릿 다운로드 ────── */
 async function downloadExcelTemplate(categories: ManagedCategory[]) {
   const XLSX = await import("xlsx");
@@ -705,11 +840,13 @@ async function downloadExcelTemplate(categories: ManagedCategory[]) {
 /* ────── 엑셀 업로드 모달 ────── */
 function ExcelUploadModal({
   section,
+  sectionLabel,
   categories,
   onImport,
   onClose,
 }: {
   section: Section;
+  sectionLabel: string;
   categories: ManagedCategory[];
   onImport: (products: Omit<ManagedProduct, "id" | "order">[]) => void;
   onClose: () => void;
@@ -790,7 +927,7 @@ function ExcelUploadModal({
           <div className="rounded-xl bg-[#fafafa] border border-[#f0f0f0] px-4 py-3 text-[12px] text-[#666] leading-[1.8]">
             <p className="font-semibold text-[#333] mb-1">안내사항</p>
             <p>· 이미지는 엑셀로 등록 후 개별 상품 수정에서 직접 확인·추가해 주세요.</p>
-            <p>· 현재 선택된 섹션 <strong className="text-[#c90f45]">{SECTION_LABELS[section]}</strong> 에 등록됩니다.</p>
+            <p>· 현재 선택된 섹션 <strong className="text-[#c90f45]">{sectionLabel}</strong> 에 등록됩니다.</p>
             <p>· 카테고리명은 이미 등록된 카테고리명과 정확히 일치해야 합니다.</p>
           </div>
 
@@ -880,7 +1017,7 @@ function ExcelUploadModal({
 }
 
 /* ────── 상품 행 ────── */
-function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection }: {
+function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection, sectionLabel }: {
   product: ManagedProduct;
   onEdit: () => void;
   onDelete: () => void;
@@ -891,6 +1028,7 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
   isDragOver: boolean;
   isDragging: boolean;
   showSection?: boolean;
+  sectionLabel?: (id: string) => string;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -921,7 +1059,7 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-semibold text-[#1a1a1a]">{product.name}</p>
         <p className="text-[11px] text-[#999]">
-          {showSection && <span className="mr-1 rounded bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#666]">{SECTION_LABELS[product.section]}</span>}
+          {showSection && <span className="mr-1 rounded bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#666]">{sectionLabel?.(product.section) ?? product.section}</span>}
           {product.model} · {product.category}
         </p>
         <p className="text-[12px] font-bold text-[#c90f45]">월 {product.monthlyPrice.toLocaleString()}원</p>
@@ -957,10 +1095,23 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
   const [dragFromProductId, setDragFromProductId] = useState<string | null>(null);
   const [dragOverProductId, setDragOverProductId] = useState<string | null>(null);
   const dragProductId = useRef<string | null>(null);
+  const [sections, setSections] = useState<ManagedSection[]>([]);
+
+  useEffect(() => { productStore.sections.get().then(setSections); }, []);
+
+  const sectionLabel = (id: string) => sections.find((s) => s.id === id)?.label ?? id;
+
+  const saveSections = (next: ManagedSection[]) => {
+    setSections([...next].sort((a, b) => a.order - b.order));
+    productStore.sections.setAll(next);
+    if (sectionFilter !== "all" && !next.some((s) => s.id === sectionFilter)) {
+      setSectionFilter(next[0]?.id ?? "kitchen");
+    }
+  };
 
   const reload = () => {
     if (sectionFilter === "all") {
-      return Promise.all(SECTIONS.map((s) => productStore.products.getBySection(s)))
+      return Promise.all(sections.map((s) => productStore.products.getBySection(s.id)))
         .then((allProds) => setProductsState(allProds.flat().sort((a, b) => a.order - b.order)));
     }
     return Promise.all([
@@ -976,7 +1127,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     if (sectionFilter !== "all") setSection(sectionFilter);
     setLoading(true);
     reload().then(() => { setFilterCat("전체"); setSearch(""); setLoading(false); });
-  }, [sectionFilter]);
+  }, [sectionFilter, sections]);
 
   /* 카테고리 저장 */
   const saveCategories = (next: ManagedCategory[]) => {
@@ -1119,9 +1270,14 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
         </button>
       </div>
 
+      {/* 상위 카테고리(섹션) 관리 — 카테고리 관리 탭에서만 표시 */}
+      {subTab === "category" && (
+        <SectionManager sections={sections} onChange={saveSections} />
+      )}
+
       {/* 섹션 탭 (공통) */}
       <div className="mb-3 flex border-b border-[#e8e8e8]">
-        {(subTab === "category" ? SECTIONS : (["all", ...SECTIONS] as const)).map((s) => (
+        {(subTab === "category" ? sections.map((s) => s.id) : ["all", ...sections.map((s) => s.id)]).map((s) => (
           <button
             key={s}
             type="button"
@@ -1132,13 +1288,13 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
                 : "text-[#aaa] after:bg-transparent hover:text-[#555]"
             }`}
           >
-            {s === "all" ? "전체" : SECTION_LABELS[s]}
+            {s === "all" ? "전체" : sectionLabel(s)}
           </button>
         ))}
       </div>
 
-      {/* 하위 카테고리 (상품추가 관리 탭에서만 표시) */}
-      {subTab === "products" && (
+      {/* 하위 카테고리 (상품추가 관리 탭에서만 표시, 전체 탭에서는 숨김) */}
+      {subTab === "products" && sectionFilter !== "all" && (
         <div className="mb-4 flex flex-wrap gap-1.5 border-b border-[#f0f0f0] pb-4 pl-2">
           <span className="flex items-center pr-1 text-[11px] text-[#bbb]">└</span>
           {["전체", ...categories.map((c) => c.name)].map((cat) => (
@@ -1213,6 +1369,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
                     isDragOver={false}
                     isDragging={dragFromProductId === product.id}
                     showSection={sectionFilter === "all"}
+                    sectionLabel={sectionLabel}
                   />
                   {insertBelow && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
                 </div>
@@ -1241,6 +1398,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       {excelModal && (
         <ExcelUploadModal
           section={section}
+          sectionLabel={sectionLabel(section)}
           categories={categories}
           onImport={importFromExcel}
           onClose={() => setExcelModal(false)}

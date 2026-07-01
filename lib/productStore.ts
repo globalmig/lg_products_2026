@@ -3,7 +3,13 @@ import { tvProducts, tvCategories } from "@/data/tvProducts";
 import { airProducts, airCategories } from "@/data/airProducts";
 import { livingProducts, livingCategories } from "@/data/livingProducts";
 
-export type Section = "kitchen" | "tv" | "air" | "living";
+export type Section = string;
+
+export interface ManagedSection {
+  id: string;
+  label: string;
+  order: number;
+}
 
 export interface PeriodPrice {
   label: string;
@@ -61,6 +67,10 @@ export const SECTION_LABELS: Record<Section, string> = {
 
 const ALL_SECTIONS: Section[] = ["kitchen", "tv", "air", "living"];
 
+function legacyDefaultSections(): ManagedSection[] {
+  return ALL_SECTIONS.map((id, i) => ({ id, label: SECTION_LABELS[id] ?? id, order: i }));
+}
+
 function buildDefaultProducts(): ManagedProduct[] {
   const result: ManagedProduct[] = [];
   let order = 0;
@@ -98,6 +108,22 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const productStore = {
+  sections: {
+    get: async (): Promise<ManagedSection[]> => {
+      try {
+        const data = await apiFetch<ManagedSection[]>(`/api/sections`);
+        return data.length > 0 ? data : legacyDefaultSections();
+      } catch {
+        return legacyDefaultSections();
+      }
+    },
+    setAll: (items: ManagedSection[]) =>
+      apiFetch(`/api/sections`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      }),
+  },
   products: {
     get: async (section?: Section): Promise<ManagedProduct[]> => {
       try {

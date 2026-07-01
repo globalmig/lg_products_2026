@@ -1,0 +1,1 @@
+ALTER TABLE hero_slides ADD COLUMN link TEXT NOT NULL DEFAULT '';

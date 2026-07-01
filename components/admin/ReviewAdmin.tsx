@@ -6,6 +6,9 @@ import AdminLoading from "./AdminLoading";
 import Image from "next/image";
 import { adminStore, uploadImage, imageUrl, type Review } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
+import NewsEventAdmin from "./NewsEventAdmin";
+
+type ReviewTab = "home" | "newsEvent";
 
 const EMPTY: Omit<Review, "id" | "sort_order"> = {
   stars: 5,
@@ -17,6 +20,7 @@ const EMPTY: Omit<Review, "id" | "sort_order"> = {
 };
 
 export default function ReviewAdmin() {
+  const [tab, setTab] = useState<ReviewTab>("home");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [editing, setEditing] = useState<Review | null>(null);
   const [adding, setAdding] = useState(false);
@@ -56,10 +60,35 @@ export default function ReviewAdmin() {
 
   return (
     <div>
+      {/* 탭 */}
+      <div className="mb-6 flex border-b border-[#e8e8e8]">
+        {([
+          { id: "home" as const, label: "홈 리뷰" },
+          { id: "newsEvent" as const, label: "리뷰 이벤트 페이지" },
+        ]).map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={`relative px-5 py-2.5 text-[13px] font-semibold transition-colors outline-none after:absolute after:-bottom-px after:left-0 after:h-0.5 after:w-full after:transition-colors ${
+              tab === id
+                ? "text-[#c90f45] after:bg-[#c90f45]"
+                : "text-[#aaa] after:bg-transparent hover:text-[#555]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "newsEvent" ? (
+        <NewsEventAdmin />
+      ) : (
+        <>
       {confirmId && <ConfirmDialog onConfirm={doDelete} onCancel={() => setConfirmId(null)} />}
 
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-[18px] font-black text-[#1a1a1a]">리뷰 관리</h2>
+        <h2 className="text-[18px] font-black text-[#1a1a1a]">홈 리뷰 관리</h2>
         <button
           onClick={() => setAdding(true)}
           className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white"
@@ -137,11 +166,13 @@ export default function ReviewAdmin() {
           </div>
         </div>
       )}
+        </>
+      )}
     </div>
   );
 }
 
-function ReviewForm({
+export function ReviewForm({
   data,
   onChange,
   onSave,

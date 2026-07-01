@@ -353,7 +353,7 @@ export default function ConsultForm() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-12 w-full flex-1 rounded-lg border border-[#e0e0e0] px-3.5 text-base outline-none focus:border-[#c90f45] sm:text-[14px]"
+              className="h-13 w-full rounded-lg border border-[#d8d8d8] bg-[#fafafa] px-4 text-[14px] outline-none focus:border-[#c90f45] focus:bg-white sm:w-auto sm:flex-1"
             />
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function ConsultForm() {
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-12 w-full flex-1 rounded-lg border border-[#e0e0e0] px-3.5 text-base outline-none focus:border-[#c90f45] sm:text-[14px]"
+              className="h-13 w-full rounded-lg border border-[#d8d8d8] bg-[#fafafa] px-4 text-[14px] outline-none focus:border-[#c90f45] focus:bg-white sm:w-auto sm:flex-1"
             />
           </div>
         </div>
@@ -387,7 +387,7 @@ export default function ConsultForm() {
               value={availableTime}
               onChange={(e) => setAvailableTime(e.target.value)}
               placeholder="상담받으시는 날짜 및 시간을 적어주세요"
-              className="h-12 w-full flex-1 rounded-lg border border-[#e0e0e0] px-3.5 text-base outline-none placeholder:text-[#bbb] focus:border-[#c90f45] sm:text-[14px]"
+              className="h-13 w-full rounded-lg border border-[#d8d8d8] bg-[#fafafa] px-4 text-[14px] outline-none placeholder:text-[#bbb] focus:border-[#c90f45] focus:bg-white sm:w-auto sm:flex-1"
             />
           </div>
         </div>
@@ -404,7 +404,7 @@ export default function ConsultForm() {
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
               placeholder="상담받으시는 제품을 적어주세요."
-              className="w-full flex-1 resize-none rounded-lg border border-[#e0e0e0] px-3.5 py-3 text-base outline-none placeholder:text-[#bbb] focus:border-[#c90f45] sm:text-[14px]"
+              className="w-full resize-none rounded-lg border border-[#d8d8d8] bg-[#fafafa] px-4 py-3 text-[14px] outline-none placeholder:text-[#bbb] focus:border-[#c90f45] focus:bg-white sm:w-auto sm:flex-1"
             />
           </div>
         </div>

@@ -12,6 +12,7 @@ export default function Footer() {
   const pathname = usePathname();
   const [modal, setModal] = useState<ModalType>(null);
   const [storeName, setStoreName] = useState("용산전자상가점");
+  const [storeNameMobile, setStoreNameMobile] = useState("");
   const [copyright, setCopyright] = useState("© 2025 LG Electronics Inc. All rights reserved.");
   const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
   const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
@@ -20,6 +21,7 @@ export default function Footer() {
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => {
       setStoreName(s.storeName);
+      setStoreNameMobile(s.storeNameMobile);
       setCopyright(s.copyright);
       if (s.privacyContent) setPrivacyContent(s.privacyContent);
       if (s.termsContent) setTermsContent(s.termsContent);
@@ -41,8 +43,11 @@ export default function Footer() {
         <div className="mx-auto max-w-270 px-5 text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
             <Image src="/images/logo2.png" alt="LG전자 BEST SHOP" width={36} height={36} />
+            {(storeNameMobile || storeName) && (
+              <span className="text-[16px] font-black text-[#777] min-[861px]:hidden">{storeNameMobile || storeName}</span>
+            )}
             {storeName && (
-              <span className="text-[16px] font-black text-[#777]">{storeName}</span>
+              <span className="hidden text-[16px] font-black text-[#777] min-[861px]:inline">{storeName}</span>
             )}
           </div>
 

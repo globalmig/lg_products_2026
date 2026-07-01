@@ -17,12 +17,12 @@ interface BenefitProps {
 
 export default function Benefit({ bg }: BenefitProps) {
   return (
-    <section className="relative overflow-hidden py-20">
+    <section className="relative overflow-hidden py-16 sm:py-20">
       <Image src={bg} alt="" fill sizes="100vw" className="object-cover object-center" />
       <div className="relative z-10 mx-auto max-w-[1440px] px-5">
         <div className="mb-12 text-center">
           <p className="mb-3 text-[13px] font-medium text-[#c90f45]">가전 구독하면 무엇이 좋은가요?</p>
-          <h2 className="text-[20px] sm:text-[24px] md:text-[30px] font-black leading-[1.3] tracking-[-0.05em] text-[#1a1a1a]">
+          <h2 className="text-[22px] sm:text-[26px] md:text-[32px] font-black leading-[1.35] tracking-tighter text-[#1a1a1a]">
             일시불과 차이없는 가격!
             <br />
             부담은 지우고 전문가의 빈틈없는 케어를 남겨드립니다.

@@ -233,12 +233,12 @@ function MembershipCard() {
 
 export default function BenefitTab() {
   return (
-    <section className="relative overflow-hidden py-16">
+    <section className="relative overflow-hidden py-16 sm:py-20">
       <Image src="/images/bg_white_benefit.png" alt="" fill sizes="100vw" className="object-cover object-center" />
       <div className="relative z-10 mx-auto max-w-[1080px] px-5">
-        <div className="mb-16 text-center">
+        <div className="mb-12 text-center">
           <p className="mb-3 text-[13px] font-medium text-[#c90f45]">더 많은 구독료 혜택을 받을 수 있나요?</p>
-          <h2 className="text-[24px] sm:text-[32px] font-black leading-[1.35] tracking-[-0.05em] text-[#1a1a1a]">
+          <h2 className="text-[22px] sm:text-[26px] md:text-[32px] font-black leading-[1.35] tracking-tighter text-[#1a1a1a]">
             고객님의 조건에 적합한
             <br />
             다양한 혜택을 안내드립니다

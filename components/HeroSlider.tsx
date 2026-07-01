@@ -33,11 +33,8 @@ export default function HeroSlider() {
 
   return (
     <section className="relative w-full overflow-hidden aspect-16/7">
-      {slides.map((s, i) => (
-        <div
-          key={s.id}
-          className={`absolute inset-0 transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
-        >
+      {slides.map((s, i) => {
+        const image = (
           <Image
             src={s.image}
             alt=""
@@ -46,8 +43,22 @@ export default function HeroSlider() {
             sizes="100vw"
             className="object-cover object-top"
           />
-        </div>
-      ))}
+        );
+        return (
+          <div
+            key={s.id}
+            className={`absolute inset-0 transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
+          >
+            {s.link ? (
+              <a href={s.link} target="_blank" rel="noopener noreferrer" className="absolute inset-0 block">
+                {image}
+              </a>
+            ) : (
+              image
+            )}
+          </div>
+        );
+      })}
 
       <button
         type="button"
