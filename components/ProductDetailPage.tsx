@@ -318,7 +318,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <Link
               href={(() => {
                 const params = new URLSearchParams();
-                if (section) params.set("ids", `${section}_${product.id}`);
+                params.set("ids", String(product.id));
                 params.set("period", selectedPeriod);
                 if (selectedCard) params.set("cardId", String(selectedCard.id));
                 const qs = params.toString();
