@@ -102,6 +102,14 @@ export interface CardDiscount {
   card_detail_json?: string | null;
 }
 
+export interface ChannelIcon {
+  id: string;
+  label: string;
+  imageKey: string;
+  href: string;
+  primary: boolean;
+}
+
 const DEFAULT_REVIEWS: Review[] = [
   { id: "r1", stars: 5, image_key: "", content: "\"상담부터 설치까지 꼼꼼하게 챙겨주셔서 정말 만족스러웠어요. 제품도 생각보다 훨씬 조용하고 공간 활용이 좋네요. 매니저님이 색상 조합까지 같이 고민해줘서 인테리어에도 딱 맞게 선택했습니다.\"", name: "김*현", product: "LG 디오스 오브제컬렉션 냉장고", date: "2026.05.18", sort_order: 0 },
   { id: "r2", stars: 5, image_key: "", content: "\"구독 서비스가 이렇게 편할 줄 몰랐어요. 설치도 빠르고 관리까지 해준다니 너무 좋아요. 용산점 매니저분이 실제 사용 팁도 알려주셔서 처음 사용하는 데 전혀 어렵지 않았습니다.\"", name: "박*은", product: "LG 워시타워 렌탈 가전 구독", date: "2026.05.12", sort_order: 1 },
@@ -118,6 +126,13 @@ const DEFAULT_CARD_DISCOUNTS: CardDiscount[] = [
   { id: "jeonbuk",        name: "[전북] 베스트케어",               discount: 20000, image_key: "cards/jeonbuk.jpg",        sort_order: 6 },
   { id: "gwangju",        name: "[광주] 베스트케어",               discount: 20000, image_key: "cards/gwangju.jpg",        sort_order: 7 },
   { id: "hyundai",        name: "[현대] LG전자 현대카드",          discount: 19000, image_key: "cards/hyundai.jpg",        sort_order: 8 },
+];
+
+const DEFAULT_CHANNEL_ICONS: ChannelIcon[] = [
+  { id: "1", label: "상담 신청", imageKey: "/images/main/btn/reservation-1.png", href: "/consult", primary: true },
+  { id: "2", label: "카카오톡 상담", imageKey: "/images/main/btn/kakaotalk.png", href: "https://pf.kakao.com/_xnMRRX", primary: false },
+  { id: "3", label: "인스타그램", imageKey: "/images/main/btn/insta.png", href: "https://www.instagram.com/lgebestshop_yongsan", primary: false },
+  { id: "4", label: "블로그", imageKey: "/images/main/btn/blog.png", href: "https://blog.naver.com/lg_yongsan", primary: false },
 ];
 
 const DEFAULT_SLIDES: Slide[] = defaultSlides;
@@ -278,6 +293,7 @@ export const adminStore = {
       termsContent: string;
       footerInfo: { id: string; label: string; value: string }[];
       consultBanner: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string };
+      channelIcons: ChannelIcon[];
     }>("/api/site-settings").catch(() => ({
       storeName: "용산전자상가점",
       copyright: "© 2025 LG Electronics Inc. All rights reserved.",
@@ -285,8 +301,9 @@ export const adminStore = {
       termsContent: "",
       footerInfo: [],
       consultBanner: { badge: "주주 상담", title: "지금 바로 상담을 신청하세요", desc: "전담 매니저가 빠르게 연락드립니다. 방문 없이 집에서 편리하게.", buttonText: "지금 바로 상담 예약", buttonHref: "/consult" },
+      channelIcons: DEFAULT_CHANNEL_ICONS,
     })),
-    set: (data: { storeName?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string } }) =>
+    set: (data: { storeName?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[] }) =>
       apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
   },
 };

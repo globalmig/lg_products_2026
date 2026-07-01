@@ -60,26 +60,26 @@ export default async function Home() {
 
       {/* 2. 퀵메뉴 */}
       <section className="border-b border-[#f1f1f1] bg-white">
-        <div className="mx-auto grid max-w-360 grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto grid max-w-360 grid-cols-2 md:grid-cols-4">
           {quickLinks.map((link, index) => (
             <a
               href={link.href}
               key={link.title}
               {...(link.blank && { target: "_blank", rel: "noopener noreferrer" })}
               className={[
-                "flex items-center gap-3 px-5 py-4 sm:gap-5 sm:px-8 lg:h-21.5 lg:py-0 border-[#eeeeee]",
+                "flex items-center gap-2.5 px-4 py-4 sm:gap-4 sm:px-6 md:h-21.5 md:py-0 border-[#eeeeee]",
                 index % 2 !== 0 ? "border-l" : "",
-                index >= 2 ? "border-t lg:border-t-0" : "",
-                index > 0 ? "lg:border-l" : "",
+                index >= 2 ? "border-t md:border-t-0" : "",
+                index > 0 ? "md:border-l" : "",
               ].join(" ")}
             >
-              <Image src={link.icon} alt="" width={32} height={32} className="shrink-0" />
-              <span>
-                <span className="mb-0.5 block text-[12px] sm:text-[13px] font-bold tracking-[-0.04em] text-[#171717]">
+              <Image src={link.icon} alt="" width={32} height={32} className="h-6 w-6 shrink-0 sm:h-8 sm:w-8" />
+              <span className="min-w-0">
+                <span className="mb-0.5 block break-keep text-[12px] sm:text-[13px] font-bold tracking-[-0.04em] text-[#171717]">
                   {link.title}
                   <span className="pl-2 text-[#9b9b9b]">›</span>
                 </span>
-                <span className="block text-[10px] sm:text-[11px] tracking-[-0.03em] text-[#999]">{link.description}</span>
+                <span className="block break-keep text-[10px] sm:text-[11px] tracking-[-0.03em] text-[#999]">{link.description}</span>
               </span>
             </a>
           ))}

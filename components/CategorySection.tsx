@@ -36,21 +36,26 @@ export default function CategorySection() {
         <h2 className="mb-8 text-[20px] font-black tracking-[-0.04em] text-[#1a1a1a]">
           카테고리
         </h2>
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide sm:gap-6 lg:grid lg:grid-cols-7 lg:gap-x-2 lg:gap-y-6 lg:justify-items-center lg:overflow-visible lg:pb-0">
-          {items.map((item) => (
-            <Link key={item.id} href={item.href} className="group flex shrink-0 flex-col items-center gap-2">
-              <div
-                className="relative h-22 w-22 overflow-hidden rounded-full transition-shadow duration-200 group-hover:shadow-md sm:h-25 sm:w-25"
-                style={{ backgroundColor: item.bg }}
-              >
-                <Image src={item.image} alt={item.label} fill sizes="100px"
-                  className="object-contain p-3 transition-transform duration-300 group-hover:scale-110" unoptimized />
-              </div>
-              <span className="text-[12px] font-medium tracking-[-0.02em] text-[#333] group-hover:text-[#c90f45] sm:text-[13px]">
-                {item.label}
-              </span>
-            </Link>
-          ))}
+        <div className="overflow-hidden">
+          <div
+            className="flex w-max animate-marquee gap-4 sm:gap-6"
+            style={{ "--marquee-duration": `${items.length * 2.5}s` } as React.CSSProperties}
+          >
+            {[...items, ...items].map((item, i) => (
+              <Link key={`${item.id}-${i}`} href={item.href} className="group flex shrink-0 flex-col items-center gap-2">
+                <div
+                  className="relative h-22 w-22 overflow-hidden rounded-full transition-shadow duration-200 group-hover:shadow-md sm:h-25 sm:w-25"
+                  style={{ backgroundColor: item.bg }}
+                >
+                  <Image src={item.image} alt={item.label} fill sizes="100px"
+                    className="object-contain p-3 transition-transform duration-300 group-hover:scale-110" unoptimized />
+                </div>
+                <span className="text-[12px] font-medium tracking-[-0.02em] text-[#333] group-hover:text-[#c90f45] sm:text-[13px]">
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>

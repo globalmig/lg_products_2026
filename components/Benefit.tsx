@@ -29,11 +29,11 @@ export default function Benefit({ bg }: BenefitProps) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {benefits.map((item, i) => (
-            <div key={i} className="flex items-end justify-between rounded-2xl bg-white px-6 sm:px-8 py-6 sm:py-8 shadow-sm">
-              <p className="whitespace-pre-line text-[1.4rem] sm:text-[1.75rem] md:text-[2rem] font-black leading-[1.35] tracking-[-0.04em] text-[#5E4242]">{item.text}</p>
-              <Image src={item.icon} alt="" width={160} height={138} className="shrink-0 w-20 sm:w-28 md:w-40 h-auto" />
+            <div key={i} className="flex items-end justify-between rounded-2xl bg-white px-5 sm:px-6 lg:px-8 py-6 sm:py-7 lg:py-8 shadow-sm">
+              <p className="whitespace-pre-line break-keep text-[1.15rem] sm:text-[1.4rem] lg:text-[2rem] font-black leading-[1.35] tracking-[-0.04em] text-[#5E4242]">{item.text}</p>
+              <Image src={item.icon} alt="" width={160} height={138} className="shrink-0 w-16 sm:w-24 lg:w-40 h-auto" />
             </div>
           ))}
         </div>

@@ -104,9 +104,9 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-30 border-b border-[#e8e8e8] bg-white">
         <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between px-5">
-          <Link href="/" aria-label="LG전자 BEST SHOP 홈" className="flex items-center gap-2">
-            <Image src="/images/logo2.png" alt="LG전자 BEST SHOP" width={24} height={24} priority />
-            {storeName && <span className="hidden text-[16px] font-black text-[#777] sm:inline">{storeName}</span>}
+          <Link href="/" aria-label="LG전자 BEST SHOP 홈" className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
+            <Image src="/images/logo2.png" alt="LG전자 BEST SHOP" width={24} height={24} priority className="shrink-0" />
+            {storeName && <span className="truncate text-[14px] font-black text-[#777] sm:text-[16px]">{storeName}</span>}
           </Link>
 
           {/* 데스크톱 GNB */}
@@ -257,7 +257,7 @@ export default function Header() {
       {drawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-[300px] overflow-y-auto bg-white shadow-xl">
+          <div className="absolute right-0 top-0 h-full w-[85vw] max-w-75 overflow-y-auto bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-[#f1f1f1] px-5 py-4">
               <span className="text-[15px] font-bold text-[#333]">메뉴</span>
               <button type="button" onClick={() => setDrawerOpen(false)} className="flex h-8 w-8 items-center justify-center text-[22px] text-[#666]" aria-label="메뉴 닫기">

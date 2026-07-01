@@ -1,18 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { adminStore, imageUrl, type EventPost } from "@/lib/adminStore";
 
+function EventCard({ post }: { post: EventPost }) {
+  const img = imageUrl(post.image_key);
+  const card = (
+    <div className="w-64 shrink-0 overflow-hidden rounded-2xl bg-[#f7f7f7] sm:w-72">
+      {img ? (
+        <div className="relative aspect-2/1 overflow-hidden">
+          <Image
+            src={img}
+            alt={post.title}
+            fill
+            sizes="288px"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            unoptimized
+          />
+        </div>
+      ) : (
+        <div className="flex aspect-2/1 items-center justify-center bg-[#f0f0f0]">
+          <span className="text-[13px] text-[#bbb]">이미지 준비중</span>
+        </div>
+      )}
+      <div className="px-5 py-4">
+        <p className="line-clamp-1 text-[15px] font-bold tracking-tighter text-[#1a1a1a] transition-colors group-hover:text-[#c90f45]">
+          {post.title}
+        </p>
+        {post.subtitle && (
+          <p className="mt-1 line-clamp-1 text-[13px] text-[#777]">{post.subtitle}</p>
+        )}
+        {post.created_at && (
+          <p className="mt-2 text-[11px] text-[#bbb]">{post.created_at}</p>
+        )}
+      </div>
+    </div>
+  );
+
+  if (!post.link) return <div className="group block">{card}</div>;
+  return post.link.startsWith("http") ? (
+    <a href={post.link} target="_blank" rel="noopener noreferrer" className="group block">
+      {card}
+    </a>
+  ) : (
+    <Link href={post.link} className="group block">
+      {card}
+    </Link>
+  );
+}
+
 export default function JuneEventProducts() {
   const [posts, setPosts] = useState<EventPost[]>([]);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     adminStore.eventPosts.get().then((data) => {
       if (data.length > 0) setPosts(data);
     });
   }, []);
+
+  const updateButtons = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 0);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => { updateButtons(); }, [posts]);
+
+  const scroll = (dir: "prev" | "next") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const track = el.firstElementChild as HTMLElement | null;
+    const card = track?.firstElementChild as HTMLElement | null;
+    const gap = track ? parseFloat(getComputedStyle(track).columnGap) || 16 : 16;
+    const step = card ? (card.offsetWidth + gap) * 2 : 600;
+    el.scrollBy({ left: dir === "next" ? step : -step, behavior: "smooth" });
+  };
 
   if (posts.length === 0) return null;
 
@@ -26,64 +94,40 @@ export default function JuneEventProducts() {
               이달의 행사
             </h2>
           </div>
-          <Link
-            href="/benefit"
-            className="self-start sm:self-auto shrink-0 rounded-full border border-[#e0e0e0] px-5 py-2 text-[13px] font-medium text-[#444] transition-colors hover:border-[#c90f45] hover:text-[#c90f45]"
-          >
-            전체 혜택 보기 →
-          </Link>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => scroll("prev")}
+                disabled={!canPrev}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e0e0e0] text-[#555] transition-colors hover:border-[#1a1a1a] hover:text-[#1a1a1a] disabled:opacity-30"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={() => scroll("next")}
+                disabled={!canNext}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e0e0e0] text-[#555] transition-colors hover:border-[#1a1a1a] hover:text-[#1a1a1a] disabled:opacity-30"
+              >
+                ›
+              </button>
+            </div>
+            <Link
+              href="/benefit"
+              className="shrink-0 rounded-full border border-[#e0e0e0] px-5 py-2 text-[13px] font-medium text-[#444] transition-colors hover:border-[#c90f45] hover:text-[#c90f45]"
+            >
+              전체 혜택 보기 →
+            </Link>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => {
-            const img = imageUrl(post.image_key);
-            const Wrapper = post.link
-              ? ({ children }: { children: React.ReactNode }) =>
-                  post.link.startsWith("http") ? (
-                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="group block">
-                      {children}
-                    </a>
-                  ) : (
-                    <Link href={post.link} className="group block">
-                      {children}
-                    </Link>
-                  )
-              : ({ children }: { children: React.ReactNode }) => <div className="group block">{children}</div>;
-
-            return (
-              <Wrapper key={post.id}>
-                <div className="overflow-hidden rounded-2xl bg-[#f7f7f7]">
-                  {img ? (
-                    <div className="relative aspect-2/1 overflow-hidden">
-                      <Image
-                        src={img}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex aspect-2/1 items-center justify-center bg-[#f0f0f0]">
-                      <span className="text-[13px] text-[#bbb]">이미지 준비중</span>
-                    </div>
-                  )}
-                  <div className="px-5 py-4">
-                    <p className="text-[15px] font-bold tracking-tighter text-[#1a1a1a] transition-colors group-hover:text-[#c90f45]">
-                      {post.title}
-                    </p>
-                    {post.subtitle && (
-                      <p className="mt-1 text-[13px] text-[#777]">{post.subtitle}</p>
-                    )}
-                    {post.created_at && (
-                      <p className="mt-2 text-[11px] text-[#bbb]">{post.created_at}</p>
-                    )}
-                  </div>
-                </div>
-              </Wrapper>
-            );
-          })}
+        <div ref={scrollRef} className="overflow-x-auto scrollbar-hide" onScroll={updateButtons}>
+          <div className="flex gap-4 pb-2" style={{ width: "max-content" }}>
+            {posts.map((post) => (
+              <EventCard key={post.id} post={post} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

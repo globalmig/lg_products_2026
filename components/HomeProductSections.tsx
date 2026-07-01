@@ -17,14 +17,14 @@ function ProductCard({ product, href }: { product: ManagedProduct; href: string 
   const [imgError, setImgError] = useState(false);
 
   return (
-    <Link href={`${href}/${product.id}`} className="group flex w-48 shrink-0 flex-col" draggable={false}>
+    <Link href={`${href}/${product.id}`} className="group flex w-36 shrink-0 flex-col sm:w-44 md:w-48" draggable={false}>
       <div className="relative mb-2.5 aspect-square overflow-hidden rounded-xl bg-[#f7f7f7]">
         {!imgError ? (
           <Image
             src={product.image}
             alt={product.name}
             fill
-            sizes="192px"
+            sizes="(min-width: 768px) 192px, (min-width: 640px) 176px, 144px"
             className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
             onError={() => setImgError(true)}
             unoptimized
@@ -34,21 +34,25 @@ function ProductCard({ product, href }: { product: ManagedProduct; href: string 
         )}
       </div>
 
-      <div className="mb-1 flex min-h-4.5 flex-wrap gap-1">
-        {product.tags.slice(0, 2).map((tag) => (
+      <div className="mb-1 flex min-h-4.5 items-center gap-1">
+        {product.tags[0] && (
           <span
-            key={tag.label}
             className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold leading-none ${
-              tag.type === "hot" || tag.type === "md"
+              product.tags[0].type === "hot" || product.tags[0].type === "md"
                 ? "bg-[#fff0f3] text-[#c90f45]"
-                : tag.type === "naver"
+                : product.tags[0].type === "naver"
                 ? "bg-[#03c75a] text-white"
                 : "bg-[#f5f5f5] text-[#666]"
             }`}
           >
-            {tag.label}
+            {product.tags[0].label}
           </span>
-        ))}
+        )}
+        {product.tags.length > 1 && (
+          <span className="inline-flex items-center rounded bg-[#f5f5f5] px-1.5 py-0.5 text-[9px] font-bold leading-none text-[#999]">
+            +{product.tags.length - 1}
+          </span>
+        )}
       </div>
 
       <p className="mb-1 line-clamp-2 text-[12px] font-semibold leading-[1.4] tracking-[-0.02em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors min-h-[2.8em]">
@@ -121,6 +125,7 @@ function SectionSlider({ sectionKey, href }: { sectionKey: Section; href: string
               ›
             </button>
           </div>
+          <span className="h-4 w-px bg-[#e0e0e0]" aria-hidden="true" />
           <Link href={href} className="text-[12px] font-semibold text-[#888] hover:text-[#c90f45] transition-colors">
             전체보기 ›
           </Link>
@@ -129,7 +134,7 @@ function SectionSlider({ sectionKey, href }: { sectionKey: Section; href: string
 
       <div
         ref={scrollRef}
-        className="overflow-x-auto scrollbar-hide"
+        className="overflow-x-auto px-5 scrollbar-hide lg:px-0"
         onScroll={updateButtons}
       >
         <div className="flex gap-4 pb-2" style={{ width: "max-content" }}>
@@ -145,9 +150,11 @@ function SectionSlider({ sectionKey, href }: { sectionKey: Section; href: string
 export default function HomeProductSections() {
   return (
     <section className="border-t border-[#f1f1f1] py-10">
-      <div className="mx-auto max-w-360 space-y-12 lg:px-5">
-        {SECTIONS.map(({ key, href }) => (
-          <SectionSlider key={key} sectionKey={key} href={href} />
+      <div className="mx-auto max-w-360 lg:px-5">
+        {SECTIONS.map(({ key, href }, i) => (
+          <div key={key} className={i === 0 ? "pb-12" : "border-t border-[#f1f1f1] py-12"}>
+            <SectionSlider sectionKey={key} href={href} />
+          </div>
         ))}
       </div>
     </section>

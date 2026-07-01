@@ -94,7 +94,7 @@ export default function ReviewEventPage() {
     <main className="bg-white text-[#1a1a1a]">
 
       {/* 히어로 */}
-      <section className="relative overflow-hidden bg-[#0d0d0d] px-5 py-24 sm:py-32">
+      <section className="relative overflow-hidden bg-[#0d0d0d] px-5 py-14 sm:py-20 lg:py-28">
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -107,11 +107,11 @@ export default function ReviewEventPage() {
             <LuGift size={14} />
             2026년 6월 리뷰 이벤트
           </span>
-          <h1 className="mt-4 text-[38px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[56px]">
+          <h1 className="mt-4 text-[28px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[42px] lg:text-[56px]">
             후기 남기고<br />
             <span className="text-[#ff6b8a]">경품 받아가세요</span>
           </h1>
-          <p className="mt-5 max-w-[560px] break-keep text-[16px] leading-[1.8] text-white/70">
+          <p className="mt-5 max-w-[560px] break-keep text-[15px] leading-[1.8] text-white/70 sm:text-[16px]">
             LG전자 베스트샵 용산점에서 구독·구매 후 네이버 지도 리뷰를 작성하시면 추첨을 통해 경품을 드립니다.
           </p>
           <div className="mt-8 flex flex-wrap gap-4 text-[13px] font-semibold text-white/50">

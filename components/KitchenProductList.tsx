@@ -4,89 +4,72 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
+import CategoryFilterBar from "@/components/CategoryFilterBar";
 
 
 function ProductCard({ product }: { product: ManagedProduct }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex flex-col">
-      <a href={`/products/kitchen/${product.id}`} className="group flex flex-col flex-1">
-        {/* 이미지 영역 */}
-        <div className="relative mb-3 overflow-hidden rounded-2xl bg-[#f7f7f7] aspect-square">
-          {!imgError ? (
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-              onError={() => setImgError(true)}
-              unoptimized
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <span className="text-[12px] text-[#bbb]">이미지 준비중</span>
-            </div>
-          )}
+    <a href={`/products/kitchen/${product.id}`} className="group flex flex-col">
+      {/* 이미지 영역 */}
+      <div className="relative mb-3 overflow-hidden rounded-2xl bg-[#f7f7f7] aspect-square">
+        {!imgError ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
+            onError={() => setImgError(true)}
+            unoptimized
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <span className="text-[12px] text-[#bbb]">이미지 준비중</span>
+          </div>
+        )}
+      </div>
 
-          {/* LG전자 온라인 인증점 배지 */}
-          <div
-            className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full text-center text-[9px] font-bold leading-[1.3] text-white"
-            style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
+      {/* 태그 */}
+      <div className="mb-1 flex min-h-4.5 items-center gap-1">
+        {product.tags[0] && (
+          <span
+            className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold sm:text-[10px] ${
+              product.tags[0].type === "hot"
+                ? "bg-[#fff0f3] text-[#c90f45]"
+                : product.tags[0].type === "naver"
+                ? "bg-[#03c75a] text-white"
+                : "bg-[#f5f5f5] text-[#666]"
+            }`}
           >
-            LG전자
-            <br />
-            온라인
-            <br />
-            인증점
-          </div>
-        </div>
+            {product.tags[0].label}
+          </span>
+        )}
+        {product.tags.length > 1 && (
+          <span className="inline-flex items-center rounded bg-[#f5f5f5] px-1.5 py-0.5 text-[9px] font-bold text-[#999] sm:text-[10px]">
+            +{product.tags.length - 1}
+          </span>
+        )}
+      </div>
 
-        {/* 상품 정보 */}
-        <div className="flex flex-col flex-1">
-          <h3 className="mb-1 text-[13px] font-semibold leading-[1.45] tracking-[-0.03em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors line-clamp-2 min-h-[2.9em]">
-            {product.name}
-          </h3>
-          <p className="mb-2 text-[11px] text-[#999]">{product.model}</p>
-          <p className="text-[15px] font-bold text-[#1a1a1a]">
-            월 {product.monthlyPrice.toLocaleString()}원
+      {/* 상품 정보 */}
+      <h3 className="mb-1 text-[13px] font-semibold leading-[1.45] tracking-[-0.03em] text-[#1a1a1a] group-hover:text-[#c90f45] transition-colors line-clamp-2 min-h-[2.9em] sm:text-[14px] lg:text-[15px]">
+        {product.name}
+      </h3>
+      <p className="mb-2 text-[10px] text-[#999] sm:text-[11px]">{product.model}</p>
+      <p className="text-left text-[14px] font-bold text-[#1a1a1a] sm:text-[15px] lg:text-[16px]">
+        월 {product.monthlyPrice.toLocaleString()}원
+      </p>
+      <div className="min-h-6">
+        {product.benefitPrice !== null && (
+          <p className="text-left text-[15px] font-bold text-[#c90f45] sm:text-[16px] lg:text-[17px]">
+            최대혜택가 월{" "}
+            {product.benefitPrice === 0 ? "0" : product.benefitPrice.toLocaleString()}원
           </p>
-          <div className="min-h-6">
-            {product.benefitPrice !== null && (
-              <p className="text-[13px] font-semibold text-[#c90f45]">
-                최대혜택가 월{" "}
-                {product.benefitPrice === 0 ? "0" : product.benefitPrice.toLocaleString()}원
-              </p>
-            )}
-          </div>
-          <div className="mt-auto">
-            <div className="mt-2 flex min-h-4.5 flex-wrap gap-1">
-                {product.tags.map((tag) => (
-                  <span
-                    key={tag.label}
-                    className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                      tag.type === "hot"
-                        ? "bg-[#fff0f3] text-[#c90f45]"
-                        : tag.type === "naver"
-                        ? "bg-[#03c75a] text-white"
-                        : "bg-[#f5f5f5] text-[#666]"
-                    }`}
-                  >
-                    {tag.label}
-                  </span>
-                ))}
-              </div>
-          </div>
-        </div>
-      </a>
-      <a
-        href={`/consult?ids=${product.id}`}
-        className="mt-3 flex h-9 w-full items-center justify-center rounded-full border border-[#c90f45] text-[12px] font-bold text-[#c90f45] transition-colors hover:bg-[#c90f45] hover:text-white"
-      >
-        구독신청
-      </a>
-    </div>
+        )}
+      </div>
+    </a>
   );
 }
 
@@ -114,31 +97,13 @@ export default function KitchenProductList() {
   }, [activeCategory, products]);
 
   return (
-    <div className="mx-auto max-w-270 px-5 py-10">
+    <div className="mx-auto max-w-300 px-5 py-8 sm:py-10">
       {/* 필터 */}
-      <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {["전체", ...categories].map((cat) => {
-          const isActive = cat === activeCategory;
-          return (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors whitespace-nowrap ${
-                isActive
-                  ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                  : "border-[#d8d8d8] bg-white text-[#555] hover:border-[#555]"
-              }`}
-            >
-              {cat}
-            </button>
-          );
-        })}
-      </div>
+      <CategoryFilterBar categories={["전체", ...categories]} active={activeCategory} onChange={setActiveCategory} />
 
       {/* 상품 그리드 */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
           {filtered.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

@@ -182,7 +182,7 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
           {data.image && !uploading && <p className="text-[11px] text-[#aaa]">클릭해서 이미지 변경</p>}
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-        <p className="mt-1.5 text-[11px] text-[#bbb]">권장 크기: 1920×1080px 이상 · 최대 5MB (JPG, PNG, WebP)</p>
+        <p className="mt-1.5 text-[11px] text-[#bbb]">권장 크기: 1920×840px (16:7 비율) 이상 · 최대 5MB (JPG, PNG, WebP)</p>
       </Field>
       <Field label="부제목">
         <input value={data.subtitle} onChange={(e) => onChange({ ...data, subtitle: e.target.value })}

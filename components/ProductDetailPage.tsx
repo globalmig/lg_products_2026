@@ -107,18 +107,18 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
       {/* 상품 메인 */}
       <section className="mx-auto max-w-270 px-5 py-10">
-        <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
+        <div className="flex flex-col gap-8 md:flex-row md:gap-10 lg:gap-16">
 
           {/* 좌측: 메인 이미지 */}
-          <div className="lg:w-[45%] lg:max-w-120 lg:shrink-0">
+          <div className="mx-auto w-full max-w-90 sm:max-w-105 md:w-[42%] md:max-w-100 md:shrink-0 lg:w-[45%] lg:max-w-120">
             <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f7f7f7]">
               {!imgError ? (
                 <Image
                   src={displayImage}
                   alt={product.name}
                   fill
-                  sizes="(max-width: 1024px) 100vw, 460px"
-                  className="object-contain p-10"
+                  sizes="(min-width: 1024px) 460px, (min-width: 768px) 42vw, (min-width: 640px) 420px, 360px"
+                  className="object-contain"
                   onError={() => setImgError(true)}
                   unoptimized
                   priority
@@ -129,12 +129,6 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                   <span className="text-[12px]">이미지 준비중</span>
                 </div>
               )}
-              <div
-                className="absolute right-3 top-3 sm:right-4 sm:top-4 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full text-center text-[9px] sm:text-[10px] font-bold leading-[1.3] text-white"
-                style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
-              >
-                LG전자<br />온라인<br />인증점
-              </div>
             </div>
           </div>
 
@@ -148,7 +142,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             {/* 계약기간 */}
             <div className="mb-5">
               <p className="mb-2 text-[13px] font-semibold text-[#333]">계약기간</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {(hasPeriodPrices
                   ? product.periodPrices!
                   : [72, 60, 48, 36].map((m) => ({ label: `${m}개월`, price: m === 72 ? product.monthlyPrice : m === 60 ? (product.price60 ?? product.monthlyPrice) : m === 48 ? (product.price48 ?? product.monthlyPrice) : (product.price36 ?? product.monthlyPrice) }))
@@ -157,7 +151,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                     key={period.label}
                     type="button"
                     onClick={() => setSelectedPeriod(period.label)}
-                    className={`rounded-lg border px-5 py-3 text-[14px] font-semibold transition-colors ${
+                    className={`rounded-lg border px-2 py-2.5 text-center text-[12px] font-semibold transition-colors sm:px-4 sm:py-3 sm:text-[14px] ${
                       selectedPeriod === period.label
                         ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
                         : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
@@ -179,13 +173,13 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                       key={i}
                       type="button"
                       onClick={() => setSelectedCareIdx(i)}
-                      className={`rounded-lg border px-4 py-2.5 text-left transition-colors ${
+                      className={`rounded-lg border px-3.5 py-2 text-left transition-colors sm:px-4 sm:py-2.5 ${
                         selectedCareIdx === i
                           ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
                           : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
                       }`}
                     >
-                      <span className="block text-[14px] font-semibold">{cs.label}</span>
+                      <span className="block text-[13px] font-semibold sm:text-[14px]">{cs.label}</span>
                       {cs.cycle && <span className={`block text-[12px] ${selectedCareIdx === i ? "text-white/70" : "text-[#999]"}`}>{cs.cycle}</span>}
                     </button>
                   ))}
@@ -210,7 +204,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                       key={i}
                       type="button"
                       onClick={() => setSelectedColorIdx(i)}
-                      className={`rounded-lg border px-4 py-2.5 text-[14px] font-semibold transition-colors ${
+                      className={`rounded-lg border px-3.5 py-2 text-[13px] font-semibold transition-colors sm:px-4 sm:py-2.5 sm:text-[14px] ${
                         selectedColorIdx === i
                           ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
                           : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
@@ -235,7 +229,6 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
               <div className="flex items-center justify-between">
                 <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
                 <span className="text-[14px] text-[#555]">
-                  {selectedPeriod} 기준{" "}
                   <span className="text-[20px] font-black text-[#1a1a1a]">
                     월 {basePrice.toLocaleString()}
                   </span>
@@ -253,7 +246,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             </div>
 
             {/* 제휴카드 선택 박스 */}
-            <div className="mb-6 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-4 py-4">
+            <div className="mb-6 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3.5 py-3.5 sm:px-4 sm:py-4">
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-[#555]">제휴카드 할인</span>
                 <span className="text-[13px] text-[#888]">
@@ -265,17 +258,17 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
               <button
                 type="button"
                 onClick={() => setCardOpen((v) => !v)}
-                className="flex w-full items-center justify-between rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#333]"
+                className="flex w-full items-center justify-between rounded-lg border border-[#e0e0e0] bg-white px-3.5 py-2.5 text-[13px] text-[#333] sm:px-4 sm:py-3 sm:text-[14px]"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {selectedCard?.image_key && (
                     <div className="relative h-5 w-9 shrink-0">
                       <Image src={imageUrl(selectedCard.image_key)} alt="" fill className="object-contain" unoptimized />
                     </div>
                   )}
-                  <span>{selectedCard ? selectedCard.name : "선택안함"}</span>
+                  <span className="truncate">{selectedCard ? selectedCard.name : "선택안함"}</span>
                 </div>
-                <LuChevronDown size={16} className={`text-[#999] transition-transform ${cardOpen ? "rotate-180" : ""}`} />
+                <LuChevronDown size={16} className={`shrink-0 text-[#999] transition-transform ${cardOpen ? "rotate-180" : ""}`} />
               </button>
 
               {/* 드롭다운 목록 */}
@@ -293,18 +286,16 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                       key={card.id}
                       type="button"
                       onClick={() => { setSelectedCardIdx(idx); setCardOpen(false); }}
-                      className={`flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-[14px] hover:bg-[#f5f5f5] ${
+                      className={`relative flex w-full flex-col gap-1 py-3 pl-15 pr-4 text-left text-[14px] hover:bg-[#f5f5f5] sm:flex-row sm:items-center sm:justify-between sm:gap-2 ${
                         selectedCardIdx === idx ? "text-[#c90f45] font-semibold" : "text-[#333]"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        {card.image_key && (
-                          <div className="relative h-5 w-9 shrink-0">
-                            <Image src={imageUrl(card.image_key)} alt="" fill className="object-contain" unoptimized />
-                          </div>
-                        )}
-                        <span>{card.name}</span>
-                      </div>
+                      {card.image_key && (
+                        <div className="absolute left-4 top-1/2 h-5 w-9 -translate-y-1/2">
+                          <Image src={imageUrl(card.image_key)} alt="" fill className="object-contain" unoptimized />
+                        </div>
+                      )}
+                      <span className="break-keep">{card.name}</span>
                       <span className={`shrink-0 ${selectedCardIdx === idx ? "text-[#c90f45]" : "text-[#888]"}`}>
                         월 최대 -{card.discount.toLocaleString()}원
                       </span>
@@ -324,9 +315,10 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 const qs = params.toString();
                 return qs ? `/consult?${qs}` : "/consult";
               })()}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#c90f45] text-[16px] font-black text-white transition-opacity hover:opacity-90"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#c90f45] text-[15px] font-black text-white transition-opacity hover:opacity-90 sm:h-14 sm:text-[16px]"
             >
-              <LuMessageCircle size={20} />
+              <LuMessageCircle size={18} className="sm:hidden" />
+              <LuMessageCircle size={20} className="hidden sm:block" />
               구독 신청하기
             </Link>
             <p className="mt-3 text-center text-[12px] text-[#aaa]">구매 기능 없음 · 상담 후 진행됩니다</p>
@@ -346,13 +338,20 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                   /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage) ? (
                     <iframe
                       srcDoc={product.detailImage}
-                      className="w-full border-none"
-                      style={{ minHeight: 400 }}
+                      className="w-full border-none block"
+                      style={{ minHeight: 400, overflow: "hidden" }}
+                      scrolling="no"
                       sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin"
                       onLoad={(e) => {
                         try {
-                          const el = e.currentTarget.contentDocument?.documentElement;
-                          if (el) e.currentTarget.style.height = el.scrollHeight + "px";
+                          const frame = e.currentTarget;
+                          const doc = frame.contentDocument;
+                          const el = doc?.documentElement;
+                          if (doc?.body) doc.body.style.overflow = "hidden";
+                          if (el) {
+                            el.style.overflow = "hidden";
+                            frame.style.height = el.scrollHeight + "px";
+                          }
                         } catch {}
                       }}
                     />
@@ -396,7 +395,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
       <section className="border-t border-[#f1f1f1] bg-[#fafafa] px-5 py-12">
         <div className="mx-auto max-w-270">
           <h2 className="mb-8 text-[20px] font-black tracking-[-0.04em]">가전구독 혜택</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map(({ Icon, title, desc }) => (
               <div key={title} className="rounded-2xl bg-white p-6 shadow-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#fff0f3]">

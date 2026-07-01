@@ -328,7 +328,7 @@ export default function ConsultForm() {
 
         {/* 관할타임 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
             <span className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28 sm:pt-1">관할타임</span>
             <div className="flex gap-5">
               {["방문관리", "자가관리"].map((opt) => (
@@ -343,7 +343,7 @@ export default function ConsultForm() {
 
         {/* 고객명 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <label htmlFor="name" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">
               고객명
             </label>
@@ -353,14 +353,14 @@ export default function ConsultForm() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 flex-1 rounded-lg border border-[#e0e0e0] px-3 text-[14px] outline-none focus:border-[#c90f45]"
+              className="h-12 w-full flex-1 rounded-lg border border-[#e0e0e0] px-3.5 text-base outline-none focus:border-[#c90f45] sm:text-[14px]"
             />
           </div>
         </div>
 
         {/* 연락처 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <label htmlFor="phone" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">
               연락처
             </label>
@@ -370,14 +370,14 @@ export default function ConsultForm() {
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="h-10 flex-1 rounded-lg border border-[#e0e0e0] px-3 text-[14px] outline-none focus:border-[#c90f45]"
+              className="h-12 w-full flex-1 rounded-lg border border-[#e0e0e0] px-3.5 text-base outline-none focus:border-[#c90f45] sm:text-[14px]"
             />
           </div>
         </div>
 
         {/* 상담가능시간 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <label htmlFor="availableTime" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28">
               상담가능시간
             </label>
@@ -387,14 +387,14 @@ export default function ConsultForm() {
               value={availableTime}
               onChange={(e) => setAvailableTime(e.target.value)}
               placeholder="상담받으시는 날짜 및 시간을 적어주세요"
-              className="h-10 flex-1 rounded-lg border border-[#e0e0e0] px-3 text-[14px] outline-none placeholder:text-[#bbb] focus:border-[#c90f45]"
+              className="h-12 w-full flex-1 rounded-lg border border-[#e0e0e0] px-3.5 text-base outline-none placeholder:text-[#bbb] focus:border-[#c90f45] sm:text-[14px]"
             />
           </div>
         </div>
 
         {/* 추가내용 */}
         <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
             <label htmlFor="extra" className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28 sm:pt-2">
               추가내용
             </label>
@@ -404,7 +404,7 @@ export default function ConsultForm() {
               value={extra}
               onChange={(e) => setExtra(e.target.value)}
               placeholder="상담받으시는 제품을 적어주세요."
-              className="flex-1 resize-none rounded-lg border border-[#e0e0e0] px-3 py-2 text-[14px] outline-none placeholder:text-[#bbb] focus:border-[#c90f45]"
+              className="w-full flex-1 resize-none rounded-lg border border-[#e0e0e0] px-3.5 py-3 text-base outline-none placeholder:text-[#bbb] focus:border-[#c90f45] sm:text-[14px]"
             />
           </div>
         </div>

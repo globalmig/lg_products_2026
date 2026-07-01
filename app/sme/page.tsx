@@ -18,15 +18,15 @@ export default function SmePage() {
 
   return (
     <main className="bg-white text-[#171717]">
-      <section className="relative isolate min-h-[430px] overflow-hidden bg-[#171717] px-5 py-24 sm:min-h-[520px] sm:py-32">
+      <section className="relative isolate min-h-75 overflow-hidden bg-[#171717] px-5 py-14 sm:min-h-95 sm:py-20 lg:min-h-120 lg:py-28">
         <Image src="/images/main/bg_hero_1.png" alt="" fill sizes="100vw" priority className="object-cover object-center opacity-58" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/76 via-black/42 to-black/12" />
-        <div className="relative z-10 mx-auto flex min-h-[250px] max-w-[1180px] flex-col justify-end">
+        <div className="relative z-10 mx-auto flex min-h-40 max-w-[1180px] flex-col justify-end sm:min-h-50 lg:min-h-60">
           <p className="mb-4 text-[14px] font-bold tracking-[0.16em] text-white/75">SMALL BUSINESS</p>
-          <h1 className="max-w-[760px] text-[38px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[56px]">
+          <h1 className="max-w-[760px] text-[28px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[42px] lg:text-[56px]">
             소상공인 전용 안내
           </h1>
-          <p className="mt-5 max-w-[640px] break-keep text-[16px] leading-[1.8] text-white/82 sm:text-[18px]">
+          <p className="mt-5 max-w-[640px] break-keep text-[15px] leading-[1.8] text-white/82 sm:text-[17px] lg:text-[18px]">
             사업장 규모와 업종에 맞는 가전 구성, 구독, 설치 상담을 LG전자 베스트샵 용산점에서 도와드립니다.
           </p>
         </div>

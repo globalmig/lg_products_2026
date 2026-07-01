@@ -15,6 +15,14 @@ export interface ConsultBanner {
   buttonHref: string;
 }
 
+export interface ChannelIcon {
+  id: string;
+  label: string;
+  imageKey: string;
+  href: string;
+  primary: boolean;
+}
+
 export interface SiteSettings {
   storeName: string;
   copyright: string;
@@ -22,6 +30,7 @@ export interface SiteSettings {
   termsContent: string;
   footerInfo: FooterInfoItem[];
   consultBanner: ConsultBanner;
+  channelIcons: ChannelIcon[];
 }
 
 const DEFAULT_CONSULT_BANNER: ConsultBanner = {
@@ -32,6 +41,13 @@ const DEFAULT_CONSULT_BANNER: ConsultBanner = {
   buttonHref: "/consult",
 };
 
+const DEFAULT_CHANNEL_ICONS: ChannelIcon[] = [
+  { id: "1", label: "상담 신청", imageKey: "/images/main/btn/reservation-1.png", href: "/consult", primary: true },
+  { id: "2", label: "카카오톡 상담", imageKey: "/images/main/btn/kakaotalk.png", href: "https://pf.kakao.com/_xnMRRX", primary: false },
+  { id: "3", label: "인스타그램", imageKey: "/images/main/btn/insta.png", href: "https://www.instagram.com/lgebestshop_yongsan", primary: false },
+  { id: "4", label: "블로그", imageKey: "/images/main/btn/blog.png", href: "https://blog.naver.com/lg_yongsan", primary: false },
+];
+
 const DEFAULTS: SiteSettings = {
   storeName: "용산전자상가점",
   copyright: "© 2026 LG Electronics Inc. All rights reserved.",
@@ -39,9 +55,10 @@ const DEFAULTS: SiteSettings = {
   termsContent: "",
   footerInfo: [],
   consultBanner: DEFAULT_CONSULT_BANNER,
+  channelIcons: DEFAULT_CHANNEL_ICONS,
 };
 
-const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner">, string> = {
+const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons">, string> = {
   storeName: "store_name",
   copyright: "copyright",
   privacyContent: "privacy_content",
@@ -60,6 +77,7 @@ export async function GET() {
       termsContent: map["terms_content"] ?? DEFAULTS.termsContent,
       footerInfo: map["footer_info"] ? JSON.parse(map["footer_info"]) : DEFAULTS.footerInfo,
       consultBanner: map["consult_banner"] ? JSON.parse(map["consult_banner"]) : DEFAULTS.consultBanner,
+      channelIcons: map["channel_icons"] ? JSON.parse(map["channel_icons"]) : DEFAULTS.channelIcons,
     });
   } catch {
     return NextResponse.json(DEFAULTS);
@@ -76,6 +94,7 @@ export async function PUT(req: Request) {
   });
   if (body.footerInfo !== undefined) updates.push(["footer_info", JSON.stringify(body.footerInfo)]);
   if (body.consultBanner !== undefined) updates.push(["consult_banner", JSON.stringify(body.consultBanner)]);
+  if (body.channelIcons !== undefined) updates.push(["channel_icons", JSON.stringify(body.channelIcons)]);
 
   if (updates.length === 0) return NextResponse.json({ ok: true });
 

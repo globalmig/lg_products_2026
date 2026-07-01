@@ -32,7 +32,7 @@ export default function HeroSlider() {
   const slide = slides[current];
 
   return (
-    <section className="relative w-full overflow-hidden aspect-[3/2] sm:aspect-[16/9] md:[aspect-ratio:16/7]">
+    <section className="relative w-full overflow-hidden aspect-16/7">
       {slides.map((s, i) => (
         <div
           key={s.id}

@@ -26,7 +26,7 @@ function ProductCard({ product, category }: { product: GridProduct; category: st
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, 25vw"
-            className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
             onError={() => setImgError(true)}
             unoptimized
           />
@@ -35,12 +35,6 @@ function ProductCard({ product, category }: { product: GridProduct; category: st
             <span className="text-[12px] text-[#bbb]">이미지 준비중</span>
           </div>
         )}
-        <div
-          className="absolute right-3 top-3 flex h-12 w-12 items-center justify-center rounded-full text-center text-[8px] font-bold leading-[1.3] text-white"
-          style={{ background: "radial-gradient(circle at 40% 35%, #e8437a, #c90f45 60%, #8b0030)" }}
-        >
-          LG전자<br />온라인<br />인증점
-        </div>
       </div>
 
       <h3 className="mb-1 line-clamp-2 text-[13px] font-semibold leading-[1.45] tracking-[-0.03em] text-[#1a1a1a] transition-colors group-hover:text-[#c90f45]">
