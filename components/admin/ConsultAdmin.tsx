@@ -16,6 +16,13 @@ function formatCurrency(value?: number) {
   return value == null ? "" : `${value.toLocaleString("ko-KR")}원`;
 }
 
+// 엑셀/시트에서 CSV를 열 때 "=", "+", "-", "@"로 시작하는 셀은 수식으로 실행될 수 있어
+// (CSV 인젝션) 앞에 작은따옴표를 붙여 문자열로 강제한다.
+function csvSafe(v: unknown): string {
+  const s = String(v ?? "");
+  return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+}
+
 function exportCSV(submissions: ConsultSubmission[]) {
   const headers = ["이름", "연락처", "상태", "신청일시", "목적/선택제품", "지역", "아파트", "채널", "모델", "상담가능시간", "추가내용", "메모"];
   const rows = submissions.map((s) => [
@@ -31,7 +38,7 @@ function exportCSV(submissions: ConsultSubmission[]) {
     s.availableTime ?? "",
     s.extra ?? "",
     s.memo ?? "",
-  ]);
+  ].map(csvSafe));
 
   const BOM = "﻿";
   const csv = BOM + [headers, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -186,9 +193,16 @@ export default function ConsultAdmin() {
                           </div>
                           <div className="mt-3 space-y-1.5 text-[12px] text-[#555]">
                             {p.selectedColor ? <DetailItem label="색상" value={p.selectedColor.name} /> : null}
-                            {p.selectedPeriodPrice ? <DetailItem label="선택 기간" value={`${p.selectedPeriodPrice.label} · ${formatCurrency(p.selectedPeriodPrice.price)}`} /> : null}
+                            {p.selectedPeriodPrice ? <DetailItem label="선택 기간" value={p.selectedPeriodPrice.label} /> : null}
                             {p.selectedCareService ? <DetailItem label="관리 서비스" value={`${p.selectedCareService.label} · ${p.selectedCareService.cycle}`} /> : null}
-                            {p.selectedCard ? <DetailItem label="카드 할인" value={`${p.selectedCard.name} · ${formatCurrency(p.selectedCard.discount)}`} /> : null}
+                            {p.selectedPeriodPrice ? <DetailItem label="구독료" value={formatCurrency(p.selectedPeriodPrice.price)} /> : null}
+                            {p.selectedCard ? <DetailItem label="카드 할인" value={`${p.selectedCard.name} · -${formatCurrency(p.selectedCard.discount)}`} /> : null}
+                            {p.selectedPeriodPrice && p.selectedCard ? (
+                              <DetailItem
+                                label="최종 구독료"
+                                value={`월 ${formatCurrency(Math.max(0, p.selectedPeriodPrice.price - p.selectedCard.discount))}`}
+                              />
+                            ) : null}
                           </div>
                         </div>
                       ))}

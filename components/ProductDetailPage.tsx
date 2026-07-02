@@ -197,60 +197,81 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             </h1>
             <p className="mb-6 text-[14px] text-[#aaa]">{product.model}</p>
 
-            {/* 계약기간 */}
-            <div className="mb-5">
-              <p className="mb-2 text-[13px] font-semibold text-[#333]">계약기간</p>
-              <div className="grid grid-cols-4 gap-2">
-                {(hasPeriodPrices
-                  ? product.periodPrices!
-                  : [72, 60, 48, 36].map((m) => ({ label: `${m}개월`, price: m === 72 ? product.monthlyPrice : m === 60 ? (product.price60 ?? product.monthlyPrice) : m === 48 ? (product.price48 ?? product.monthlyPrice) : (product.price36 ?? product.monthlyPrice) }))
-                ).map((period) => (
-                  <button
-                    key={period.label}
-                    type="button"
-                    onClick={() => setSelectedPeriod(period.label)}
-                    className={`rounded-lg border px-2 py-2.5 text-center text-[12px] font-semibold transition-colors sm:px-4 sm:py-3 sm:text-[14px] ${
-                      selectedPeriod === period.label
-                        ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                        : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
-                    }`}
-                  >
-                    {period.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 케어서비스 주기 */}
-            {(product.careServiceItems?.length ?? 0) > 0 ? (
-              <div className="mb-3">
-                <p className="mb-2 text-[13px] font-semibold text-[#333]">케어서비스 주기</p>
-                <div className="flex flex-wrap gap-2">
-                  {product.careServiceItems!.map((cs, i) => (
+            {/* 계약기간 / 케어서비스 주기 */}
+            <div className="mb-5 divide-y divide-[#e5e5e5] border-y border-[#e5e5e5]">
+              {/* 계약기간 */}
+              <div className="flex items-stretch gap-2 py-2.5 sm:py-3">
+                <div className="flex w-[64px] shrink-0 items-center text-[12px] font-semibold leading-tight text-[#333] sm:w-[104px] sm:text-[14px]">
+                  계약기간
+                </div>
+                <div className="flex flex-1 gap-2">
+                  {(hasPeriodPrices
+                    ? product.periodPrices!
+                    : [72, 60, 48, 36].map((m) => ({ label: `${m}개월`, price: m === 72 ? product.monthlyPrice : m === 60 ? (product.price60 ?? product.monthlyPrice) : m === 48 ? (product.price48 ?? product.monthlyPrice) : (product.price36 ?? product.monthlyPrice) }))
+                  ).map((period) => (
                     <button
-                      key={i}
+                      key={period.label}
                       type="button"
-                      onClick={() => setSelectedCareIdx(i)}
-                      className={`rounded-lg border px-3.5 py-2 text-left transition-colors sm:px-4 sm:py-2.5 ${
-                        selectedCareIdx === i
-                          ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                          : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
-                      }`}
+                      onClick={() => setSelectedPeriod(period.label)}
+                      className="flex flex-1 items-center justify-center py-1"
                     >
-                      <span className="block text-[13px] font-semibold sm:text-[14px]">{cs.label}</span>
-                      {cs.cycle && <span className={`block text-[12px] ${selectedCareIdx === i ? "text-white/70" : "text-[#999]"}`}>{cs.cycle}</span>}
+                      <span
+                        className={`flex w-full items-center justify-center rounded-md border py-1.5 text-[12px] font-semibold transition-colors sm:text-[14px] ${
+                          selectedPeriod === period.label
+                            ? "border-[#1a1a1a] text-[#1a1a1a]"
+                            : "border-[#e0e0e0] text-[#888] hover:border-[#999] hover:text-[#333]"
+                        }`}
+                      >
+                        {period.label}
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
-            ) : (product.careService || product.manageCycle) ? (
-              <div className="mb-3">
-                <p className="mb-2 text-[13px] font-semibold text-[#333]">케어서비스 주기</p>
-                <div className="rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#555]">
-                  {product.careService}{product.manageCycle ? ` / ${product.manageCycle}` : ""}
+
+              {/* 케어서비스 주기 */}
+              {hasCareItems ? (
+                <div className="flex items-stretch gap-2 py-2.5 sm:py-3">
+                  <div className="flex w-[64px] shrink-0 items-center text-[12px] font-semibold leading-tight text-[#333] sm:w-[104px] sm:text-[14px]">
+                    케어서비스 주기
+                  </div>
+                  <div className="flex flex-1 gap-2">
+                    {product.careServiceItems!.map((cs, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSelectedCareIdx(i)}
+                        className="flex flex-1 items-center justify-center py-1"
+                      >
+                        <span
+                          className={`flex w-full flex-col items-center justify-center rounded-md border px-1 py-1.5 transition-colors ${
+                            selectedCareIdx === i ? "border-[#1a1a1a]" : "border-[#e0e0e0] hover:border-[#999]"
+                          }`}
+                        >
+                          <span className={`text-[12px] font-semibold sm:text-[14px] ${selectedCareIdx === i ? "text-[#1a1a1a]" : "text-[#888]"}`}>
+                            {cs.label}
+                          </span>
+                          {cs.cycle && (
+                            <span className={`text-[11px] ${selectedCareIdx === i ? "text-[#666]" : "text-[#aaa]"}`}>
+                              {cs.cycle}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : null}
+              ) : (product.careService || product.manageCycle) ? (
+                <div className="flex items-stretch gap-2 py-2.5 sm:py-3">
+                  <div className="flex w-[64px] shrink-0 items-center text-[12px] font-semibold leading-tight text-[#333] sm:w-[104px] sm:text-[14px]">
+                    케어서비스 주기
+                  </div>
+                  <div className="flex flex-1 items-center px-1 text-[13px] text-[#555] sm:text-[14px]">
+                    {product.careService}{product.manageCycle ? ` / ${product.manageCycle}` : ""}
+                  </div>
+                </div>
+              ) : null}
+            </div>
 
             {/* 색상 */}
             {hasColorItems ? (
@@ -282,34 +303,39 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
               </div>
             ) : null}
 
-            {/* 이용요금 / 제휴카드가 */}
-            <div className="mb-4 mt-6 space-y-2">
-              <div className="flex items-center justify-between">
+            {/* 이용요금 (제휴카드 적용가 병기) */}
+            <div className="mb-4 mt-6">
+              <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
                 {basePrice !== null ? (
-                  <span className="text-[14px] text-[#555]">
-                    <span className="text-[20px] font-black text-[#1a1a1a]">
-                      월 {basePrice.toLocaleString()}
+                  <div className="flex flex-wrap items-baseline gap-x-1.5 md:flex-col md:items-start md:gap-x-0 md:gap-y-1">
+                    <span className="text-[14px] text-[#555] wrap-break-word">
+                      <span className="text-[20px] font-black text-[#1a1a1a]">
+                        월 {basePrice.toLocaleString()}
+                      </span>
+                      원
                     </span>
-                    {" "}원
-                  </span>
+                    {cardPrice !== null && (
+                      cardPrice > 0 ? (
+                        <span className="text-[13px] font-semibold text-[#c90f45]">
+                          (제휴카드 이용시 월 {cardPrice.toLocaleString()}원)
+                        </span>
+                      ) : (
+                        <span className="text-[13px] font-semibold text-[#c90f45]">
+                          (제휴카드 할인 적용가는 상담 문의 시 안내드립니다)
+                        </span>
+                      )
+                    )}
+                  </div>
                 ) : (
                   <span className="text-[14px] font-semibold text-[#c90f45]">상담 문의 시 안내드립니다</span>
                 )}
               </div>
-              {cardPrice !== null && (
-                <div className="flex items-center justify-between">
-                  <span className="text-[16px] font-black text-[#1a1a1a]">제휴카드가</span>
-                  <span className="text-[20px] font-black text-[#c90f45]">
-                    월 {cardPrice.toLocaleString()} 원
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* 제휴카드 선택 박스 */}
             <div className="mb-6 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3.5 py-3.5 sm:px-4 sm:py-4">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex flex-col gap-1">
                 <span className="text-[13px] font-semibold text-[#555]">제휴카드 할인</span>
                 <span className="text-[13px] text-[#888]">
                   월 최대 -{(cards[0]?.discount ?? 0).toLocaleString()}원
@@ -373,6 +399,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 const params = new URLSearchParams();
                 params.set("ids", String(product.id));
                 params.set("period", selectedPeriod);
+                if (selectedCareItem) params.set("care", selectedCareItem.label);
                 if (selectedCard) params.set("cardId", String(selectedCard.id));
                 const qs = params.toString();
                 return qs ? `/consult?${qs}` : "/consult";

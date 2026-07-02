@@ -35,6 +35,18 @@ function getColorItems(p: ManagedProduct): ColorItem[] {
   return [];
 }
 
+// 케어서비스별 계약기간 매트릭스가 있으면 (계약기간 × 케어서비스) 조합의 가격을 사용하고,
+// 없으면 계약기간 자체에 매겨진 가격을 그대로 사용한다.
+function hasCareMatrix(careItems: CareServiceItem[]): boolean {
+  return careItems.some((ci) => (ci.prices?.length ?? 0) > 0);
+}
+function resolvePrice(careItems: CareServiceItem[], period?: PeriodPrice, careIdx?: number | null): number | undefined {
+  if (!period) return undefined;
+  if (!hasCareMatrix(careItems)) return period.price;
+  if (careIdx == null) return undefined;
+  return careItems[careIdx]?.prices?.find((pr) => pr.period === period.label)?.price;
+}
+
 type ProductSelection = {
   periodPriceIdx: number | null;
   careServiceIdx: number | null;
@@ -47,6 +59,7 @@ export default function ConsultForm() {
   const searchParams = useSearchParams();
   const initialIds = searchParams.get("ids") ?? "";
   const initialPeriod = searchParams.get("period") ?? "";
+  const initialCare = searchParams.get("care") ?? "";
   const initialCardId = searchParams.get("cardId") ?? "";
   const [initialIdSet] = useState(
     () => new Set(initialIds.split(",").map((s) => s.trim()).filter(Boolean))
@@ -81,19 +94,27 @@ export default function ConsultForm() {
         const ids = initialIds.split(",").map((s) => s.trim()).filter(Boolean);
         const pre = ids.map((id) => all.find((p) => p.id === id)).filter(Boolean) as ManagedProduct[];
         setSelected(pre);
-        if (initialPeriod) {
+        if (initialPeriod || initialCare) {
           setProductSelections((prev) => {
             const next = { ...prev };
             pre.forEach((p) => {
-              const idx = getPeriodPrices(p).findIndex((pp) => pp.label === initialPeriod);
-              if (idx !== -1) next[p.id] = { ...(next[p.id] ?? DEFAULT_SEL), periodPriceIdx: idx };
+              let sel = next[p.id] ?? DEFAULT_SEL;
+              if (initialPeriod) {
+                const idx = getPeriodPrices(p).findIndex((pp) => pp.label === initialPeriod);
+                if (idx !== -1) sel = { ...sel, periodPriceIdx: idx };
+              }
+              if (initialCare) {
+                const idx = getCareServiceItems(p).findIndex((ci) => ci.label === initialCare);
+                if (idx !== -1) sel = { ...sel, careServiceIdx: idx };
+              }
+              next[p.id] = sel;
             });
             return next;
           });
         }
       }
     });
-  }, [initialIds, initialPeriod]);
+  }, [initialIds, initialPeriod, initialCare]);
 
   const setSel = (productId: string, key: keyof ProductSelection, idx: number | null) => {
     setProductSelections((prev) => ({
@@ -128,12 +149,16 @@ export default function ConsultForm() {
         const colorItems = getColorItems(p);
         const periodPrices = getPeriodPrices(p);
         const careItems = getCareServiceItems(p);
+        const rawPeriod = sel.periodPriceIdx != null ? periodPrices[sel.periodPriceIdx] : undefined;
+        const resolvedPrice = resolvePrice(careItems, rawPeriod, sel.careServiceIdx);
         return {
           id: p.id,
           name: p.name,
           model: p.model,
           image: sel.colorIdx != null && colorItems[sel.colorIdx] ? colorItems[sel.colorIdx].image : p.image,
-          selectedPeriodPrice: sel.periodPriceIdx != null ? periodPrices[sel.periodPriceIdx] : undefined,
+          selectedPeriodPrice: rawPeriod
+            ? { label: rawPeriod.label, price: resolvedPrice ?? rawPeriod.price }
+            : undefined,
           selectedCareService: sel.careServiceIdx != null ? careItems[sel.careServiceIdx] : undefined,
           selectedColor: sel.colorIdx != null ? colorItems[sel.colorIdx] : undefined,
           selectedCard: selectedCard && initialIdSet.has(p.id)
@@ -249,7 +274,7 @@ export default function ConsultForm() {
                             {/* 계약기간별 구독료 */}
                             {periodPrices.length > 0 && (
                               <div>
-                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">계약기간별 구독료</p>
+                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">계약기간</p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {periodPrices.map((pp, i) => {
                                     const active = sel.periodPriceIdx === i;
@@ -264,7 +289,7 @@ export default function ConsultForm() {
                                             : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
                                         }`}
                                       >
-                                        {pp.label} {pp.price.toLocaleString()}원
+                                        {pp.label}
                                       </button>
                                     );
                                   })}
@@ -279,6 +304,10 @@ export default function ConsultForm() {
                                 <div className="flex flex-wrap gap-1.5">
                                   {careItems.map((ci, i) => {
                                     const active = sel.careServiceIdx === i;
+                                    const selectedPeriod = sel.periodPriceIdx != null ? periodPrices[sel.periodPriceIdx] : undefined;
+                                    const price = selectedPeriod
+                                      ? ci.prices?.find((pr) => pr.period === selectedPeriod.label)?.price
+                                      : undefined;
                                     return (
                                       <button
                                         key={i}
@@ -290,12 +319,16 @@ export default function ConsultForm() {
                                             : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
                                         }`}
                                       >
-                                        {[ci.label, ci.cycle].filter(Boolean).join(" / ")}
+                                        {[ci.label, ci.cycle].filter(Boolean).join(" / ")}{price != null ? ` · ${price.toLocaleString()}원` : ""}
                                       </button>
                                     );
                                   })}
                                 </div>
                               </div>
+                            )}
+
+                            {hasCareMatrix(careItems) && (sel.periodPriceIdx == null || sel.careServiceIdx == null) && (
+                              <p className="text-[10px] text-[#c90f45]">계약기간과 케어서비스를 모두 선택하면 정확한 구독료가 표시됩니다.</p>
                             )}
 
                             {/* 제휴카드 (상품 상세페이지에서 선택한 값) */}
