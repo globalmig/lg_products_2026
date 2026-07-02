@@ -27,7 +27,7 @@ export type DetailProduct = {
   price48?: number | null;
   price36?: number | null;
   periodPrices?: { label: string; price: number }[];
-  careServiceItems?: { label: string; cycle: string }[];
+  careServiceItems?: { label: string; cycle: string; prices?: { period: string; price: number }[] }[];
   colorItems?: { name: string; image: string }[];
   image: string;
   detailImage?: string;
@@ -98,7 +98,11 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
   const selectedCard = selectedCardIdx !== null ? cards[selectedCardIdx] : null;
 
-  const basePrice = (() => {
+  const hasCareItems = (product.careServiceItems?.length ?? 0) > 0;
+  const hasCareMatrix = hasCareItems && product.careServiceItems!.some((cs) => (cs.prices?.length ?? 0) > 0);
+  const selectedCareItem = hasCareItems ? product.careServiceItems![selectedCareIdx] : undefined;
+
+  const legacyBasePrice = (() => {
     if (hasPeriodPrices) {
       return product.periodPrices!.find((p) => p.label === selectedPeriod)?.price ?? product.monthlyPrice;
     }
@@ -109,12 +113,18 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
     return product.monthlyPrice;
   })();
 
+  // 케어서비스별 계약기간 매트릭스가 있으면 해당 조합의 가격을, 없으면 기존 계약기간 기준 가격을 사용한다.
+  // 매트릭스는 있는데 선택한 조합의 값이 비어있으면 null을 반환해 "상담 문의 시 안내"로 표시한다.
+  const basePrice = hasCareMatrix
+    ? selectedCareItem?.prices?.find((p) => p.period === selectedPeriod)?.price ?? null
+    : legacyBasePrice;
+
   const hasColorItems = (product.colorItems?.length ?? 0) > 0;
   const displayImage = (hasColorItems && product.colorItems![selectedColorIdx]?.image)
     ? product.colorItems![selectedColorIdx].image
     : product.image;
 
-  const cardPrice = selectedCard ? Math.max(0, basePrice - selectedCard.discount) : null;
+  const cardPrice = selectedCard && basePrice !== null ? Math.max(0, basePrice - selectedCard.discount) : null;
 
   return (
     <main className="min-h-screen bg-white text-[#1a1a1a]">
@@ -164,6 +174,24 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
           {/* 우측: 상품 정보 */}
           <div className="flex-1">
+            {product.tags.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1">
+                {product.tags.map((tag) => (
+                  <span
+                    key={tag.label}
+                    className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                      tag.type === "hot" || tag.type === "md"
+                        ? "bg-[#fff0f3] text-[#c90f45]"
+                        : tag.type === "naver"
+                        ? "bg-[#03c75a] text-white"
+                        : "bg-[#f5f5f5] text-[#666]"
+                    }`}
+                  >
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+            )}
             <h1 className="mb-1 text-[20px] font-black leading-[1.35] tracking-[-0.04em] sm:text-[24px]">
               {product.name}
             </h1>
@@ -258,12 +286,16 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="mb-4 mt-6 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
-                <span className="text-[14px] text-[#555]">
-                  <span className="text-[20px] font-black text-[#1a1a1a]">
-                    월 {basePrice.toLocaleString()}
+                {basePrice !== null ? (
+                  <span className="text-[14px] text-[#555]">
+                    <span className="text-[20px] font-black text-[#1a1a1a]">
+                      월 {basePrice.toLocaleString()}
+                    </span>
+                    {" "}원
                   </span>
-                  {" "}원
-                </span>
+                ) : (
+                  <span className="text-[14px] font-semibold text-[#c90f45]">상담 문의 시 안내드립니다</span>
+                )}
               </div>
               {cardPrice !== null && (
                 <div className="flex items-center justify-between">

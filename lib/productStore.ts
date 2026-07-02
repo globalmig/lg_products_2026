@@ -19,6 +19,7 @@ export interface PeriodPrice {
 export interface CareServiceItem {
   label: string;
   cycle: string;
+  prices?: { period: string; price: number }[];
 }
 
 export interface ColorItem {

@@ -183,7 +183,12 @@ function ProductModal({
         })
       );
       const periodPrices = form.periodPrices ?? [];
-      const monthlyPrice = periodPrices[0]?.price ?? form.monthlyPrice;
+      const matrixPrices = (form.careServiceItems ?? [])
+        .flatMap((cs) => (cs.prices ?? []).map((p) => p.price))
+        .filter((p) => p > 0);
+      const monthlyPrice = matrixPrices.length > 0
+        ? Math.min(...matrixPrices)
+        : periodPrices[0]?.price ?? form.monthlyPrice;
       await onSave({ ...form, image, detailImage, colorItems: uploadedColorItems, monthlyPrice });
     } finally {
       setSaving(false);
@@ -202,6 +207,26 @@ function ProductModal({
   const removeCareServiceItem = (i: number) => set("careServiceItems", (form.careServiceItems ?? []).filter((_, j) => j !== i));
   const updateCareServiceItem = (i: number, field: keyof CareServiceItem, val: string) =>
     set("careServiceItems", (form.careServiceItems ?? []).map((cs, j) => j === i ? { ...cs, [field]: val } : cs));
+
+  const getMatrixPrice = (careIdx: number, periodLabel: string): number | "" => {
+    const entry = (form.careServiceItems?.[careIdx]?.prices ?? []).find((p) => p.period === periodLabel);
+    return entry ? entry.price : "";
+  };
+  const setMatrixPrice = (careIdx: number, periodLabel: string, val: string) => {
+    const price = val === "" ? undefined : Number(val);
+    set("careServiceItems", (form.careServiceItems ?? []).map((cs, j) => {
+      if (j !== careIdx) return cs;
+      const existing = cs.prices ?? [];
+      const idx = existing.findIndex((p) => p.period === periodLabel);
+      const prices =
+        price === undefined
+          ? existing.filter((p) => p.period !== periodLabel)
+          : idx >= 0
+            ? existing.map((p, k) => (k === idx ? { ...p, price } : p))
+            : [...existing, { period: periodLabel, price }];
+      return { ...cs, prices };
+    }));
+  };
 
   const addColorItem = () => {
     set("colorItems", [...(form.colorItems ?? []), { name: "", image: "" }]);
@@ -233,13 +258,13 @@ function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+      <div className="w-full max-w-3xl rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-[#f0f0f0] px-6 py-4">
           <h3 className="text-[16px] font-bold text-[#1a1a1a]">{initial ? "상품 수정" : "상품 추가"}</h3>
           <button type="button" onClick={onClose} className="text-[20px] text-[#999] hover:text-[#333]">✕</button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-4 space-y-3">
+        <div className="max-h-[85vh] overflow-y-auto px-6 py-4 space-y-6">
           {/* 카테고리 */}
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">카테고리</label>
@@ -268,41 +293,34 @@ function ProductModal({
 
           {/* 가격 */}
           <div>
-            <label className="mb-1 block text-[12px] font-semibold text-[#555]">계약기간별 월 구독료 (원)</label>
-            <p className="mb-2 text-[11px] text-[#bbb]">첫 번째 항목이 기본가로 사용됩니다.</p>
-            <div className="space-y-2">
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">계약기간</label>
+            <p className="mb-2 text-[11px] text-[#bbb]">
+              {(form.careServiceItems?.length ?? 0) > 0
+                ? "구독료는 아래 계약기간 × 케어서비스 표에서 입력합니다."
+                : "구독료를 설정하려면 케어서비스를 1개 이상 추가하세요."}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
               {(form.periodPrices ?? []).map((pp, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3 py-2">
+                <div key={i} className="flex items-center gap-1 rounded-full border border-[#e8e8e8] bg-[#fafafa] py-1 pl-3 pr-1.5">
                   <input
                     value={pp.label}
                     onChange={(e) => updatePeriodPrice(i, "label", e.target.value)}
-                    className="h-8 w-24 shrink-0 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                    className="h-7 w-16 bg-transparent text-[12px] outline-none"
                     placeholder="72개월"
                   />
-                  <input
-                    type="number"
-                    value={pp.price || ""}
-                    onChange={(e) => updatePeriodPrice(i, "price", e.target.value === "" ? 0 : Number(e.target.value))}
-                    className="h-8 flex-1 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
-                    placeholder="금액 (원)"
-                  />
-                  <button type="button" onClick={() => removePeriodPrice(i)} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eee] text-[11px] text-[#888] hover:bg-[#c90f45] hover:text-white">×</button>
+                  <button type="button" onClick={() => removePeriodPrice(i)} className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#eee] text-[10px] text-[#888] hover:bg-[#c90f45] hover:text-white">×</button>
                 </div>
               ))}
+              <button type="button" onClick={addPeriodPrice} className="flex h-8 items-center gap-1 rounded-full border-2 border-dashed border-[#e0e0e0] px-3 text-[12px] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors">
+                + 기간 추가
+              </button>
             </div>
-            <button type="button" onClick={addPeriodPrice} className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#e0e0e0] text-[12px] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors">
-              + 기간 추가
-            </button>
-          </div>
-          <div>
-            <label className="mb-1 block text-[12px] font-semibold text-[#555]">최대혜택가 (원, 없으면 비워두기)</label>
-            <input type="number" value={form.benefitPrice ?? ""} onChange={(e) => set("benefitPrice", e.target.value === "" ? null : Number(e.target.value))}
-              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="없음" />
           </div>
 
           {/* 케어서비스 주기 */}
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">케어서비스 주기 <span className="font-normal text-[#aaa]">(선택)</span></label>
+            <p className="mb-2 text-[11px] text-[#bbb]">케어서비스를 추가하면 아래에 계약기간별 구독료 표가 나타납니다.</p>
             <div className="space-y-2">
               {(form.careServiceItems ?? []).map((cs, i) => (
                 <div key={i} className="flex items-center gap-2 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3 py-2">
@@ -325,6 +343,54 @@ function ProductModal({
             <button type="button" onClick={addCareServiceItem} className="mt-2 flex h-9 w-full items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#e0e0e0] text-[12px] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors">
               + 케어서비스 추가
             </button>
+          </div>
+
+          {/* 구독료 매트릭스: 계약기간 × 케어서비스 */}
+          {(form.periodPrices?.length ?? 0) > 0 && (form.careServiceItems?.length ?? 0) > 0 && (
+            <div>
+              <label className="mb-1 block text-[12px] font-semibold text-[#555]">계약기간 × 케어서비스 구독료 (원)</label>
+              <p className="mb-2 text-[11px] text-[#bbb]">비워두면 해당 조합은 상세페이지에서 &quot;상담 문의 시 안내&quot;로 표시됩니다.</p>
+              <div className="overflow-x-auto rounded-xl border border-[#e8e8e8]">
+                <table className="w-full border-collapse text-[12px]">
+                  <thead>
+                    <tr className="bg-[#fafafa]">
+                      <th className="sticky left-0 z-10 border-b border-r border-[#e8e8e8] bg-[#fafafa] px-3 py-2 text-left font-semibold text-[#555] whitespace-nowrap">계약기간</th>
+                      {(form.careServiceItems ?? []).map((cs, ci) => (
+                        <th key={ci} className="border-b border-[#e8e8e8] px-2 py-2 text-center font-semibold text-[#555] whitespace-nowrap">
+                          {cs.label || `케어${ci + 1}`}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(form.periodPrices ?? []).map((pp, pi) => (
+                      <tr key={pi}>
+                        <td className="sticky left-0 z-10 border-b border-r border-[#e8e8e8] bg-white px-3 py-1.5 font-medium text-[#555] whitespace-nowrap">
+                          {pp.label || `기간${pi + 1}`}
+                        </td>
+                        {(form.careServiceItems ?? []).map((cs, ci) => (
+                          <td key={ci} className="border-b border-[#e8e8e8] px-1.5 py-1.5">
+                            <input
+                              type="number"
+                              value={getMatrixPrice(ci, pp.label)}
+                              onChange={(e) => setMatrixPrice(ci, pp.label, e.target.value)}
+                              className="h-8 w-full min-w-20 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                              placeholder="금액"
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">최대혜택가 (원, 없으면 비워두기)</label>
+            <input type="number" value={form.benefitPrice ?? ""} onChange={(e) => set("benefitPrice", e.target.value === "" ? null : Number(e.target.value))}
+              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" placeholder="없음" />
           </div>
 
           {/* 색상 */}
@@ -1231,8 +1297,15 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
 
   const reload = () => {
     if (sectionFilter === "all") {
-      return Promise.all(sections.map((s) => productStore.products.getBySection(s.id)))
-        .then((allProds) => setProductsState(allProds.flat().sort((a, b) => a.order - b.order)));
+      // "전체" 탭에서는 상품 추가 모달이 사용할 section 기준으로 카테고리를 로드해야
+      // 카테고리 select가 비어있지 않다.
+      return Promise.all([
+        Promise.all(sections.map((s) => productStore.products.getBySection(s.id))),
+        productStore.categories.getBySection(section),
+      ]).then(([allProds, cats]) => {
+        setProductsState(allProds.flat().sort((a, b) => a.order - b.order));
+        setCategoriesState(cats);
+      });
     }
     return Promise.all([
       productStore.products.getBySection(sectionFilter),
@@ -1247,7 +1320,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     if (sectionFilter !== "all") setSection(sectionFilter);
     setLoading(true);
     reload().then(() => { setFilterCat("전체"); setSearch(""); setLoading(false); });
-  }, [sectionFilter, sections]);
+  }, [sectionFilter, sections, section]);
 
   /* 카테고리 저장 */
   const saveCategories = (next: ManagedCategory[]) => {

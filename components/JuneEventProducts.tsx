@@ -9,7 +9,8 @@ function EventCard({ post }: { post: Post }) {
   const date = post.created_at
     ? new Date(post.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
     : "";
-  const preview = post.content.replace(/[#*>\-|]/g, "").trim().slice(0, 70);
+  const rawPreview = post.content.replace(/[#*>\-|]/g, "").trim();
+  const preview = rawPreview.length > 70 ? `${rawPreview.slice(0, 70)}...` : rawPreview;
 
   return (
     <Link
@@ -21,7 +22,7 @@ function EventCard({ post }: { post: Post }) {
         {post.title}
       </p>
       <p className="mt-3 line-clamp-3 break-keep text-[13px] leading-relaxed text-[#777]">{preview}</p>
-      <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-semibold text-[#c90f45] opacity-0 transition-opacity group-hover:opacity-100">
+      <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-semibold text-[#c90f45]">
         자세히 보기 <LuArrowRight size={12} />
       </span>
     </Link>
@@ -69,7 +70,7 @@ export default function JuneEventProducts() {
   if (posts.length === 0) return null;
 
   return (
-    <section className="py-16">
+    <section className="pt-16 pb-8">
       <div className="mx-auto max-w-360 px-5">
         <div className="mb-8">
           <p className="mb-2 text-[13px] font-semibold tracking-widest text-[#c90f45]">EVENT</p>
@@ -116,7 +117,7 @@ export default function JuneEventProducts() {
         </div>
 
         {posts.length > 1 && (
-          <div className="mx-auto mt-6 h-1 max-w-50 overflow-hidden rounded-full bg-[#f0f0f0]">
+          <div className="mx-auto mt-4 h-1 max-w-50 overflow-hidden rounded-full bg-[#f0f0f0]">
             <div
               className="h-full rounded-full bg-[#c90f45] transition-[left,width] duration-300"
               style={{ width: `${progress.width}%`, marginLeft: `${progress.left}%` }}
