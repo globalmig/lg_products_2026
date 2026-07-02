@@ -33,7 +33,7 @@ function buildNavItems(categories: ManagedCategory[], sections: ManagedSection[]
       };
     });
   return [
-    { label: "6월 행사", href: "/benefit" },
+    { label: "이달의 행사", href: "/benefit" },
     ...productNavItems,
     { label: "제휴카드", href: "/subscription?tab=card" },
     { label: "리뷰 이벤트", href: "/news" },

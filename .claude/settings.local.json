@@ -8,7 +8,29 @@
       "Bash(git rm *)",
       "Bash(git stash *)",
       "Bash(node -e ' *)",
-      "WebFetch(domain:m.wooricard.com)"
+      "WebFetch(domain:m.wooricard.com)",
+      "Bash(curl -sL -o /tmp/banner.jpg \"https://open.lge.co.kr/link/2026/care/usp_banner/promo/05/promotion/2801_affiliate_card/_won/20260528_11st.jpg\" -w \"HTTP:%{http_code} SIZE:%{size_download}\\\\n\")",
+      "Bash(python3 -c ' *)",
+      "Bash(ls -la /tmp/banner.jpg; pwd; echo \"---\"; find / -name \"banner.jpg\" 2>/dev/null | head -5)",
+      "Read(//d//**)",
+      "Bash(curl -sL -o \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad\\\\banner.jpg\" \"https://open.lge.co.kr/link/2026/care/usp_banner/promo/05/promotion/2801_affiliate_card/_won/20260528_11st.jpg\" -w \"HTTP:%{http_code} SIZE:%{size_download}\\\\n\")",
+      "Bash(curl -s \"http://localhost:3000/api/products\")",
+      "Bash(curl -s \"http://localhost:3000/api/products?section=air\" -o \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad\\\\air_products_backup.json\")",
+      "Bash(node -e \"console.log\\(JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/Users/user/AppData/Local/Temp/claude/d--file-hyebinkim-development-lg-product26/a9530157-75cf-482d-b5ef-b15a00fb217a/scratchpad/air_products_backup.json'\\)\\).length\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(Object.keys\\(p.dependencies||{}\\).concat\\(Object.keys\\(p.devDependencies||{}\\)\\).filter\\(x=>/playwright|puppeteer/i.test\\(x\\)\\)\\)\")",
+      "Bash(curl -s \"http://localhost:3000/products/air/air_1\")",
+      "Bash(where msedge.exe)",
+      "Bash(where chrome.exe)",
+      "Read(//c/Program Files/Google/Chrome/**)",
+      "Read(//c/Program Files \\(x86\\)/Microsoft/Edge/Application//**)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --no-sandbox --window-size=390,844 --virtual-time-budget=5000 --dump-dom \"http://localhost:3000/products/air/air_1\")",
+      "Bash('/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe' --headless=new --disable-gpu --no-sandbox --remote-debugging-port=9333 --window-size=390,1400 '--user-data-dir=C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/edge-profile' http://localhost:3000/products/air/air_1)",
+      "Bash(curl -s http://localhost:9333/json)",
+      "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_eval.js' ws://localhost:9333/devtools/page/10602A91D13B269B00AFF171BC4050C7 'JSON.stringify\\({bodyScrollWidth: document.body.scrollWidth, docScrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth}\\)')",
+      "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_mobile_shot.js' ws://localhost:9333/devtools/page/10602A91D13B269B00AFF171BC4050C7 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/mobile_true_390.png')",
+      "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_scroll_shot.js' ws://localhost:9333/devtools/page/10602A91D13B269B00AFF171BC4050C7 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/mobile_detail_section.png' 1350)",
+      "Bash(curl -s \"http://localhost:3000/api/products?section=air\")",
+      "Bash(taskkill //F //IM msedge.exe)"
     ]
   }
 }

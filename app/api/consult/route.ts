@@ -23,13 +23,13 @@ export async function POST(req: Request) {
     // legacy fields
     purpose = "", area = "", apartment = "", channels = [], model = "",
     // new subscription fields
-    selectedProducts = [], careType = "", availableTime = "", extra = "",
+    selectedProducts = [], availableTime = "", extra = "",
   } = await req.json();
   await env.lg_product_db
     .prepare(
       "INSERT INTO consult_submissions (id, name, phone, purpose, area, apartment, channels, model, submitted_at, status, selected_products, care_type, available_time, extra) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
-    .bind(id, name, phone, purpose, area, apartment, JSON.stringify(channels), model, submitted_at, status, JSON.stringify(selectedProducts), careType, availableTime, extra)
+    .bind(id, name, phone, purpose, area, apartment, JSON.stringify(channels), model, submitted_at, status, JSON.stringify(selectedProducts), "", availableTime, extra)
     .run();
   return NextResponse.json({ ok: true });
 }

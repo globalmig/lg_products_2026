@@ -34,7 +34,6 @@ export interface ConsultSubmission {
     selectedColor?: { name: string; image: string };
     selectedCard?: { name: string; discount: number; image?: string };
   }[];
-  careType?: string;
   availableTime?: string;
   extra?: string;
   submitted_at: string;

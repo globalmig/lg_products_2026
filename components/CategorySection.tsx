@@ -64,12 +64,17 @@ export default function CategorySection() {
       pausedRef.current = true;
       startX = e.clientX;
       startScroll = el.scrollLeft;
-      el.setPointerCapture(e.pointerId);
     };
     const onPointerMove = (e: PointerEvent) => {
       if (!dragging) return;
       const dx = e.clientX - startX;
-      if (Math.abs(dx) > 5) dragged = true;
+      if (Math.abs(dx) > 5) {
+        // 실제 드래그로 확정된 시점에만 포인터를 캡처한다.
+        // pointerdown 시점에 바로 캡처하면 클릭 이벤트의 타겟이 el로 바뀌어
+        // 자식 Link가 클릭 이벤트를 받지 못해 이동이 전혀 안 되는 문제가 있었다.
+        if (!dragged) el.setPointerCapture(e.pointerId);
+        dragged = true;
+      }
       el.scrollLeft = startScroll - dx;
     };
     const endDrag = () => {

@@ -47,7 +47,7 @@ export default function HeroSlider() {
         return (
           <div
             key={s.id}
-            className={`absolute inset-0 transition-opacity duration-700 ${i === current ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 transition-opacity duration-700 ${i === current ? "opacity-100" : "pointer-events-none opacity-0"}`}
           >
             {s.link ? (
               <a href={s.link} target="_blank" rel="noopener noreferrer" className="absolute inset-0 block">
@@ -77,7 +77,7 @@ export default function HeroSlider() {
         ›
       </button>
 
-      <div className="relative z-10 mx-auto flex h-full max-w-270 items-center px-5">
+      <div className="pointer-events-none relative z-10 mx-auto flex h-full max-w-270 items-center px-5">
         <div className="mb-4 sm:mb-6 md:mb-10">
           <p className="mb-2 sm:mb-4 text-[16px] sm:text-[22px] md:text-[31px] font-medium tracking-tighter">
             {slide.subtitle}

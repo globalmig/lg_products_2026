@@ -107,13 +107,6 @@ export default function BenefitDetailPage() {
       <section className="px-5 py-12">
         <div className="mx-auto max-w-270">
           <div className="prose-custom">{renderContent(post.content)}</div>
-          <div className="mt-14 rounded-2xl bg-[#fff5f7] px-8 py-8 text-center">
-            <p className="mb-2 text-[14px] font-medium text-[#c90f45]">궁금한 점이 있으신가요?</p>
-            <p className="mb-5 text-[20px] font-black tracking-[-0.04em] text-[#1a1a1a]">전담 매니저가 빠르게 안내해 드립니다</p>
-            <a href="/consult" className="inline-flex h-12 items-center justify-center rounded-full bg-[#c90f45] px-10 text-[15px] font-bold text-white transition-opacity hover:opacity-90">
-              상담 신청하기
-            </a>
-          </div>
         </div>
       </section>
 

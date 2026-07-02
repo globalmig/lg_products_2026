@@ -17,7 +17,7 @@ function formatCurrency(value?: number) {
 }
 
 function exportCSV(submissions: ConsultSubmission[]) {
-  const headers = ["이름", "연락처", "상태", "신청일시", "목적/선택제품", "지역", "아파트", "채널", "모델", "관할타임", "상담가능시간", "추가내용", "메모"];
+  const headers = ["이름", "연락처", "상태", "신청일시", "목적/선택제품", "지역", "아파트", "채널", "모델", "상담가능시간", "추가내용", "메모"];
   const rows = submissions.map((s) => [
     s.name,
     s.phone,
@@ -28,7 +28,6 @@ function exportCSV(submissions: ConsultSubmission[]) {
     s.apartment ?? "",
     (s.channels ?? []).join(" | "),
     s.model ?? "",
-    s.careType ?? "",
     s.availableTime ?? "",
     s.extra ?? "",
     s.memo ?? "",
@@ -196,7 +195,6 @@ export default function ConsultAdmin() {
                     </div>
                     <Row label="이름" value={selected.name} />
                     <Row label="연락처" value={selected.phone} />
-                    <Row label="관할타임" value={selected.careType ?? ""} />
                     <Row label="상담가능시간" value={selected.availableTime ?? "없음"} />
                     <Row label="추가내용" value={selected.extra ?? "없음"} />
                     <Row label="신청 일시" value={new Date(selected.submitted_at).toLocaleString("ko-KR")} />

@@ -57,7 +57,6 @@ export default function ConsultForm() {
   const [productSelections, setProductSelections] = useState<Record<string, ProductSelection>>({});
   const [cards, setCards] = useState<CardDiscount[]>([]);
   const selectedCard = initialCardId ? cards.find((c) => c.id === initialCardId) ?? null : null;
-  const [careType, setCareType] = useState("방문관리");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [availableTime, setAvailableTime] = useState("");
@@ -142,7 +141,6 @@ export default function ConsultForm() {
             : undefined,
         };
       }),
-      careType,
       availableTime,
       extra,
       submitted_at: new Date().toISOString(),
@@ -322,21 +320,6 @@ export default function ConsultForm() {
                   </button>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* 관할타임 */}
-        <div className="border-b border-[#f0f0f0] py-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-            <span className="shrink-0 text-[14px] font-semibold text-[#555] sm:w-28 sm:pt-1">관할타임</span>
-            <div className="flex gap-5">
-              {["방문관리", "자가관리"].map((opt) => (
-                <label key={opt} className="flex cursor-pointer items-center gap-2">
-                  <input type="radio" name="careType" value={opt} checked={careType === opt} onChange={() => setCareType(opt)} className="accent-[#c90f45]" />
-                  <span className="text-[14px] text-[#333]">{opt}</span>
-                </label>
-              ))}
             </div>
           </div>
         </div>

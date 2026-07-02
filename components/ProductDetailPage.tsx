@@ -45,6 +45,24 @@ type Props = {
   section?: string;
 };
 
+function withResponsiveOverride(html: string): string {
+  const style =
+    "<style>img{max-width:100% !important;height:auto !important}" +
+    '*[style*="860px"]{width:100% !important;max-width:860px !important}' +
+    "html,body{max-width:100%;overflow-x:hidden}</style>";
+  const headMatch = html.match(/<head[^>]*>/i);
+  if (headMatch) {
+    const idx = html.indexOf(headMatch[0]) + headMatch[0].length;
+    return html.slice(0, idx) + style + html.slice(idx);
+  }
+  const bodyMatch = html.match(/<body[^>]*>/i);
+  if (bodyMatch) {
+    const idx = html.indexOf(bodyMatch[0]) + bodyMatch[0].length;
+    return html.slice(0, idx) + style + html.slice(idx);
+  }
+  return style + html;
+}
+
 const benefits = [
   { Icon: LuWrench, title: "전문가 정기 점검", desc: "전문 매니저가 정기적으로 방문해 제품 상태를 점검·관리합니다." },
   { Icon: LuRefreshCw, title: "제품 업그레이드", desc: "약정 기간 후 최신 제품으로 업그레이드할 수 있습니다." },
@@ -337,7 +355,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 product.detailImage.trimStart().startsWith("<") ? (
                   /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage) ? (
                     <iframe
-                      srcDoc={product.detailImage}
+                      srcDoc={withResponsiveOverride(product.detailImage)}
                       className="w-full border-none block"
                       style={{ minHeight: 400, overflow: "hidden" }}
                       scrolling="no"

@@ -142,6 +142,18 @@ function ProductModal({
   const handleThumb = makeFileHandler(setThumbPreview);
   const handleDetail = makeFileHandler(setDetailPreview);
 
+  const handleHtmlFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const buffer = e.target?.result as ArrayBuffer;
+      const sniff = new TextDecoder("latin1").decode(buffer.slice(0, 2000));
+      const isEucKr = /charset=["']?euc-kr/i.test(sniff);
+      const text = new TextDecoder(isEucKr ? "euc-kr" : "utf-8").decode(buffer);
+      setDetailHtml(text);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
@@ -474,6 +486,23 @@ function ProductModal({
               <>
                 <p className="mb-1.5 text-[11px] text-[#bbb]">Iframe, 팝업링크 제외. 이미지 URL은 https로 작성해주세요.</p>
 
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <label className="cursor-pointer rounded-lg border border-[#e8e8e8] bg-white px-2.5 py-1 text-[11px] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45] transition-colors">
+                    원본 .html 파일 불러오기 (인코딩 자동 감지)
+                    <input
+                      type="file"
+                      accept=".html,.htm"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleHtmlFileUpload(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                  <p className="text-[11px] text-[#bbb]">EUC-KR로 저장된 원본 파일을 그대로 올리면 인코딩을 자동으로 맞춰줍니다.</p>
+                </div>
+
                 {/* 태그 빠른 삽입 툴바 */}
                 <div className="mb-2 flex flex-wrap gap-1 rounded-lg border border-[#f0f0f0] bg-[#fafafa] p-1.5">
                   {([
@@ -510,7 +539,8 @@ function ProductModal({
                 />
                 {/charset=["']?EUC-KR/i.test(detailHtml) && (
                   <p className="mt-1 rounded-lg bg-[#fff8e1] px-3 py-2 text-[11px] text-[#b8860b]">
-                    ⚠ EUC-KR 인코딩 HTML이 감지되었습니다. 한글이 깨질 수 있습니다. 메모장에서 UTF-8로 저장 후 다시 붙여넣기 해주세요. (파일 → 다른 이름으로 저장 → 인코딩: UTF-8)
+                    ⚠ EUC-KR 인코딩 HTML이 감지되었습니다. 지금처럼 텍스트를 복사해서 붙여넣으면 한글이 이미 깨진 상태로 들어올 수 있습니다.
+                    위의 &quot;원본 .html 파일 불러오기&quot; 버튼으로 원본 파일을 직접 올려주세요. 이미 깨져서 붙여넣어진 글자(□, ?)는 복구할 수 없으니, 파일을 다시 올려 새로 반영해야 합니다.
                   </p>
                 )}
                 <div className="mt-1.5 flex justify-between">
