@@ -1049,7 +1049,7 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
       {/* 이미지 */}
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#f5f5f5]">
         {product.image && !imgError ? (
-          <Image src={product.image} alt="" fill className="object-contain p-1" onError={() => setImgError(true)} unoptimized />
+          <Image src={product.image} alt="" fill className="object-contain" onError={() => setImgError(true)} unoptimized />
         ) : (
           <span className="flex h-full items-center justify-center text-[9px] text-[#ccc]">없음</span>
         )}

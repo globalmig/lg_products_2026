@@ -25,7 +25,7 @@ function ProductCard({ product, href }: { product: ManagedProduct; href: string 
             alt={product.name}
             fill
             sizes="(min-width: 768px) 192px, (min-width: 640px) 176px, 144px"
-            className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
             onError={() => setImgError(true)}
             unoptimized
           />
