@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO site_settings (key, value) VALUES ('event_banner', '{"badge":"이달의 행사","title":"이달의 행사 진행 중 🎉","description":"이달의 특별 할인 혜택을 놓치지 마세요","buttonLabel":"혜택 확인하기 →","buttonHref":"/benefit"}');

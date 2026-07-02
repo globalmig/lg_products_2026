@@ -15,6 +15,14 @@ export interface ConsultBanner {
   buttonHref: string;
 }
 
+export interface EventBanner {
+  badge: string;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  buttonHref: string;
+}
+
 export interface ChannelIcon {
   id: string;
   label: string;
@@ -70,6 +78,7 @@ export interface SiteSettings {
   consultBanner: ConsultBanner;
   channelIcons: ChannelIcon[];
   newsEvent: NewsEventContent;
+  eventBanner: EventBanner;
 }
 
 const DEFAULT_CONSULT_BANNER: ConsultBanner = {
@@ -78,6 +87,14 @@ const DEFAULT_CONSULT_BANNER: ConsultBanner = {
   desc: "전담 매니저가 빠르게 연락드립니다. 방문 없이 집에서 편리하게.",
   buttonText: "지금 바로 상담 예약",
   buttonHref: "/consult",
+};
+
+const DEFAULT_EVENT_BANNER: EventBanner = {
+  badge: "이달의 행사",
+  title: "이달의 행사 진행 중 🎉",
+  description: "이달의 특별 할인 혜택을 놓치지 마세요",
+  buttonLabel: "혜택 확인하기 →",
+  buttonHref: "/benefit",
 };
 
 const DEFAULT_CHANNEL_ICONS: ChannelIcon[] = [
@@ -123,9 +140,10 @@ const DEFAULTS: SiteSettings = {
   consultBanner: DEFAULT_CONSULT_BANNER,
   channelIcons: DEFAULT_CHANNEL_ICONS,
   newsEvent: DEFAULT_NEWS_EVENT,
+  eventBanner: DEFAULT_EVENT_BANNER,
 };
 
-const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent">, string> = {
+const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner">, string> = {
   storeName: "store_name",
   storeNameMobile: "store_name_mobile",
   copyright: "copyright",
@@ -148,6 +166,7 @@ export async function GET() {
       consultBanner: map["consult_banner"] ? JSON.parse(map["consult_banner"]) : DEFAULTS.consultBanner,
       channelIcons: map["channel_icons"] ? JSON.parse(map["channel_icons"]) : DEFAULTS.channelIcons,
       newsEvent: map["news_event"] ? JSON.parse(map["news_event"]) : DEFAULTS.newsEvent,
+      eventBanner: map["event_banner"] ? JSON.parse(map["event_banner"]) : DEFAULTS.eventBanner,
     });
   } catch {
     return NextResponse.json(DEFAULTS);
@@ -166,6 +185,7 @@ export async function PUT(req: Request) {
   if (body.consultBanner !== undefined) updates.push(["consult_banner", JSON.stringify(body.consultBanner)]);
   if (body.channelIcons !== undefined) updates.push(["channel_icons", JSON.stringify(body.channelIcons)]);
   if (body.newsEvent !== undefined) updates.push(["news_event", JSON.stringify(body.newsEvent)]);
+  if (body.eventBanner !== undefined) updates.push(["event_banner", JSON.stringify(body.eventBanner)]);
 
   if (updates.length === 0) return NextResponse.json({ ok: true });
 

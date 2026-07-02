@@ -109,6 +109,14 @@ export interface ChannelIcon {
   primary: boolean;
 }
 
+export interface EventBanner {
+  badge: string;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  buttonHref: string;
+}
+
 export interface NewsEventStep {
   title: string;
   desc: string;
@@ -184,6 +192,14 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
     { id: "nr2", stars: 5, image_key: "", content: "구독 서비스가 이렇게 편할 줄 몰랐어요. 설치도 빠르고 관리까지 해준다니 너무 좋아요. 용산점 매니저분이 실제 사용 팁도 알려주셔서 처음 사용하는 데 전혀 어렵지 않았습니다.", name: "박*은", product: "LG 워시타워 렌탈 가전 구독", date: "2026.05.12", sort_order: 1 },
     { id: "nr3", stars: 5, image_key: "", content: "혼자 사는데 거실에 두기 딱 좋은 사이즈예요. 가격 대비 화질이 정말 좋고, 배터리로 어디서나 볼 수 있어서 활용도가 높아요. 매장에서 직접 비교하고 구매할 수 있어서 좋았습니다.", name: "이*준", product: "LG 스탠바이미 2 렌탈 가전 구독", date: "2026.04.29", sort_order: 2 },
   ],
+};
+
+const DEFAULT_EVENT_BANNER: EventBanner = {
+  badge: "이달의 행사",
+  title: "이달의 행사 진행 중 🎉",
+  description: "이달의 특별 할인 혜택을 놓치지 마세요",
+  buttonLabel: "혜택 확인하기 →",
+  buttonHref: "/benefit",
 };
 
 const DEFAULT_SLIDES: Slide[] = defaultSlides;
@@ -347,6 +363,7 @@ export const adminStore = {
       consultBanner: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string };
       channelIcons: ChannelIcon[];
       newsEvent: NewsEventContent;
+      eventBanner: EventBanner;
     }>("/api/site-settings").catch(() => ({
       storeName: "용산전자상가점",
       storeNameMobile: "",
@@ -357,8 +374,9 @@ export const adminStore = {
       consultBanner: { badge: "주주 상담", title: "지금 바로 상담을 신청하세요", desc: "전담 매니저가 빠르게 연락드립니다. 방문 없이 집에서 편리하게.", buttonText: "지금 바로 상담 예약", buttonHref: "/consult" },
       channelIcons: DEFAULT_CHANNEL_ICONS,
       newsEvent: DEFAULT_NEWS_EVENT,
+      eventBanner: DEFAULT_EVENT_BANNER,
     })),
-    set: (data: { storeName?: string; storeNameMobile?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[]; newsEvent?: NewsEventContent }) =>
+    set: (data: { storeName?: string; storeNameMobile?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[]; newsEvent?: NewsEventContent; eventBanner?: EventBanner }) =>
       apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
   },
 };
