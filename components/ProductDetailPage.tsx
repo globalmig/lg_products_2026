@@ -45,6 +45,18 @@ type Props = {
   section?: string;
 };
 
+function dedupeMapNames(html: string): string {
+  let pairIndex = 0;
+  return html.replace(
+    /(usemap=["']#)[^"']+(["'])|<map(\s+name=["'])[^"']+(["'])/gi,
+    (match, umPrefix, umSuffix, mapPrefix, mapSuffix) => {
+      if (umPrefix) return `${umPrefix}usp_map_${pairIndex + 1}${umSuffix}`;
+      pairIndex += 1;
+      return `<map${mapPrefix}usp_map_${pairIndex}${mapSuffix}`;
+    }
+  );
+}
+
 function withResponsiveOverride(html: string): string {
   const style =
     "<style>img{max-width:100% !important;height:auto !important}" +
@@ -355,7 +367,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 product.detailImage.trimStart().startsWith("<") ? (
                   /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage) ? (
                     <iframe
-                      srcDoc={withResponsiveOverride(product.detailImage)}
+                      srcDoc={withResponsiveOverride(dedupeMapNames(product.detailImage))}
                       className="w-full border-none block"
                       style={{ minHeight: 400, overflow: "hidden" }}
                       scrolling="no"

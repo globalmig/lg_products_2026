@@ -845,22 +845,22 @@ function SectionManager({ sections, onChange }: {
 }
 
 /* ────── 엑셀 템플릿 다운로드 ────── */
-async function downloadExcelTemplate(categories: ManagedCategory[]) {
+async function downloadExcelTemplate(sections: ManagedSection[]) {
   const XLSX = await import("xlsx");
   const headers = [
-    "카테고리", "상품명", "모델번호",
+    "상위카테고리", "카테고리", "상품명", "모델번호",
     "72개월_구독료", "60개월_구독료", "48개월_구독료", "36개월_구독료",
     "최대혜택가", "케어서비스주기", "관리주기", "색상",
     "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
   ];
-  const example = [
-    categories[0]?.name ?? "카테고리명",
-    "예시 상품명", "ABCD-1234",
-    45900, 49900, 53900, 57900,
-    "", "라이트+", "라이트+ (12개월)", "네이처 그린",
-    "N", "네이버페이:naver",
+  const sorted = [...sections].sort((a, b) => a.order - b.order);
+  const sectionLabel = (i: number) => sorted[i % sorted.length]?.label ?? "";
+  const examples = [
+    [sectionLabel(0), "정수기", "예시 상품명", "ABCD-1234", 45900, 49900, 53900, 57900, "", "라이트+", "라이트+ (12개월)", "네이처 그린", "N", "네이버페이:naver"],
+    [sectionLabel(1), "안마의자", "예시 상품명2", "EFGH-5678", 39900, 43900, 47900, 51900, "", "", "", "", "N", ""],
+    [sectionLabel(2), "스타일러", "예시 상품명3", "IJKL-9012", 32900, "", "", "", "", "", "", "", "Y", "MD 추천:md"],
   ];
-  const ws = XLSX.utils.aoa_to_sheet([headers, example]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
   ws["!cols"] = headers.map(() => ({ wch: 20 }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "상품등록");
@@ -869,23 +869,72 @@ async function downloadExcelTemplate(categories: ManagedCategory[]) {
 
 /* ────── 엑셀 업로드 모달 ────── */
 function ExcelUploadModal({
-  section,
-  sectionLabel,
-  categories,
+  sections,
+  defaultSection,
   onImport,
   onClose,
 }: {
-  section: Section;
-  sectionLabel: string;
-  categories: ManagedCategory[];
+  sections: ManagedSection[];
+  defaultSection: Section;
   onImport: (products: Omit<ManagedProduct, "id" | "order">[]) => void;
   onClose: () => void;
 }) {
   const [parsed, setParsed] = useState<Omit<ManagedProduct, "id" | "order">[]>([]);
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
+  const [categoriesBySection, setCategoriesBySection] = useState<Record<string, ManagedCategory[]>>({});
+  const [liveSections, setLiveSections] = useState<ManagedSection[]>(sections);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // 모달을 열 때마다 최신 상위카테고리·카테고리 목록을 다시 받아온다.
+  // 부모의 sections는 admin 페이지 최초 진입 시 한 번만 불러온 값이라 오래 켜둔 탭에서는 오래된 값일 수 있다.
+  useEffect(() => {
+    productStore.sections.get().then((secs) => {
+      setLiveSections(secs);
+      // 섹션별로 개별 조회해야 한다: 전체 한 번에 조회하면 DB에 카테고리가 하나라도 있는 순간
+      // (예: 주방가전만 등록됨) 나머지 빈 섹션은 기본 카테고리로 대체되지 않고 그냥 빈 목록이 된다.
+      Promise.all(secs.map((s) => productStore.categories.getBySection(s.id))).then((results) => {
+        const map: Record<string, ManagedCategory[]> = {};
+        secs.forEach((s, i) => {
+          map[s.id] = [...results[i]].sort((a, b) => a.order - b.order);
+        });
+        setCategoriesBySection(map);
+      });
+    });
+  }, []);
+
+  const normalize = (s: string) => s.trim().replace(/\s+/g, "").toLowerCase();
+
+  // "상위카테고리" 셀 텍스트를 실제 등록된 섹션과 매칭. 못 찾으면 null.
+  const matchSectionByText = (text: string): Section | null => {
+    const norm = normalize(text);
+    if (!norm) return null;
+    const match = liveSections.find((s) => normalize(s.label) === norm || normalize(s.id) === norm);
+    return match ? match.id : null;
+  };
+
+  // "카테고리"(하위카테고리) 셀 텍스트가 어느 섹션에 등록된 이름인지 역으로 찾는다. 못 찾으면 null.
+  const matchSectionByCategory = (categoryText: string): Section | null => {
+    const norm = normalize(categoryText);
+    if (!norm) return null;
+    const found = liveSections.find((s) => (categoriesBySection[s.id] ?? []).some((c) => normalize(c.name) === norm));
+    return found ? found.id : null;
+  };
+
+  // "카테고리" 칸에 실제로는 상위카테고리 이름(예: "TV")이 적힌 경우를 가려낸다.
+  // 이때는 그 이름으로 상위카테고리를 잡고, 하위카테고리는 비워서 미리보기에서 직접 고르도록 안내한다.
+  const resolveSectionAndCategory = (sectionText: string, categoryText: string): { section: Section; category: string | null } => {
+    const bySectionColumn = matchSectionByText(sectionText);
+    if (bySectionColumn) return { section: bySectionColumn, category: null };
+
+    const categoryLooksLikeSection = matchSectionByText(categoryText);
+    if (categoryLooksLikeSection) return { section: categoryLooksLikeSection, category: "" };
+
+    const byCategoryLookup = matchSectionByCategory(categoryText);
+    if (byCategoryLookup) return { section: byCategoryLookup, category: null };
+
+    return { section: defaultSection, category: null };
+  };
 
   const handleFile = async (file: File) => {
     setError("");
@@ -908,7 +957,14 @@ function ExcelUploadModal({
         if (!name) { errors.push(`${rowNum}행: 상품명 필수`); return; }
         if (!monthlyPrice) { errors.push(`${rowNum}행: 72개월 구독료 필수`); return; }
 
-        const category = String(row["카테고리"] ?? "").trim() || (categories[0]?.name ?? "");
+        const rawCategory = String(row["카테고리"] ?? "").trim();
+        const { section, category: forcedCategory } = resolveSectionAndCategory(String(row["상위카테고리"] ?? ""), rawCategory);
+        const sectionCats = categoriesBySection[section] ?? [];
+        // 빈 셀만 해당 섹션의 첫 카테고리로 채우고, 값이 있으면 등록 여부와 상관없이 엑셀에 적힌 그대로 유지한다.
+        // (미등록 값이면 미리보기에서 "(미등록)"으로 표시되고 드롭다운으로 직접 고를 수 있다.)
+        // "카테고리" 칸이 상위카테고리 이름이었던 경우(forcedCategory === "")엔 비워서 직접 선택하도록 안내한다.
+        const category = forcedCategory !== null ? forcedCategory : (rawCategory || (sectionCats[0]?.name ?? ""));
+
         const tagsRaw = String(row["태그(라벨:타입,라벨2:타입2)"] ?? "").trim();
         const tags = tagsRaw
           ? tagsRaw.split(",").map((t) => {
@@ -944,6 +1000,18 @@ function ExcelUploadModal({
     }
   };
 
+  const updateCategory = (i: number, category: string) =>
+    setParsed((prev) => prev.map((p, j) => (j === i ? { ...p, category } : p)));
+
+  const updateSection = (i: number, section: Section) => {
+    const cats = categoriesBySection[section] ?? [];
+    setParsed((prev) => prev.map((p, j) => {
+      if (j !== i) return p;
+      const category = cats.some((c) => c.name === p.category) ? p.category : (cats[0]?.name ?? "");
+      return { ...p, section, category };
+    }));
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
@@ -957,15 +1025,15 @@ function ExcelUploadModal({
           <div className="rounded-xl bg-[#fafafa] border border-[#f0f0f0] px-4 py-3 text-[12px] text-[#666] leading-[1.8]">
             <p className="font-semibold text-[#333] mb-1">안내사항</p>
             <p>· 이미지는 엑셀로 등록 후 개별 상품 수정에서 직접 확인·추가해 주세요.</p>
-            <p>· 현재 선택된 섹션 <strong className="text-[#c90f45]">{sectionLabel}</strong> 에 등록됩니다.</p>
-            <p>· 카테고리명은 이미 등록된 카테고리명과 정확히 일치해야 합니다.</p>
+            <p>· 상위카테고리를 비워두면 <strong className="text-[#c90f45]">{liveSections.find((s) => s.id === defaultSection)?.label ?? defaultSection}</strong> 에 등록됩니다.</p>
+            <p>· 상위카테고리·카테고리명이 등록된 값과 다르면 원본 텍스트가 그대로 유지되고 빨간 테두리로 표시되니, 업로드 후 미리보기에서 드롭다운으로 직접 선택해 수정해 주세요.</p>
           </div>
 
           {/* 템플릿 다운로드 */}
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => downloadExcelTemplate(categories)}
+              onClick={() => downloadExcelTemplate(liveSections)}
               className="flex items-center gap-1.5 h-9 rounded-xl border border-[#e8e8e8] px-4 text-[13px] text-[#555] hover:border-[#555] transition-colors"
             >
               ↓ 템플릿 다운로드
@@ -1001,28 +1069,50 @@ function ExcelUploadModal({
           {/* 미리보기 */}
           {parsed.length > 0 && (
             <div>
-              <p className="mb-2 text-[13px] font-semibold text-[#333]">미리보기 ({parsed.length}개 상품)</p>
+              <p className="mb-2 text-[13px] font-semibold text-[#333]">미리보기 ({parsed.length}개 상품) — 상위카테고리·카테고리는 클릭해서 바로 수정할 수 있습니다.</p>
               <div className="overflow-x-auto rounded-xl border border-[#f0f0f0]">
                 <table className="w-full text-[12px]">
                   <thead>
                     <tr className="bg-[#fafafa] border-b border-[#f0f0f0]">
+                      <th className="px-3 py-2 text-left font-semibold text-[#555]">상위카테고리</th>
                       <th className="px-3 py-2 text-left font-semibold text-[#555]">카테고리</th>
                       <th className="px-3 py-2 text-left font-semibold text-[#555]">상품명</th>
                       <th className="px-3 py-2 text-left font-semibold text-[#555]">모델번호</th>
-                      <th className="px-3 py-2 text-right font-semibold text-[#555]">72개월</th>
-                      <th className="px-3 py-2 text-center font-semibold text-[#555]">베스트</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {parsed.map((p, i) => (
+                    {parsed.map((p, i) => {
+                      const cats = categoriesBySection[p.section] ?? [];
+                      const categoryMatched = cats.some((c) => c.name === p.category);
+                      return (
                       <tr key={i} className="border-b border-[#f0f0f0] last:border-0">
-                        <td className="px-3 py-2 text-[#666]">{p.category}</td>
+                        <td className="px-3 py-2">
+                          <select
+                            value={p.section}
+                            onChange={(e) => updateSection(i, e.target.value)}
+                            className="h-8 w-28 shrink-0 rounded-lg border border-[#e8e8e8] bg-white px-2 text-[12px] outline-none focus:border-[#c90f45]"
+                          >
+                            {liveSections.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                          </select>
+                        </td>
+                        <td className="px-3 py-2">
+                          <select
+                            value={p.category}
+                            onChange={(e) => updateCategory(i, e.target.value)}
+                            className={`h-8 w-28 shrink-0 rounded-lg border bg-white px-2 text-[12px] outline-none focus:border-[#c90f45] ${categoryMatched ? "border-[#e8e8e8]" : "border-[#f0b0b0]"}`}
+                          >
+                            {cats.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            {/* 등록된 목록에 없는 값(빈 값 포함)도 항상 최소 1개 옵션을 보여줘 드롭다운이 비지 않게 한다 */}
+                            {!categoryMatched && (
+                              <option value={p.category}>{p.category ? `${p.category} (미등록)` : "카테고리 선택"}</option>
+                            )}
+                          </select>
+                        </td>
                         <td className="px-3 py-2 font-semibold text-[#1a1a1a]">{p.name}</td>
                         <td className="px-3 py-2 text-[#888]">{p.model || "-"}</td>
-                        <td className="px-3 py-2 text-right font-bold text-[#c90f45]">{p.monthlyPrice.toLocaleString()}원</td>
-                        <td className="px-3 py-2 text-center">{p.isBest ? "✓" : "-"}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1279,7 +1369,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       <div className={`mt-4 mb-4 flex justify-end gap-2 ${subTab === "category" ? "invisible h-8" : ""}`}>
         <button
           type="button"
-          onClick={() => downloadExcelTemplate(categories)}
+          onClick={() => downloadExcelTemplate(sections)}
           className="h-8 rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#555]"
         >
           ↓ 엑셀 양식 다운로드
@@ -1427,9 +1517,8 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
 
       {excelModal && (
         <ExcelUploadModal
-          section={section}
-          sectionLabel={sectionLabel(section)}
-          categories={categories}
+          sections={sections}
+          defaultSection={section}
           onImport={importFromExcel}
           onClose={() => setExcelModal(false)}
         />
