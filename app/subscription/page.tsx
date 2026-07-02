@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     title: "가전 구독 | LG전자 베스트샵 용산점",
     description: "재구독·결합·선납 할인 등 다양한 구독 혜택을 확인하세요.",
     url: "/subscription",
+    images: [{ url: "/images/main/hero.jpg", width: 1600, height: 699, alt: "LG전자 베스트샵 용산점" }],
   },
 };
 

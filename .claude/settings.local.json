@@ -51,7 +51,14 @@
       "Bash('/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe' --headless=new --disable-gpu --no-sandbox --remote-debugging-port=9336 --window-size=1280,1600 '--user-data-dir=C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/edge-profile4')",
       "Bash(curl -s -X PUT \"http://localhost:9336/json/new?about:blank\")",
       "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_click_prod2.js' ws://localhost:9336/devtools/page/72C234E5C92EDB21F4EF1C6DCE83B85D 9336 http://localhost:3000/products/air/air_1)",
-      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts, null, 2\\)\\)\")"
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts, null, 2\\)\\)\")",
+      "Bash(curl -sI \"http://localhost:3000/favicon.ico\")",
+      "Bash(find . -maxdepth 1 -iname \"wrangler*\")",
+      "Bash(cat wrangler.jsonc)",
+      "Bash(cat wrangler.toml)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>console.log\\(JSON.parse\\(d\\).version\\)\\)\")",
+      "Bash(curl -s \"http://localhost:3000/\")",
+      "Bash(curl -s \"http://localhost:3000/subscription\")"
     ]
   }
 }
