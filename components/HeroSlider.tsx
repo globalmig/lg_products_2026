@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { slides as defaultSlides, type Slide } from "@/data/slides";
-import { adminStore } from "@/lib/adminStore";
+import { adminStore, imageUrl } from "@/lib/adminStore";
 
 export default function HeroSlider() {
   const [slides, setSlides] = useState<Slide[]>(defaultSlides);
+  const [mobileImages, setMobileImages] = useState<Record<string, string>>({});
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [autoplaySuspended, setAutoplaySuspended] = useState(false);
@@ -20,6 +21,9 @@ export default function HeroSlider() {
   useEffect(() => {
     adminStore.slides.get().then((data) => {
       if (data.length > 0) setSlides(data);
+    });
+    adminStore.siteSettings.get().then((s) => {
+      if (s.heroMobileImages) setMobileImages(s.heroMobileImages);
     });
   }, []);
 
@@ -141,16 +145,28 @@ export default function HeroSlider() {
         className="scrollbar-hide flex h-full w-full cursor-grab select-none snap-x snap-mandatory overflow-x-auto scroll-smooth active:cursor-grabbing"
       >
         {slides.map((s, i) => {
+          const mobileSrc = imageUrl(mobileImages[String(s.id)]) || s.image;
           const image = (
-            <Image
-              src={s.image}
-              alt=""
-              fill
-              priority={i === 0}
-              sizes="100vw"
-              draggable={false}
-              className="pointer-events-none object-cover object-top"
-            />
+            <>
+              <Image
+                src={s.image}
+                alt=""
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                draggable={false}
+                className="pointer-events-none hidden object-cover object-top min-[861px]:block"
+              />
+              <Image
+                src={mobileSrc}
+                alt=""
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                draggable={false}
+                className="pointer-events-none object-cover object-top min-[861px]:hidden"
+              />
+            </>
           );
           return (
             <div key={s.id} className="relative h-full w-full flex-none snap-center">

@@ -62,6 +62,8 @@ export interface NewsEventContent {
   description: string;
   period: string;
   target: string;
+  heroImageKey: string;
+  heroImageKeyMobile: string;
   steps: NewsEventStep[];
   prizes: NewsEventPrize[];
   prizeNote: string;
@@ -79,6 +81,7 @@ export interface SiteSettings {
   channelIcons: ChannelIcon[];
   newsEvent: NewsEventContent;
   eventBanner: EventBanner;
+  heroMobileImages: Record<string, string>;
 }
 
 const DEFAULT_CONSULT_BANNER: ConsultBanner = {
@@ -111,6 +114,8 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
   description: "LG전자 베스트샵 용산점에서 구독·구매 후 네이버 지도 리뷰를 작성하시면 추첨을 통해 경품을 드립니다.",
   period: "2026.06.01 – 06.30",
   target: "구독·구매 완료 고객",
+  heroImageKey: "",
+  heroImageKeyMobile: "",
   steps: [
     { title: "구독 or 구매 상담", desc: "매장 방문 또는 온라인으로 상담 후 제품을 구독·구매하세요." },
     { title: "네이버 지도 리뷰 작성", desc: "LG전자 베스트샵 용산점 네이버 지도 페이지에 별점 5점 + 50자 이상 후기를 남겨주세요." },
@@ -141,9 +146,10 @@ const DEFAULTS: SiteSettings = {
   channelIcons: DEFAULT_CHANNEL_ICONS,
   newsEvent: DEFAULT_NEWS_EVENT,
   eventBanner: DEFAULT_EVENT_BANNER,
+  heroMobileImages: {},
 };
 
-const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner">, string> = {
+const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner" | "heroMobileImages">, string> = {
   storeName: "store_name",
   storeNameMobile: "store_name_mobile",
   copyright: "copyright",
@@ -167,6 +173,7 @@ export async function GET() {
       channelIcons: map["channel_icons"] ? JSON.parse(map["channel_icons"]) : DEFAULTS.channelIcons,
       newsEvent: map["news_event"] ? JSON.parse(map["news_event"]) : DEFAULTS.newsEvent,
       eventBanner: map["event_banner"] ? JSON.parse(map["event_banner"]) : DEFAULTS.eventBanner,
+      heroMobileImages: map["hero_mobile_images"] ? JSON.parse(map["hero_mobile_images"]) : DEFAULTS.heroMobileImages,
     });
   } catch {
     return NextResponse.json(DEFAULTS);
@@ -186,6 +193,7 @@ export async function PUT(req: Request) {
   if (body.channelIcons !== undefined) updates.push(["channel_icons", JSON.stringify(body.channelIcons)]);
   if (body.newsEvent !== undefined) updates.push(["news_event", JSON.stringify(body.newsEvent)]);
   if (body.eventBanner !== undefined) updates.push(["event_banner", JSON.stringify(body.eventBanner)]);
+  if (body.heroMobileImages !== undefined) updates.push(["hero_mobile_images", JSON.stringify(body.heroMobileImages)]);
 
   if (updates.length === 0) return NextResponse.json({ ok: true });
 

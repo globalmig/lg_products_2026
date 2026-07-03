@@ -11,7 +11,7 @@ import {
   LuArrowRight,
 } from "react-icons/lu";
 import { FaStar } from "react-icons/fa";
-import { adminStore, type NewsEventContent } from "@/lib/adminStore";
+import { adminStore, imageUrl, type NewsEventContent } from "@/lib/adminStore";
 
 const STEP_ICONS = [LuShoppingCart, LuStar, LuCamera, LuGift];
 
@@ -22,6 +22,8 @@ const DEFAULT_CONTENT: NewsEventContent = {
   description: "LG전자 베스트샵 용산점에서 구독·구매 후 네이버 지도 리뷰를 작성하시면 추첨을 통해 경품을 드립니다.",
   period: "2026.06.01 – 06.30",
   target: "구독·구매 완료 고객",
+  heroImageKey: "",
+  heroImageKeyMobile: "",
   steps: [
     { title: "구독 or 구매 상담", desc: "매장 방문 또는 온라인으로 상담 후 제품을 구독·구매하세요." },
     { title: "네이버 지도 리뷰 작성", desc: "LG전자 베스트샵 용산점 네이버 지도 페이지에 별점 5점 + 50자 이상 후기를 남겨주세요." },
@@ -46,13 +48,24 @@ export default function NewsEventPageContent() {
     });
   }, []);
 
-  const { badge, titleLine1, titleLine2, description, period, target, steps, prizes, prizeNote, reviews } = content;
+  const { badge, titleLine1, titleLine2, description, period, target, heroImageKey, heroImageKeyMobile, steps, prizes, prizeNote, reviews } = content;
+  const heroImg = imageUrl(heroImageKey);
+  const heroImgMobile = imageUrl(heroImageKeyMobile) || heroImg;
 
   return (
     <main className="bg-white text-[#1a1a1a]">
 
       {/* 히어로 */}
       <section className="relative overflow-hidden bg-[#0d0d0d] px-5 py-14 sm:py-20 lg:py-28">
+        {heroImg && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={heroImg} alt="" className="absolute inset-0 hidden h-full w-full object-cover object-center min-[861px]:block" />
+        )}
+        {heroImgMobile && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={heroImgMobile} alt="" className="absolute inset-0 h-full w-full object-cover object-center min-[861px]:hidden" />
+        )}
+        {(heroImg || heroImgMobile) && <div className="absolute inset-0 bg-black/55" />}
         <div
           className="absolute inset-0 opacity-20"
           style={{

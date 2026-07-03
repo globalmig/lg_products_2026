@@ -7,12 +7,13 @@ import { adminStore, uploadImage, imageUrl } from "@/lib/adminStore";
 import type { Slide } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
 
-type SlideWithKey = Slide & { image_key: string };
+type SlideWithKey = Slide & { image_key: string; image_key_mobile?: string };
 
-const EMPTY = { image: "", image_key: "", subtitle: "", title: "", link: "" };
+const EMPTY = { image: "", image_key: "", image_key_mobile: "", subtitle: "", title: "", link: "" };
 
 export default function HeroAdmin() {
   const [slides, setSlides] = useState<SlideWithKey[]>([]);
+  const [mobileImages, setMobileImages] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<SlideWithKey | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -34,7 +35,15 @@ export default function HeroAdmin() {
       }
       setLoading(false);
     });
+    adminStore.siteSettings.get().then((s) => {
+      if (s.heroMobileImages) setMobileImages(s.heroMobileImages);
+    });
   }, []);
+
+  const saveMobileImages = (next: Record<string, string>) => {
+    setMobileImages(next);
+    return adminStore.siteSettings.set({ heroMobileImages: next });
+  };
 
   const handleSaveEdit = async () => {
     if (!editing) return;
@@ -45,6 +54,10 @@ export default function HeroAdmin() {
       link: editing.link ?? "",
       sort_order: slides.findIndex((s) => s.id === editing.id),
     });
+    const nextMobile = { ...mobileImages };
+    if (editing.image_key_mobile) nextMobile[String(editing.id)] = editing.image_key_mobile;
+    else delete nextMobile[String(editing.id)];
+    await saveMobileImages(nextMobile);
     setSlides((prev) => prev.map((s) => (s.id === editing.id ? editing : s)));
     setEditing(null);
   };
@@ -58,7 +71,10 @@ export default function HeroAdmin() {
       sort_order: slides.length,
     });
     const { id } = result as { id: number };
-    setSlides((prev) => [...prev, { id, image: form.image, image_key: form.image_key, subtitle: form.subtitle, title: form.title, link: form.link }]);
+    if (form.image_key_mobile) {
+      await saveMobileImages({ ...mobileImages, [String(id)]: form.image_key_mobile });
+    }
+    setSlides((prev) => [...prev, { id, image: form.image, image_key: form.image_key, image_key_mobile: form.image_key_mobile, subtitle: form.subtitle, title: form.title, link: form.link }]);
     setForm(EMPTY);
     setAdding(false);
   };
@@ -68,6 +84,11 @@ export default function HeroAdmin() {
   const doDelete = async () => {
     if (confirmId === null) return;
     await adminStore.slides.delete(confirmId);
+    if (mobileImages[String(confirmId)]) {
+      const nextMobile = { ...mobileImages };
+      delete nextMobile[String(confirmId)];
+      await saveMobileImages(nextMobile);
+    }
     setSlides((prev) => prev.filter((s) => s.id !== confirmId));
     setConfirmId(null);
   };
@@ -122,7 +143,7 @@ export default function HeroAdmin() {
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button onClick={() => setEditing({ ...slide })} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
+                  <button onClick={() => setEditing({ ...slide, image_key_mobile: mobileImages[String(slide.id)] ?? "" })} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
                   <button onClick={() => handleDelete(slide.id)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-red-400 hover:text-red-500" title="삭제"><LuTrash2 size={14} /></button>
                 </div>
               </div>
@@ -133,7 +154,7 @@ export default function HeroAdmin() {
 
       {adding && (
         <Modal title="슬라이드 추가" onClose={() => setAdding(false)}>
-          <SlideForm data={{ id: 0, ...form }} onChange={(v) => setForm({ image: v.image, image_key: v.image_key, subtitle: v.subtitle, title: v.title, link: v.link ?? "" })} onSave={handleAdd} onCancel={() => setAdding(false)} saveLabel="추가" />
+          <SlideForm data={{ id: 0, ...form }} onChange={(v) => setForm({ image: v.image, image_key: v.image_key, image_key_mobile: v.image_key_mobile ?? "", subtitle: v.subtitle, title: v.title, link: v.link ?? "" })} onSave={handleAdd} onCancel={() => setAdding(false)} saveLabel="추가" />
         </Modal>
       )}
     </div>
@@ -149,6 +170,8 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const mobileFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingMobile, setUploadingMobile] = useState(false);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -162,9 +185,24 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
     }
   };
 
+  const handleMobileFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingMobile(true);
+    try {
+      const key = await uploadImage(file, "slides");
+      onChange({ ...data, image_key_mobile: key });
+    } finally {
+      setUploadingMobile(false);
+      e.target.value = "";
+    }
+  };
+
+  const mobileImg = imageUrl(data.image_key_mobile ?? "");
+
   return (
     <div className="space-y-3">
-      <Field label="이미지">
+      <Field label="이미지 (PC)">
         <div
           onClick={() => fileRef.current?.click()}
           className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-5 hover:border-[#c90f45] transition-colors"
@@ -186,6 +224,29 @@ function SlideForm({ data, onChange, onSave, onCancel, saveLabel = "저장" }: {
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         <p className="mt-1.5 text-[11px] text-[#bbb]">권장 크기: 1920×840px (16:7 비율) 이상 · 최대 5MB (JPG, PNG, WebP)</p>
+      </Field>
+      <Field label="이미지 (모바일)">
+        <div
+          onClick={() => mobileFileRef.current?.click()}
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#e8e8e8] py-5 hover:border-[#c90f45] transition-colors"
+        >
+          {uploadingMobile ? (
+            <p className="text-[13px] text-[#aaa]">업로드 중...</p>
+          ) : mobileImg ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={mobileImg} alt="" className="max-h-32 w-full rounded-lg object-contain" />
+          ) : (
+            <p className="text-[12px] text-[#aaa]">클릭해서 이미지 업로드</p>
+          )}
+          {mobileImg && !uploadingMobile && <p className="text-[11px] text-[#aaa]">클릭해서 이미지 변경</p>}
+        </div>
+        <input ref={mobileFileRef} type="file" accept="image/*" className="hidden" onChange={handleMobileFile} />
+        {mobileImg && (
+          <button type="button" onClick={() => onChange({ ...data, image_key_mobile: "" })} className="mt-1 text-[11px] text-[#bbb] hover:text-red-400">
+            이미지 삭제
+          </button>
+        )}
+        <p className="mt-1.5 text-[11px] text-[#bbb]">비워두면 PC 이미지가 대신 표시됩니다. 권장: 세로형, 1000×1200px 이상</p>
       </Field>
       <Field label="부제목">
         <input value={data.subtitle} onChange={(e) => onChange({ ...data, subtitle: e.target.value })}

@@ -37,8 +37,8 @@ const NAV: { id: string; label: string; Icon: IconType }[] = [
   { id: "hero", label: "히어로 슬라이드", Icon: MdImage },
   { id: "featureBanner", label: "피처 배너", Icon: MdLocalOffer },
   { id: "mainCategory", label: "메인 카테고리", Icon: MdCategory },
-  { id: "benefitPosts", label: "혜택 & 소식 관리", Icon: MdArticle },
-  { id: "cardDiscounts", label: "제휴카드 관리", Icon: MdCreditCard },
+  { id: "benefitPosts", label: "혜택 & 소식", Icon: MdArticle },
+  { id: "cardDiscounts", label: "제휴카드", Icon: MdCreditCard },
   { id: "reviews", label: "리뷰 관리", Icon: MdStar },
   { id: "consult", label: "상담 신청 현황", Icon: MdAssignment },
   { id: "siteSettings", label: "사이트 설정", Icon: MdSettings },
@@ -314,7 +314,7 @@ export default function AdminPage() {
           {tab === "featureBanner" && <FeatureBannerAdmin />}
           {tab === "mainCategory" && <MainCategoryAdmin />}
           {tab === "eventProducts" && <EventPostAdmin />}
-          {tab === "benefitPosts" && <PostAdmin storeKey="benefit" title="혜택 & 소식 관리" />}
+          {tab === "benefitPosts" && <PostAdmin storeKey="benefit" title="혜택 & 소식" />}
           {tab === "cardDiscounts" && <CardDiscountAdmin />}
           {tab === "reviews" && <ReviewAdmin />}
           {tab === "consult" && <ConsultAdmin />}

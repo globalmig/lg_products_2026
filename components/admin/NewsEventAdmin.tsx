@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LuPencil, LuTrash2 } from "react-icons/lu";
 import AdminLoading from "./AdminLoading";
 import ConfirmDialog from "./ConfirmDialog";
 import { ReviewForm } from "./ReviewAdmin";
-import { adminStore, imageUrl, type NewsEventContent, type NewsEventStep, type NewsEventPrize, type Review } from "@/lib/adminStore";
+import { adminStore, imageUrl, uploadImage, type NewsEventContent, type NewsEventStep, type NewsEventPrize, type Review } from "@/lib/adminStore";
 
 const EMPTY_CONTENT: NewsEventContent = {
   badge: "",
@@ -14,6 +14,8 @@ const EMPTY_CONTENT: NewsEventContent = {
   description: "",
   period: "",
   target: "",
+  heroImageKey: "",
+  heroImageKeyMobile: "",
   steps: [],
   prizes: [],
   prizeNote: "",
@@ -37,6 +39,9 @@ export default function NewsEventAdmin() {
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [addingReview, setAddingReview] = useState<Omit<Review, "id" | "sort_order"> | null>(null);
   const [confirmReviewId, setConfirmReviewId] = useState<string | null>(null);
+  const [uploadingHero, setUploadingHero] = useState<"pc" | "mobile" | null>(null);
+  const heroPcFileRef = useRef<HTMLInputElement>(null);
+  const heroMobileFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     adminStore.siteSettings.get().then((s) => {
@@ -53,6 +58,19 @@ export default function NewsEventAdmin() {
       setTimeout(() => setSaved(false), 2000);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleHeroFile = async (target: "pc" | "mobile", e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingHero(target);
+    try {
+      const key = await uploadImage(file, "news-event");
+      setContent((prev) => (target === "pc" ? { ...prev, heroImageKey: key } : { ...prev, heroImageKeyMobile: key }));
+    } finally {
+      setUploadingHero(null);
+      e.target.value = "";
     }
   };
 
@@ -102,6 +120,56 @@ export default function NewsEventAdmin() {
       <div>
         <h3 className="mb-3 text-[14px] font-bold text-[#1a1a1a]">히어로 영역</h3>
         <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>배경 이미지 (PC)</label>
+              <div
+                onClick={() => heroPcFileRef.current?.click()}
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 transition-colors hover:border-[#c90f45]"
+                style={{ minHeight: "100px" }}
+              >
+                {uploadingHero === "pc" ? (
+                  <p className="text-[13px] text-[#aaa]">업로드 중...</p>
+                ) : content.heroImageKey ? (
+                  <img src={imageUrl(content.heroImageKey)} alt="" className="max-h-28 w-full rounded-lg object-cover" />
+                ) : (
+                  <p className="text-[12px] text-[#aaa]">클릭해서 이미지 업로드</p>
+                )}
+                {content.heroImageKey && uploadingHero !== "pc" && <p className="text-[11px] text-[#aaa]">클릭해서 이미지 변경</p>}
+              </div>
+              <input ref={heroPcFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroFile("pc", e)} />
+              {content.heroImageKey && (
+                <button type="button" onClick={() => setContent({ ...content, heroImageKey: "" })} className="mt-1 text-[11px] text-[#bbb] hover:text-red-400">
+                  이미지 삭제
+                </button>
+              )}
+              <p className="mt-1 text-[11px] text-[#bbb]">권장: 1920×800px 이상</p>
+            </div>
+            <div>
+              <label className={labelCls}>배경 이미지 (모바일)</label>
+              <div
+                onClick={() => heroMobileFileRef.current?.click()}
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 transition-colors hover:border-[#c90f45]"
+                style={{ minHeight: "100px" }}
+              >
+                {uploadingHero === "mobile" ? (
+                  <p className="text-[13px] text-[#aaa]">업로드 중...</p>
+                ) : content.heroImageKeyMobile ? (
+                  <img src={imageUrl(content.heroImageKeyMobile)} alt="" className="max-h-28 w-full rounded-lg object-cover" />
+                ) : (
+                  <p className="text-[12px] text-[#aaa]">클릭해서 이미지 업로드</p>
+                )}
+                {content.heroImageKeyMobile && uploadingHero !== "mobile" && <p className="text-[11px] text-[#aaa]">클릭해서 이미지 변경</p>}
+              </div>
+              <input ref={heroMobileFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroFile("mobile", e)} />
+              {content.heroImageKeyMobile && (
+                <button type="button" onClick={() => setContent({ ...content, heroImageKeyMobile: "" })} className="mt-1 text-[11px] text-[#bbb] hover:text-red-400">
+                  이미지 삭제
+                </button>
+              )}
+              <p className="mt-1 text-[11px] text-[#bbb]">비워두면 PC 이미지가 대신 표시됩니다.</p>
+            </div>
+          </div>
           <div>
             <label className={labelCls}>배지 문구</label>
             <input value={content.badge} onChange={(e) => setContent({ ...content, badge: e.target.value })} className={inputCls} placeholder="예: 2026년 6월 리뷰 이벤트" />
