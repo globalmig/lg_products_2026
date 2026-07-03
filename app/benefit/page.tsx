@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminStore, type Post } from "@/lib/adminStore";
+import { postPreviewText } from "@/lib/renderPostContent";
 
 export default function BenefitNewsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -57,10 +58,7 @@ export default function BenefitNewsPage() {
                     {post.title}
                   </h3>
                   <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666] line-clamp-2">
-                    {post.content
-                      .replace(/[#*>\-|]/g, "")
-                      .trim()
-                      .slice(0, 120)}
+                    {postPreviewText(post.content)}
                   </p>
                   <span className="mt-4 inline-block text-[13px] font-semibold text-[#c90f45] opacity-0 group-hover:opacity-100 transition-opacity">자세히 보기 →</span>
                 </Link>

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export function renderPostContent(content: string): ReactNode[] {
+function renderMarkdownLite(content: string): ReactNode[] {
   const lines = content.trim().split("\n");
   const elements: ReactNode[] = [];
   let key = 0;
@@ -51,4 +51,31 @@ export function renderPostContent(content: string): ReactNode[] {
   }
   if (inTable) flushTable();
   return elements;
+}
+
+/** 목록 카드용 짧은 미리보기 텍스트를 만든다. */
+export function postPreviewText(content: string, maxLength = 120): string {
+  const trimmed = content.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("<")) {
+    return trimmed.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, maxLength);
+  }
+  if (/^(https?:\/\/|\/)\S+$/.test(trimmed) && !trimmed.includes("\n")) return "";
+  return trimmed.replace(/[#*>\-|]/g, "").trim().slice(0, maxLength);
+}
+
+/**
+ * 게시글 본문 렌더러. 상품 상세설명 편집과 동일하게 세 가지 작성 방식을 지원한다:
+ * HTML(<로 시작) → 그대로 삽입, 단일 이미지 URL → <img>, 그 외 → 마크다운 라이트 파서.
+ */
+export function renderPostContent(content: string): ReactNode {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("<")) {
+    return <div className="detail-html-content" dangerouslySetInnerHTML={{ __html: content }} />;
+  }
+  if (/^(https?:\/\/|\/)\S+$/.test(trimmed) && !trimmed.includes("\n")) {
+    return <img src={trimmed} alt="" style={{ maxWidth: "100%", height: "auto", display: "block" }} />;
+  }
+  return <>{renderMarkdownLite(content)}</>;
 }

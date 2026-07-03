@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminStore, type Post } from "@/lib/adminStore";
+import { postPreviewText } from "@/lib/renderPostContent";
 
 export default function SmePage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -59,7 +60,7 @@ export default function SmePage() {
                     <div>
                       <h3 className="break-keep text-[22px] font-black leading-[1.45] tracking-[-0.04em] text-[#1a1a1a]">{post.title}</h3>
                       <p className="mt-3 break-keep text-[15px] leading-[1.8] text-[#666] line-clamp-2">
-                        {post.content.replace(/[#*>\-|]/g, "").trim().slice(0, 120)}
+                        {postPreviewText(post.content)}
                       </p>
                     </div>
                   </article>

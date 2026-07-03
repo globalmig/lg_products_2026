@@ -4,12 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LuChevronLeft, LuChevronRight, LuArrowRight } from "react-icons/lu";
 import { adminStore, type Post } from "@/lib/adminStore";
+import { postPreviewText } from "@/lib/renderPostContent";
 
 function EventCard({ post }: { post: Post }) {
   const date = post.created_at
     ? new Date(post.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
     : "";
-  const rawPreview = post.content.replace(/[#*>\-|]/g, "").trim();
+  const rawPreview = postPreviewText(post.content, 70);
   const preview = rawPreview.length > 70 ? `${rawPreview.slice(0, 70)}...` : rawPreview;
 
   return (
