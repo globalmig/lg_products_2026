@@ -104,7 +104,12 @@
       "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_hero_drag3.js' ws://localhost:9340/devtools/page/00F0DFBC792FACEB17BE96804DA6A44F)",
       "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_hero_drag3.js' ws://localhost:9340/devtools/page/25EF6BEABFB029BBC02AAC7129C02EEB)",
       "Bash(node 'C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--file-hyebinkim-development-lg-product26\\\\a9530157-75cf-482d-b5ef-b15a00fb217a\\\\scratchpad/cdp_hero_drag4.js' ws://localhost:9340/devtools/page/B77AB19CAC90BA275A2BB7E07974C8CF)",
-      "Bash(curl -s -o /dev/null -w \"dev server: %{http_code}\\\\n\" http://localhost:3000/)"
+      "Bash(curl -s -o /dev/null -w \"dev server: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(command -v sqlite3)",
+      "Bash(sqlite3 \".wrangler/state/v3/d1/miniflare-D1DatabaseObject/e97fecfee6d4a6fc25a9bc4e0bfe78e02fc108961c0a1bf931968dea84a9410d.sqlite\" \".mode line\" \"SELECT id, monthly_price, benefit_price, price_60, price_48, price_36, care_service, manage_cycle, color, is_best, tags, period_prices, care_service_items, color_items FROM products LIMIT 3;\")",
+      "Bash(sqlite3 --version)",
+      "Bash(python3 -c \"import sqlite3; print\\('ok'\\)\")",
+      "Bash(python3 -)"
     ]
   }
 }

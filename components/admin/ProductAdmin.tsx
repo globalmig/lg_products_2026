@@ -63,6 +63,38 @@ function legacyColorItems(p: ManagedProduct): ColorItem[] {
   return [];
 }
 
+// 엑셀 내보내기/가져오기에서 "케어서비스N_라벨/주기/기간별구독료" 컬럼 그룹을 다루기 위한 헬퍼.
+// 구독료는 이제 단일 72/60/48/36개월이 아니라 계약기간 × 케어서비스 매트릭스이므로,
+// 케어서비스 1개당 3칸(라벨, 주기, "기간라벨:가격,기간라벨2:가격2" 인코딩 문자열)을 반복한다.
+function careGroupHeaders(count: number): string[] {
+  const headers: string[] = [];
+  for (let i = 1; i <= count; i++) {
+    headers.push(`케어서비스${i}_라벨`, `케어서비스${i}_주기`, `케어서비스${i}_기간별구독료`);
+  }
+  return headers;
+}
+
+function encodePeriodPrices(prices: { period: string; price: number }[] | undefined): string {
+  return (prices ?? [])
+    .filter((pp) => pp.period)
+    .map((pp) => `${pp.period}:${pp.price}`)
+    .join(",");
+}
+
+function decodePeriodPrices(cell: unknown): { period: string; price: number }[] {
+  const s = String(cell ?? "").trim();
+  if (!s) return [];
+  return s
+    .split(",")
+    .map((pair) => pair.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const [period, priceStr] = pair.split(":").map((v) => v.trim());
+      return { period: period ?? "", price: Number(priceStr) || 0 };
+    })
+    .filter((pp) => pp.period);
+}
+
 // 엑셀 업로드 시 "같은 제품"을 판정하는 기준: 같은 상위카테고리(section) 내에서
 // 모델번호가 둘 다 있으면 모델번호로, 없으면 카테고리+상품명으로 동일 제품 여부를 판단한다.
 function isSameProduct(existing: ManagedProduct, incoming: Omit<ManagedProduct, "id" | "order">): boolean {
@@ -921,20 +953,24 @@ function SectionManager({ sections, onChange }: {
 }
 
 /* ────── 엑셀 템플릿 다운로드 ────── */
+const TEMPLATE_CARE_GROUP_COUNT = 2;
+
 async function downloadExcelTemplate(sections: ManagedSection[]) {
   const XLSX = await import("xlsx");
-  const headers = [
+  const baseHeaders = [
     "상위카테고리", "카테고리", "상품명", "모델번호",
-    "72개월_구독료", "60개월_구독료", "48개월_구독료", "36개월_구독료",
-    "최대혜택가", "케어서비스주기", "관리주기", "색상",
-    "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
+    "최대혜택가", "색상(콤마로 구분)", "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
   ];
+  const headers = [...baseHeaders, ...careGroupHeaders(TEMPLATE_CARE_GROUP_COUNT)];
   const sorted = [...sections].sort((a, b) => a.order - b.order);
   const sectionLabel = (i: number) => sorted[i % sorted.length]?.label ?? "";
   const examples = [
-    [sectionLabel(0), "정수기", "예시 상품명", "ABCD-1234", 45900, 49900, 53900, 57900, "", "라이트+", "라이트+ (12개월)", "네이처 그린", "N", "네이버페이:naver"],
-    [sectionLabel(1), "안마의자", "예시 상품명2", "EFGH-5678", 39900, 43900, 47900, 51900, "", "", "", "", "N", ""],
-    [sectionLabel(2), "스타일러", "예시 상품명3", "IJKL-9012", 32900, "", "", "", "", "", "", "", "Y", "MD 추천:md"],
+    [sectionLabel(0), "정수기", "예시 상품명", "ABCD-1234", "", "네이처 그린", "N", "네이버페이:naver",
+      "라이트+", "12개월에 1회", "10개월:17900,72개월:35000", "프리미엄", "6개월에 1회", "10개월:25000,72개월:45000"],
+    [sectionLabel(1), "안마의자", "예시 상품명2", "EFGH-5678", "", "", "N", "",
+      "케어", "12개월에 1회", "36개월:39900,48개월:43900", "", "", ""],
+    [sectionLabel(2), "스타일러", "예시 상품명3", "IJKL-9012", "", "", "Y", "MD 추천:md",
+      "", "", "", "", "", ""],
   ];
   const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
   ws["!cols"] = headers.map(() => ({ wch: 20 }));
@@ -944,30 +980,27 @@ async function downloadExcelTemplate(sections: ManagedSection[]) {
 }
 
 /* ────── 등록된 상품 엑셀 다운로드 ────── */
-function periodPriceByKeyword(p: ManagedProduct, keyword: string): number | "" {
-  const found = legacyPeriodPrices(p).find((pp) => pp.label.includes(keyword));
-  return found ? found.price : "";
-}
-
 async function downloadProductsExcel(products: ManagedProduct[], sections: ManagedSection[]) {
   const XLSX = await import("xlsx");
-  const headers = [
+  const baseHeaders = [
     "상위카테고리", "카테고리", "상품명", "모델번호",
-    "72개월_구독료", "60개월_구독료", "48개월_구독료", "36개월_구독료",
-    "최대혜택가", "케어서비스주기", "관리주기", "색상",
-    "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
+    "최대혜택가", "색상(콤마로 구분)", "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
   ];
+  const careGroupCount = Math.max(1, ...products.map((p) => legacyCareServiceItems(p).length));
+  const headers = [...baseHeaders, ...careGroupHeaders(careGroupCount)];
   const sectionLabel = (id: string) => sections.find((s) => s.id === id)?.label ?? id;
   const rows = products.map((p) => {
-    const care = legacyCareServiceItems(p)[0];
-    const color = legacyColorItems(p)[0];
+    const careItems = legacyCareServiceItems(p);
+    const colorNames = legacyColorItems(p).map((c) => c.name).filter(Boolean).join(",");
+    const careCells = Array.from({ length: careGroupCount }, (_, i) => {
+      const cs = careItems[i];
+      return [cs?.label ?? "", cs?.cycle ?? "", encodePeriodPrices(cs?.prices)];
+    }).flat();
     return [
       sectionLabel(p.section), p.category, p.name, p.model,
-      periodPriceByKeyword(p, "72"), periodPriceByKeyword(p, "60"),
-      periodPriceByKeyword(p, "48"), periodPriceByKeyword(p, "36"),
-      p.benefitPrice ?? "", care?.label ?? "", care?.cycle ?? "", color?.name ?? "",
-      p.isBest ? "Y" : "N",
+      p.benefitPrice ?? "", colorNames, p.isBest ? "Y" : "N",
       p.tags.map((t) => `${t.label}:${t.type}`).join(","),
+      ...careCells,
     ];
   });
   const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -1065,15 +1098,19 @@ function ExcelUploadModal({
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
 
+      // 실제 시트의 헤더 행에서 "케어서비스N_라벨" 컬럼이 몇 개까지 있는지 확인한다.
+      // (row 값으로 판단하면 특정 상품에서 그 케어서비스 칸이 비어있을 때 컬럼 자체가 없는 것으로 오판할 수 있다.)
+      const headerRow = (XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1 })[0] ?? []) as string[];
+      let careGroupCount = 0;
+      while (headerRow.includes(`케어서비스${careGroupCount + 1}_라벨`)) careGroupCount++;
+
       const results: Omit<ManagedProduct, "id" | "order">[] = [];
       const errors: string[] = [];
 
       rows.forEach((row, i) => {
         const rowNum = i + 2;
         const name = String(row["상품명"] ?? "").trim();
-        const monthlyPrice = Number(row["72개월_구독료"] ?? 0);
         if (!name) { errors.push(`${rowNum}행: 상품명 필수`); return; }
-        if (!monthlyPrice) { errors.push(`${rowNum}행: 72개월 구독료 필수`); return; }
 
         const rawCategory = String(row["카테고리"] ?? "").trim();
         const { section, category: forcedCategory } = resolveSectionAndCategory(String(row["상위카테고리"] ?? ""), rawCategory);
@@ -1091,19 +1128,39 @@ function ExcelUploadModal({
             }).filter((t) => t.label)
           : [];
 
+        // 케어서비스N_라벨/주기/기간별구독료 컬럼 그룹을 careServiceItems 매트릭스로 되돌린다.
+        const careServiceItems = Array.from({ length: careGroupCount }, (_, gi) => {
+          const label = String(row[`케어서비스${gi + 1}_라벨`] ?? "").trim();
+          const cycle = String(row[`케어서비스${gi + 1}_주기`] ?? "").trim();
+          const prices = decodePeriodPrices(row[`케어서비스${gi + 1}_기간별구독료`]);
+          return { label, cycle, prices };
+        }).filter((cs) => cs.label || cs.cycle || cs.prices.length > 0);
+
+        // 계약기간 목록은 케어서비스 매트릭스에 등장한 기간 라벨들을 처음 나온 순서대로 모아서 만든다.
+        const periodLabels: string[] = [];
+        careServiceItems.forEach((cs) => cs.prices.forEach((pp) => {
+          if (!periodLabels.includes(pp.period)) periodLabels.push(pp.period);
+        }));
+        const periodPrices = periodLabels.map((label) => ({ label, price: 0 }));
+
+        const matrixPrices = careServiceItems.flatMap((cs) => cs.prices.map((pp) => pp.price)).filter((v) => v > 0);
+        const monthlyPrice = matrixPrices.length > 0 ? Math.min(...matrixPrices) : 0;
+
+        const colorNamesRaw = String(row["색상(콤마로 구분)"] ?? row["색상"] ?? "").trim();
+        const colorItems = colorNamesRaw
+          ? colorNamesRaw.split(",").map((n) => n.trim()).filter(Boolean).map((n) => ({ name: n, image: "" }))
+          : [];
+
         results.push({
           section,
           category,
           name,
           model: String(row["모델번호"] ?? "").trim(),
           monthlyPrice,
-          price60: row["60개월_구독료"] ? Number(row["60개월_구독료"]) : null,
-          price48: row["48개월_구독료"] ? Number(row["48개월_구독료"]) : null,
-          price36: row["36개월_구독료"] ? Number(row["36개월_구독료"]) : null,
+          periodPrices,
+          careServiceItems,
+          colorItems,
           benefitPrice: row["최대혜택가"] ? Number(row["최대혜택가"]) : null,
-          careService: String(row["케어서비스주기"] ?? "").trim() || undefined,
-          manageCycle: String(row["관리주기"] ?? "").trim() || undefined,
-          color: String(row["색상"] ?? "").trim() || undefined,
           tags,
           image: "",
           detailImage: "",
@@ -1146,6 +1203,8 @@ function ExcelUploadModal({
             <p>· 이미지는 엑셀로 등록 후 개별 상품 수정에서 직접 확인·추가해 주세요.</p>
             <p>· 상위카테고리를 비워두면 <strong className="text-[#c90f45]">{liveSections.find((s) => s.id === defaultSection)?.label ?? defaultSection}</strong> 에 등록됩니다.</p>
             <p>· 상위카테고리·카테고리명이 등록된 값과 다르면 원본 텍스트가 그대로 유지되고 빨간 테두리로 표시되니, 업로드 후 미리보기에서 드롭다운으로 직접 선택해 수정해 주세요.</p>
+            <p>· 케어서비스별 기간별구독료는 <strong className="text-[#c90f45]">&quot;기간라벨:가격,기간라벨2:가격2&quot;</strong> 형식으로 입력하세요 (예: 10개월:17900,72개월:35000). 비워두면 상세페이지에 &quot;상담 문의 시 안내&quot;로 표시됩니다.</p>
+            <p>· 색상은 <strong className="text-[#c90f45]">콤마로 구분</strong>해 이름만 입력하세요 (색상별 이미지는 업로드 후 개별 상품 수정에서 추가).</p>
           </div>
 
           {/* 템플릿 다운로드 */}
@@ -1229,7 +1288,7 @@ function ExcelUploadModal({
                             )}
                           </select>
                         </td>
-                        <td className="max-w-[160px] truncate px-3 py-2 font-semibold text-[#1a1a1a]" title={p.name}>{p.name}</td>
+                        <td className="max-w-40 truncate px-3 py-2 font-semibold text-[#1a1a1a]" title={p.name}>{p.name}</td>
                         <td className="whitespace-nowrap px-3 py-2 text-[#888]">{p.model || "-"}</td>
                         <td className="whitespace-nowrap px-3 py-2">
                           {isDuplicate ? (
