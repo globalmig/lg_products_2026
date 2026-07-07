@@ -8,10 +8,16 @@ import { adminStore, imageUrl } from "@/lib/adminStore";
 export default function HeroSlider() {
   const [slides, setSlides] = useState<Slide[]>(defaultSlides);
   const [mobileImages, setMobileImages] = useState<Record<string, string>>({});
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [autoplaySuspended, setAutoplaySuspended] = useState(false);
-  const total = slides.length;
+
+  // 모바일 화면에서는 모바일 전용 이미지가 없는 슬라이드는 건너뛰고 다음 배너를 보여준다
+  // (데스크톱 이미지를 억지로 잘라 보여주면 세로형 영역에 어색하게 채워지기 때문).
+  const mobileSlides = slides.filter((s) => !!mobileImages[String(s.id)]);
+  const visibleSlides = isMobileViewport && mobileSlides.length > 0 ? mobileSlides : slides;
+  const total = visibleSlides.length;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
@@ -26,6 +32,18 @@ export default function HeroSlider() {
       if (s.heroMobileImages) setMobileImages(s.heroMobileImages);
     });
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 860px)");
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (current >= total) setCurrent(0);
+  }, [total, current]);
 
   const scrollToIndex = (index: number) => {
     const container = scrollRef.current;
@@ -138,13 +156,13 @@ export default function HeroSlider() {
   }, []);
 
   return (
-    <section className="relative w-full overflow-hidden aspect-16/7">
+    <section className="relative w-full overflow-hidden aspect-5/6 min-[861px]:aspect-16/7">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         className="scrollbar-hide flex h-full w-full cursor-grab select-none snap-x snap-mandatory overflow-x-auto scroll-smooth active:cursor-grabbing"
       >
-        {slides.map((s, i) => {
+        {visibleSlides.map((s, i) => {
           const mobileSrc = imageUrl(mobileImages[String(s.id)]) || s.image;
           const image = (
             <>
@@ -164,7 +182,7 @@ export default function HeroSlider() {
                 priority={i === 0}
                 sizes="100vw"
                 draggable={false}
-                className="pointer-events-none object-cover object-top min-[861px]:hidden"
+                className="pointer-events-none object-contain object-top min-[861px]:hidden"
               />
             </>
           );
@@ -219,7 +237,7 @@ export default function HeroSlider() {
         <span className="text-[10px] font-medium text-[#f1b7a1]">
           {String(current + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
         </span>
-        {slides.map((s, i) => (
+        {visibleSlides.map((s, i) => (
           <button
             key={s.id}
             type="button"
