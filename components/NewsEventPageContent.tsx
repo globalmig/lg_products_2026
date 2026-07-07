@@ -11,7 +11,7 @@ import {
   LuArrowRight,
 } from "react-icons/lu";
 import { FaStar } from "react-icons/fa";
-import { adminStore, imageUrl, type NewsEventContent } from "@/lib/adminStore";
+import { adminStore, imageUrl, getReviewVisibility, type NewsEventContent, type Review } from "@/lib/adminStore";
 
 const STEP_ICONS = [LuShoppingCart, LuStar, LuCamera, LuGift];
 
@@ -36,19 +36,20 @@ const DEFAULT_CONTENT: NewsEventContent = {
     { rank: "참여 전원", count: "선착순 30명", name: "스타벅스 아메리카노\n1잔 쿠폰", value: "6,000원 상당", highlight: false },
   ],
   prizeNote: "※ 당첨자 발표는 매월 초 개별 문자 발송 / 경품은 변경될 수 있습니다.",
-  reviews: [],
 };
 
 export default function NewsEventPageContent() {
   const [content, setContent] = useState<NewsEventContent>(DEFAULT_CONTENT);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
-    adminStore.siteSettings.get().then((s) => {
+    Promise.all([adminStore.siteSettings.get(), adminStore.reviews.get()]).then(([s, allReviews]) => {
       if (s.newsEvent) setContent(s.newsEvent);
+      setReviews(allReviews.filter((r) => getReviewVisibility(s.reviewVisibility, r.id).newsEvent));
     });
   }, []);
 
-  const { badge, titleLine1, titleLine2, description, period, target, heroImageKey, heroImageKeyMobile, steps, prizes, prizeNote, reviews } = content;
+  const { badge, titleLine1, titleLine2, description, period, target, heroImageKey, heroImageKeyMobile, steps, prizes, prizeNote } = content;
   const heroImg = imageUrl(heroImageKey);
   const heroImgMobile = imageUrl(heroImageKeyMobile) || heroImg;
 

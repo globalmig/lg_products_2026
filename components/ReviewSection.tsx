@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { adminStore, imageUrl, type Review } from "@/lib/adminStore";
+import { adminStore, imageUrl, getReviewVisibility, type Review } from "@/lib/adminStore";
 
 const DEFAULT_REVIEWS: Review[] = [
   { id: "r1", stars: 5, image_key: "", content: "\"상담부터 설치까지 꼼꼼하게 챙겨주셔서 정말 만족스러웠어요. 제품도 생각보다 훨씬 조용하고 공간 활용이 좋네요. 매니저님이 색상 조합까지 같이 고민해줘서 인테리어에도 딱 맞게 선택했습니다.\"", name: "김*현", product: "LG 디오스 오브제컬렉션 냉장고", date: "2026.05.18", sort_order: 0 },
@@ -52,8 +52,9 @@ export default function ReviewSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    adminStore.reviews.get().then((data) => {
-      if (data.length > 0) setReviews(data);
+    Promise.all([adminStore.reviews.get(), adminStore.siteSettings.get()]).then(([data, settings]) => {
+      const visible = data.filter((r) => getReviewVisibility(settings.reviewVisibility, r.id).home);
+      if (visible.length > 0) setReviews(visible);
     });
   }, []);
 

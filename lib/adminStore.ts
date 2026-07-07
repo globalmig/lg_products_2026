@@ -92,6 +92,18 @@ export interface Review {
   sort_order: number;
 }
 
+// 리뷰는 한 곳(리뷰 관리 탭)에서만 작성하고, 이 값으로 홈 화면 / 리뷰 이벤트 페이지
+// 노출 여부를 각각 켜고 끈다. 값이 없는 리뷰는 둘 다 노출되는 것으로 취급한다.
+export interface ReviewVisibility {
+  home: boolean;
+  newsEvent: boolean;
+}
+export type ReviewVisibilityMap = Record<string, ReviewVisibility>;
+export const DEFAULT_REVIEW_VISIBILITY: ReviewVisibility = { home: true, newsEvent: true };
+export function getReviewVisibility(map: ReviewVisibilityMap | undefined, id: string): ReviewVisibility {
+  return map?.[id] ?? DEFAULT_REVIEW_VISIBILITY;
+}
+
 export interface CardDiscount {
   id: string;
   name: string;
@@ -142,7 +154,6 @@ export interface NewsEventContent {
   steps: NewsEventStep[];
   prizes: NewsEventPrize[];
   prizeNote: string;
-  reviews: Review[];
 }
 
 const DEFAULT_REVIEWS: Review[] = [
@@ -191,11 +202,6 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
     { rank: "참여 전원", count: "선착순 30명", name: "스타벅스 아메리카노\n1잔 쿠폰", value: "6,000원 상당", highlight: false },
   ],
   prizeNote: "※ 당첨자 발표는 매월 초 개별 문자 발송 / 경품은 변경될 수 있습니다.",
-  reviews: [
-    { id: "nr1", stars: 5, image_key: "", content: "상담부터 설치까지 꼼꼼하게 챙겨주셔서 정말 만족스러웠어요. 제품도 생각보다 훨씬 조용하고 공간 활용이 좋네요. 매니저님이 색상 조합까지 같이 고민해줘서 인테리어에도 딱 맞게 선택했습니다.", name: "김*현", product: "LG 디오스 오브제컬렉션 냉장고", date: "2026.05.18", sort_order: 0 },
-    { id: "nr2", stars: 5, image_key: "", content: "구독 서비스가 이렇게 편할 줄 몰랐어요. 설치도 빠르고 관리까지 해준다니 너무 좋아요. 용산점 매니저분이 실제 사용 팁도 알려주셔서 처음 사용하는 데 전혀 어렵지 않았습니다.", name: "박*은", product: "LG 워시타워 렌탈 가전 구독", date: "2026.05.12", sort_order: 1 },
-    { id: "nr3", stars: 5, image_key: "", content: "혼자 사는데 거실에 두기 딱 좋은 사이즈예요. 가격 대비 화질이 정말 좋고, 배터리로 어디서나 볼 수 있어서 활용도가 높아요. 매장에서 직접 비교하고 구매할 수 있어서 좋았습니다.", name: "이*준", product: "LG 스탠바이미 2 렌탈 가전 구독", date: "2026.04.29", sort_order: 2 },
-  ],
 };
 
 const DEFAULT_EVENT_BANNER: EventBanner = {
@@ -369,6 +375,7 @@ export const adminStore = {
       newsEvent: NewsEventContent;
       eventBanner: EventBanner;
       heroMobileImages: Record<string, string>;
+      reviewVisibility: ReviewVisibilityMap;
     }>("/api/site-settings").catch(() => ({
       storeName: "용산전자상가점",
       storeNameMobile: "",
@@ -381,8 +388,9 @@ export const adminStore = {
       newsEvent: DEFAULT_NEWS_EVENT,
       eventBanner: DEFAULT_EVENT_BANNER,
       heroMobileImages: {},
+      reviewVisibility: {} as ReviewVisibilityMap,
     })),
-    set: (data: { storeName?: string; storeNameMobile?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[]; newsEvent?: NewsEventContent; eventBanner?: EventBanner; heroMobileImages?: Record<string, string> }) =>
+    set: (data: { storeName?: string; storeNameMobile?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[]; newsEvent?: NewsEventContent; eventBanner?: EventBanner; heroMobileImages?: Record<string, string>; reviewVisibility?: ReviewVisibilityMap }) =>
       apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
   },
 };

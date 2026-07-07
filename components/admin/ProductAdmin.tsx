@@ -63,6 +63,16 @@ function legacyColorItems(p: ManagedProduct): ColorItem[] {
   return [];
 }
 
+// 엑셀 업로드 시 "같은 제품"을 판정하는 기준: 같은 상위카테고리(section) 내에서
+// 모델번호가 둘 다 있으면 모델번호로, 없으면 카테고리+상품명으로 동일 제품 여부를 판단한다.
+function isSameProduct(existing: ManagedProduct, incoming: Omit<ManagedProduct, "id" | "order">): boolean {
+  if (existing.section !== incoming.section) return false;
+  const modelA = existing.model.trim().toLowerCase();
+  const modelB = incoming.model.trim().toLowerCase();
+  if (modelA && modelB) return modelA === modelB;
+  return existing.category === incoming.category && existing.name.trim() === incoming.name.trim();
+}
+
 /* ────── 상품 편집 모달 ────── */
 function ProductModal({
   initial,
@@ -933,6 +943,40 @@ async function downloadExcelTemplate(sections: ManagedSection[]) {
   XLSX.writeFile(wb, "상품_업로드_템플릿.xlsx");
 }
 
+/* ────── 등록된 상품 엑셀 다운로드 ────── */
+function periodPriceByKeyword(p: ManagedProduct, keyword: string): number | "" {
+  const found = legacyPeriodPrices(p).find((pp) => pp.label.includes(keyword));
+  return found ? found.price : "";
+}
+
+async function downloadProductsExcel(products: ManagedProduct[], sections: ManagedSection[]) {
+  const XLSX = await import("xlsx");
+  const headers = [
+    "상위카테고리", "카테고리", "상품명", "모델번호",
+    "72개월_구독료", "60개월_구독료", "48개월_구독료", "36개월_구독료",
+    "최대혜택가", "케어서비스주기", "관리주기", "색상",
+    "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
+  ];
+  const sectionLabel = (id: string) => sections.find((s) => s.id === id)?.label ?? id;
+  const rows = products.map((p) => {
+    const care = legacyCareServiceItems(p)[0];
+    const color = legacyColorItems(p)[0];
+    return [
+      sectionLabel(p.section), p.category, p.name, p.model,
+      periodPriceByKeyword(p, "72"), periodPriceByKeyword(p, "60"),
+      periodPriceByKeyword(p, "48"), periodPriceByKeyword(p, "36"),
+      p.benefitPrice ?? "", care?.label ?? "", care?.cycle ?? "", color?.name ?? "",
+      p.isBest ? "Y" : "N",
+      p.tags.map((t) => `${t.label}:${t.type}`).join(","),
+    ];
+  });
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws["!cols"] = headers.map(() => ({ wch: 20 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "상품목록");
+  XLSX.writeFile(wb, "상품_목록.xlsx");
+}
+
 /* ────── 엑셀 업로드 모달 ────── */
 function ExcelUploadModal({
   sections,
@@ -1090,6 +1134,7 @@ function ExcelUploadModal({
           {/* 안내 */}
           <div className="rounded-xl bg-[#fafafa] border border-[#f0f0f0] px-4 py-3 text-[12px] text-[#666] leading-[1.8]">
             <p className="font-semibold text-[#333] mb-1">안내사항</p>
+            <p>· 같은 상위카테고리에 모델번호가 일치하는 상품이 이미 등록되어 있으면 자동으로 덮어씁니다 (모델번호가 없으면 카테고리+상품명으로 판단).</p>
             <p>· 이미지는 엑셀로 등록 후 개별 상품 수정에서 직접 확인·추가해 주세요.</p>
             <p>· 상위카테고리를 비워두면 <strong className="text-[#c90f45]">{liveSections.find((s) => s.id === defaultSection)?.label ?? defaultSection}</strong> 에 등록됩니다.</p>
             <p>· 상위카테고리·카테고리명이 등록된 값과 다르면 원본 텍스트가 그대로 유지되고 빨간 테두리로 표시되니, 업로드 후 미리보기에서 드롭다운으로 직접 선택해 수정해 주세요.</p>
@@ -1361,13 +1406,30 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
   };
 
   const importFromExcel = async (newProducts: Omit<ManagedProduct, "id" | "order">[]) => {
-    const maxOrder = products.length ? Math.max(...products.map((p) => p.order)) + 1 : 0;
-    const toAdd: ManagedProduct[] = newProducts.map((p, i) => ({
-      ...p,
-      id: `${p.section}_excel_${Date.now()}_${i}`,
-      order: maxOrder + i,
-    }));
-    await persistProducts([...products, ...toAdd]);
+    // 현재 화면에 로드된 products는 sectionFilter에 따라 일부 섹션만 포함할 수 있으므로,
+    // 덮어쓰기 판정과 저장은 전체 섹션의 최신 데이터를 기준으로 한다.
+    const allExisting = (
+      await Promise.all(sections.map((s) => productStore.products.getBySection(s.id)))
+    ).flat();
+    const nextOrderBySection = new Map<Section, number>();
+    sections.forEach((s) => {
+      const items = allExisting.filter((p) => p.section === s.id);
+      nextOrderBySection.set(s.id, items.length ? Math.max(...items.map((p) => p.order)) + 1 : 0);
+    });
+
+    const merged = [...allExisting];
+    newProducts.forEach((p, i) => {
+      const matchIdx = merged.findIndex((existing) => isSameProduct(existing, p));
+      if (matchIdx >= 0) {
+        merged[matchIdx] = { ...p, id: merged[matchIdx].id, order: merged[matchIdx].order };
+      } else {
+        const order = nextOrderBySection.get(p.section) ?? 0;
+        nextOrderBySection.set(p.section, order + 1);
+        merged.push({ ...p, id: `${p.section}_excel_${Date.now()}_${i}`, order });
+      }
+    });
+
+    await persistProducts(merged);
     reload();
   };
 
@@ -1440,6 +1502,14 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
 
       {/* 버튼 영역 — 상품카테고리관리 탭일 때 숨김 */}
       <div className={`mt-4 mb-4 flex justify-end gap-2 ${subTab === "category" ? "invisible h-8" : ""}`}>
+        <button
+          type="button"
+          onClick={() => downloadProductsExcel(filteredProducts, sections)}
+          disabled={filteredProducts.length === 0}
+          className="h-8 rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#555] disabled:opacity-40"
+        >
+          ↓ 엑셀 다운로드
+        </button>
         <button
           type="button"
           onClick={() => downloadExcelTemplate(sections)}

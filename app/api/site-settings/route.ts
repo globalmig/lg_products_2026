@@ -44,17 +44,6 @@ export interface NewsEventPrize {
   highlight: boolean;
 }
 
-export interface NewsEventReview {
-  id: string;
-  stars: number;
-  image_key: string;
-  content: string;
-  name: string;
-  product: string;
-  date: string;
-  sort_order: number;
-}
-
 export interface NewsEventContent {
   badge: string;
   titleLine1: string;
@@ -67,8 +56,13 @@ export interface NewsEventContent {
   steps: NewsEventStep[];
   prizes: NewsEventPrize[];
   prizeNote: string;
-  reviews: NewsEventReview[];
 }
+
+export interface ReviewVisibility {
+  home: boolean;
+  newsEvent: boolean;
+}
+export type ReviewVisibilityMap = Record<string, ReviewVisibility>;
 
 export interface SiteSettings {
   storeName: string;
@@ -82,6 +76,7 @@ export interface SiteSettings {
   newsEvent: NewsEventContent;
   eventBanner: EventBanner;
   heroMobileImages: Record<string, string>;
+  reviewVisibility: ReviewVisibilityMap;
 }
 
 const DEFAULT_CONSULT_BANNER: ConsultBanner = {
@@ -128,11 +123,6 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
     { rank: "참여 전원", count: "선착순 30명", name: "스타벅스 아메리카노\n1잔 쿠폰", value: "6,000원 상당", highlight: false },
   ],
   prizeNote: "※ 당첨자 발표는 매월 초 개별 문자 발송 / 경품은 변경될 수 있습니다.",
-  reviews: [
-    { id: "nr1", stars: 5, image_key: "", content: "상담부터 설치까지 꼼꼼하게 챙겨주셔서 정말 만족스러웠어요. 제품도 생각보다 훨씬 조용하고 공간 활용이 좋네요. 매니저님이 색상 조합까지 같이 고민해줘서 인테리어에도 딱 맞게 선택했습니다.", name: "김*현", product: "LG 디오스 오브제컬렉션 냉장고", date: "2026.05.18", sort_order: 0 },
-    { id: "nr2", stars: 5, image_key: "", content: "구독 서비스가 이렇게 편할 줄 몰랐어요. 설치도 빠르고 관리까지 해준다니 너무 좋아요. 용산점 매니저분이 실제 사용 팁도 알려주셔서 처음 사용하는 데 전혀 어렵지 않았습니다.", name: "박*은", product: "LG 워시타워 렌탈 가전 구독", date: "2026.05.12", sort_order: 1 },
-    { id: "nr3", stars: 5, image_key: "", content: "혼자 사는데 거실에 두기 딱 좋은 사이즈예요. 가격 대비 화질이 정말 좋고, 배터리로 어디서나 볼 수 있어서 활용도가 높아요. 매장에서 직접 비교하고 구매할 수 있어서 좋았습니다.", name: "이*준", product: "LG 스탠바이미 2 렌탈 가전 구독", date: "2026.04.29", sort_order: 2 },
-  ],
 };
 
 const DEFAULTS: SiteSettings = {
@@ -147,9 +137,10 @@ const DEFAULTS: SiteSettings = {
   newsEvent: DEFAULT_NEWS_EVENT,
   eventBanner: DEFAULT_EVENT_BANNER,
   heroMobileImages: {},
+  reviewVisibility: {},
 };
 
-const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner" | "heroMobileImages">, string> = {
+const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner" | "heroMobileImages" | "reviewVisibility">, string> = {
   storeName: "store_name",
   storeNameMobile: "store_name_mobile",
   copyright: "copyright",
@@ -174,6 +165,7 @@ export async function GET() {
       newsEvent: map["news_event"] ? JSON.parse(map["news_event"]) : DEFAULTS.newsEvent,
       eventBanner: map["event_banner"] ? JSON.parse(map["event_banner"]) : DEFAULTS.eventBanner,
       heroMobileImages: map["hero_mobile_images"] ? JSON.parse(map["hero_mobile_images"]) : DEFAULTS.heroMobileImages,
+      reviewVisibility: map["review_visibility"] ? JSON.parse(map["review_visibility"]) : DEFAULTS.reviewVisibility,
     });
   } catch {
     return NextResponse.json(DEFAULTS);
@@ -194,6 +186,7 @@ export async function PUT(req: Request) {
   if (body.newsEvent !== undefined) updates.push(["news_event", JSON.stringify(body.newsEvent)]);
   if (body.eventBanner !== undefined) updates.push(["event_banner", JSON.stringify(body.eventBanner)]);
   if (body.heroMobileImages !== undefined) updates.push(["hero_mobile_images", JSON.stringify(body.heroMobileImages)]);
+  if (body.reviewVisibility !== undefined) updates.push(["review_visibility", JSON.stringify(body.reviewVisibility)]);
 
   if (updates.length === 0) return NextResponse.json({ ok: true });
 

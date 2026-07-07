@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { LuPencil, LuTrash2 } from "react-icons/lu";
 import AdminLoading from "./AdminLoading";
-import ConfirmDialog from "./ConfirmDialog";
-import { ReviewForm } from "./ReviewAdmin";
-import { adminStore, imageUrl, uploadImage, type NewsEventContent, type NewsEventStep, type NewsEventPrize, type Review } from "@/lib/adminStore";
+import { adminStore, imageUrl, uploadImage, type NewsEventContent, type NewsEventStep, type NewsEventPrize } from "@/lib/adminStore";
 
 const EMPTY_CONTENT: NewsEventContent = {
   badge: "",
@@ -19,16 +16,6 @@ const EMPTY_CONTENT: NewsEventContent = {
   steps: [],
   prizes: [],
   prizeNote: "",
-  reviews: [],
-};
-
-const EMPTY_REVIEW: Omit<Review, "id" | "sort_order"> = {
-  stars: 5,
-  image_key: "",
-  content: "",
-  name: "",
-  product: "",
-  date: "",
 };
 
 export default function NewsEventAdmin() {
@@ -36,9 +23,6 @@ export default function NewsEventAdmin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [addingReview, setAddingReview] = useState<Omit<Review, "id" | "sort_order"> | null>(null);
-  const [confirmReviewId, setConfirmReviewId] = useState<string | null>(null);
   const [uploadingHero, setUploadingHero] = useState<"pc" | "mobile" | null>(null);
   const heroPcFileRef = useRef<HTMLInputElement>(null);
   const heroMobileFileRef = useRef<HTMLInputElement>(null);
@@ -86,25 +70,6 @@ export default function NewsEventAdmin() {
   const addPrize = () => setContent((prev) => ({ ...prev, prizes: [...prev.prizes, { rank: "", count: "", name: "", value: "", highlight: false }] }));
   const removePrize = (i: number) => setContent((prev) => ({ ...prev, prizes: prev.prizes.filter((_, idx) => idx !== i) }));
 
-  const handleAddReview = () => {
-    if (!addingReview) return;
-    const newReview: Review = { id: `nr_${Date.now()}`, ...addingReview, sort_order: content.reviews.length };
-    setContent((prev) => ({ ...prev, reviews: [...prev.reviews, newReview] }));
-    setAddingReview(null);
-  };
-
-  const handleSaveReviewEdit = () => {
-    if (!editingReview) return;
-    setContent((prev) => ({ ...prev, reviews: prev.reviews.map((r) => (r.id === editingReview.id ? editingReview : r)) }));
-    setEditingReview(null);
-  };
-
-  const handleDeleteReview = () => {
-    if (!confirmReviewId) return;
-    setContent((prev) => ({ ...prev, reviews: prev.reviews.filter((r) => r.id !== confirmReviewId) }));
-    setConfirmReviewId(null);
-  };
-
   if (loading) return <AdminLoading />;
 
   const inputCls = "h-9 w-full rounded-lg border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]";
@@ -112,9 +77,7 @@ export default function NewsEventAdmin() {
 
   return (
     <div className="max-w-2xl space-y-8">
-      {confirmReviewId && <ConfirmDialog onConfirm={handleDeleteReview} onCancel={() => setConfirmReviewId(null)} />}
-
-      <p className="text-[11px] text-[#bbb]">localhost:3000/news (리뷰 이벤트) 페이지의 내용을 수정합니다.</p>
+      <p className="text-[11px] text-[#bbb]">localhost:3000/news (리뷰 이벤트) 페이지의 내용을 수정합니다. 후기는 &ldquo;리뷰 관리&rdquo; 탭에서 작성 후 노출 설정에서 켤 수 있습니다.</p>
 
       {/* 히어로 */}
       <div>
@@ -258,65 +221,6 @@ export default function NewsEventAdmin() {
           <label className={labelCls}>경품 하단 안내 문구</label>
           <input value={content.prizeNote} onChange={(e) => setContent({ ...content, prizeNote: e.target.value })} className={inputCls} placeholder="예: ※ 당첨자 발표는 매월 초 개별 문자 발송" />
         </div>
-      </div>
-
-      {/* 고객 생생 후기 */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[14px] font-bold text-[#1a1a1a]">고객 생생 후기</h3>
-          <button type="button" onClick={() => setAddingReview(EMPTY_REVIEW)} className="text-[12px] font-semibold text-[#c90f45] hover:underline">+ 후기 추가</button>
-        </div>
-
-        {content.reviews.length === 0 && <p className="text-[12px] text-[#ccc]">등록된 후기가 없습니다.</p>}
-
-        <div className="space-y-3">
-          {content.reviews.map((review) => (
-            <div key={review.id} className="rounded-xl border border-[#f0f0f0] bg-[#fafafa] p-3">
-              {editingReview?.id === review.id ? (
-                <ReviewForm
-                  data={editingReview}
-                  onChange={setEditingReview as (v: Review) => void}
-                  onSave={handleSaveReviewEdit}
-                  onCancel={() => setEditingReview(null)}
-                />
-              ) : (
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex gap-0.5">
-                      {Array.from({ length: review.stars }).map((_, i) => (
-                        <span key={i} className="text-[13px] text-[#f5a623]">★</span>
-                      ))}
-                    </div>
-                    <p className="line-clamp-2 text-[13px] text-[#555]">{review.content}</p>
-                    <p className="mt-1 text-[12px] font-bold text-[#1a1a1a]">{review.name}</p>
-                    <p className="text-[11px] text-[#999]">{review.product} · {review.date}</p>
-                  </div>
-                  {review.image_key && <img src={imageUrl(review.image_key)} alt="" className="h-12 w-16 shrink-0 rounded-lg object-cover bg-white" />}
-                  <div className="flex shrink-0 gap-2">
-                    <button onClick={() => setEditingReview({ ...review })} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={13} /></button>
-                    <button onClick={() => setConfirmReviewId(review.id)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-red-400 hover:text-red-500" title="삭제"><LuTrash2 size={13} /></button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {addingReview && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setAddingReview(null)} />
-            <div className="relative z-10 mx-4 w-full max-w-lg rounded-2xl bg-white p-6">
-              <h3 className="mb-4 text-[16px] font-black text-[#1a1a1a]">후기 추가</h3>
-              <ReviewForm
-                data={{ id: "", ...addingReview, sort_order: 0 }}
-                onChange={(v) => setAddingReview({ stars: v.stars, image_key: v.image_key, content: v.content, name: v.name, product: v.product, date: v.date })}
-                onSave={handleAddReview}
-                onCancel={() => setAddingReview(null)}
-                saveLabel="추가"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="flex items-center gap-3 border-t border-[#f0f0f0] pt-5">
