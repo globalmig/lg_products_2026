@@ -994,6 +994,8 @@ function ExcelUploadModal({
   const [fileName, setFileName] = useState("");
   const [categoriesBySection, setCategoriesBySection] = useState<Record<string, ManagedCategory[]>>({});
   const [liveSections, setLiveSections] = useState<ManagedSection[]>(sections);
+  const [existingProducts, setExistingProducts] = useState<ManagedProduct[]>([]);
+  const [confirming, setConfirming] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // 모달을 열 때마다 최신 상위카테고리·카테고리 목록을 다시 받아온다.
@@ -1010,8 +1012,14 @@ function ExcelUploadModal({
         });
         setCategoriesBySection(map);
       });
+      // 덮어쓰기 판정(미리보기 배지·확인 문구용)을 위해 등록된 상품도 함께 받아온다.
+      Promise.all(secs.map((s) => productStore.products.getBySection(s.id))).then((results) => {
+        setExistingProducts(results.flat());
+      });
     });
   }, []);
+
+  const duplicateCount = parsed.filter((p) => existingProducts.some((e) => isSameProduct(e, p))).length;
 
   const normalize = (s: string) => s.trim().replace(/\s+/g, "").toLowerCase();
 
@@ -1124,7 +1132,7 @@ function ExcelUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+      <div className="w-full max-w-4xl rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-[#f0f0f0] px-6 py-4">
           <h3 className="text-[16px] font-bold text-[#1a1a1a]">엑셀로 상품 일괄 등록</h3>
           <button type="button" onClick={onClose} className="text-[20px] text-[#999] hover:text-[#333]">✕</button>
@@ -1185,16 +1193,18 @@ function ExcelUploadModal({
                 <table className="w-full text-[12px]">
                   <thead>
                     <tr className="bg-[#fafafa] border-b border-[#f0f0f0]">
-                      <th className="px-3 py-2 text-left font-semibold text-[#555]">상위카테고리</th>
-                      <th className="px-3 py-2 text-left font-semibold text-[#555]">카테고리</th>
+                      <th className="w-28 px-3 py-2 text-left font-semibold text-[#555]">상위카테고리</th>
+                      <th className="w-28 px-3 py-2 text-left font-semibold text-[#555]">카테고리</th>
                       <th className="px-3 py-2 text-left font-semibold text-[#555]">상품명</th>
-                      <th className="px-3 py-2 text-left font-semibold text-[#555]">모델번호</th>
+                      <th className="w-24 px-3 py-2 text-left font-semibold text-[#555]">모델번호</th>
+                      <th className="w-20 px-3 py-2 text-left font-semibold text-[#555] whitespace-nowrap">등록 결과</th>
                     </tr>
                   </thead>
                   <tbody>
                     {parsed.map((p, i) => {
                       const cats = categoriesBySection[p.section] ?? [];
                       const categoryMatched = cats.some((c) => c.name === p.category);
+                      const isDuplicate = existingProducts.some((e) => isSameProduct(e, p));
                       return (
                       <tr key={i} className="border-b border-[#f0f0f0] last:border-0">
                         <td className="px-3 py-2">
@@ -1219,8 +1229,15 @@ function ExcelUploadModal({
                             )}
                           </select>
                         </td>
-                        <td className="px-3 py-2 font-semibold text-[#1a1a1a]">{p.name}</td>
-                        <td className="px-3 py-2 text-[#888]">{p.model || "-"}</td>
+                        <td className="max-w-[160px] truncate px-3 py-2 font-semibold text-[#1a1a1a]" title={p.name}>{p.name}</td>
+                        <td className="whitespace-nowrap px-3 py-2 text-[#888]">{p.model || "-"}</td>
+                        <td className="whitespace-nowrap px-3 py-2">
+                          {isDuplicate ? (
+                            <span className="rounded-full bg-[#fff0f4] px-2 py-0.5 text-[11px] font-semibold text-[#c90f45]">덮어씀</span>
+                          ) : (
+                            <span className="rounded-full bg-[#f0f8f2] px-2 py-0.5 text-[11px] font-semibold text-[#2f9e5c]">신규</span>
+                          )}
+                        </td>
                       </tr>
                       );
                     })}
@@ -1235,7 +1252,7 @@ function ExcelUploadModal({
           <button type="button" onClick={onClose} className="h-9 rounded-full border border-[#e8e8e8] px-5 text-[13px] text-[#555] hover:bg-[#f5f5f5]">취소</button>
           <button
             type="button"
-            onClick={() => { onImport(parsed); onClose(); }}
+            onClick={() => setConfirming(true)}
             disabled={parsed.length === 0}
             className="h-9 rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white hover:opacity-90 disabled:opacity-40"
           >
@@ -1243,6 +1260,19 @@ function ExcelUploadModal({
           </button>
         </div>
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title="엑셀 업로드 확인"
+          message={
+            duplicateCount > 0
+              ? `${parsed.length}개 중 ${duplicateCount}개는 이미 등록된 상품이라 덮어쓰고, 나머지 ${parsed.length - duplicateCount}개는 신규로 등록됩니다. 진행할까요?`
+              : `${parsed.length}개 상품을 모두 신규로 등록합니다. 진행할까요?`
+          }
+          onConfirm={() => { setConfirming(false); onImport(parsed); onClose(); }}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }
