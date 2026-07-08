@@ -409,6 +409,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 params.set("period", selectedPeriod);
                 if (selectedCareItem) params.set("care", selectedCareItem.label);
                 if (selectedCard) params.set("cardId", String(selectedCard.id));
+                if (hasColorItems) params.set("color", product.colorItems![selectedColorIdx].name);
                 const qs = params.toString();
                 return qs ? `/consult?${qs}` : "/consult";
               })()}

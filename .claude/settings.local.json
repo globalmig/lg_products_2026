@@ -109,7 +109,12 @@
       "Bash(sqlite3 \".wrangler/state/v3/d1/miniflare-D1DatabaseObject/e97fecfee6d4a6fc25a9bc4e0bfe78e02fc108961c0a1bf931968dea84a9410d.sqlite\" \".mode line\" \"SELECT id, monthly_price, benefit_price, price_60, price_48, price_36, care_service, manage_cycle, color, is_best, tags, period_prices, care_service_items, color_items FROM products LIMIT 3;\")",
       "Bash(sqlite3 --version)",
       "Bash(python3 -c \"import sqlite3; print\\('ok'\\)\")",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(curl -s http://localhost:3001/consult)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/consult)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3001/consult?ids=test&period=72개월\")",
+      "Bash(find . -iname \"*hero*\" -not -path \"*/node_modules/*\" -not -path \"*/.next/*\")",
+      "Bash(find . -iname \"*banner*\" -not -path \"*/node_modules/*\" -not -path \"*/.next/*\")"
     ]
   }
 }

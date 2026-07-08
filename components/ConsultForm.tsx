@@ -11,7 +11,7 @@ import {
   type ColorItem,
 } from "@/lib/productStore";
 import { adminStore, type CardDiscount } from "@/lib/adminStore";
-import { LuSearch, LuX, LuPlus, LuCheck } from "react-icons/lu";
+import { LuSearch, LuX, LuPlus, LuCheck, LuChevronDown } from "react-icons/lu";
 
 function getPeriodPrices(p: ManagedProduct): PeriodPrice[] {
   if (p.periodPrices && p.periodPrices.length > 0) return p.periodPrices;
@@ -51,25 +51,33 @@ type ProductSelection = {
   periodPriceIdx: number | null;
   careServiceIdx: number | null;
   colorIdx: number | null;
+  cardId: string | null;
 };
 
-const DEFAULT_SEL: ProductSelection = { periodPriceIdx: null, careServiceIdx: null, colorIdx: null };
+const DEFAULT_SEL: ProductSelection = { periodPriceIdx: null, careServiceIdx: null, colorIdx: null, cardId: null };
+
+// 옵션이 있는 항목은 첫 번째 값을 기본 선택 상태로 지정한다.
+function defaultSelection(p: ManagedProduct): ProductSelection {
+  return {
+    periodPriceIdx: getPeriodPrices(p).length > 0 ? 0 : null,
+    careServiceIdx: getCareServiceItems(p).length > 0 ? 0 : null,
+    colorIdx: getColorItems(p).length > 0 ? 0 : null,
+    cardId: null,
+  };
+}
 
 export default function ConsultForm() {
   const searchParams = useSearchParams();
   const initialIds = searchParams.get("ids") ?? "";
   const initialPeriod = searchParams.get("period") ?? "";
   const initialCare = searchParams.get("care") ?? "";
+  const initialColor = searchParams.get("color") ?? "";
   const initialCardId = searchParams.get("cardId") ?? "";
-  const [initialIdSet] = useState(
-    () => new Set(initialIds.split(",").map((s) => s.trim()).filter(Boolean))
-  );
   const [submitted, setSubmitted] = useState(false);
   const [allProducts, setAllProducts] = useState<ManagedProduct[]>([]);
   const [selected, setSelected] = useState<ManagedProduct[]>([]);
   const [productSelections, setProductSelections] = useState<Record<string, ProductSelection>>({});
   const [cards, setCards] = useState<CardDiscount[]>([]);
-  const selectedCard = initialCardId ? cards.find((c) => c.id === initialCardId) ?? null : null;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [availableTime, setAvailableTime] = useState("");
@@ -78,6 +86,7 @@ export default function ConsultForm() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [cardDropdownFor, setCardDropdownFor] = useState<string | null>(null);
 
   useEffect(() => { adminStore.cardDiscounts.get().then(setCards); }, []);
 
@@ -94,32 +103,40 @@ export default function ConsultForm() {
         const ids = initialIds.split(",").map((s) => s.trim()).filter(Boolean);
         const pre = ids.map((id) => all.find((p) => p.id === id)).filter(Boolean) as ManagedProduct[];
         setSelected(pre);
-        if (initialPeriod || initialCare) {
-          setProductSelections((prev) => {
-            const next = { ...prev };
-            pre.forEach((p) => {
-              let sel = next[p.id] ?? DEFAULT_SEL;
-              if (initialPeriod) {
-                const idx = getPeriodPrices(p).findIndex((pp) => pp.label === initialPeriod);
-                if (idx !== -1) sel = { ...sel, periodPriceIdx: idx };
-              }
-              if (initialCare) {
-                const idx = getCareServiceItems(p).findIndex((ci) => ci.label === initialCare);
-                if (idx !== -1) sel = { ...sel, careServiceIdx: idx };
-              }
-              next[p.id] = sel;
-            });
-            return next;
+        setProductSelections((prev) => {
+          const next = { ...prev };
+          pre.forEach((p) => {
+            let sel = next[p.id] ?? defaultSelection(p);
+            if (initialPeriod) {
+              const idx = getPeriodPrices(p).findIndex((pp) => pp.label === initialPeriod);
+              if (idx !== -1) sel = { ...sel, periodPriceIdx: idx };
+            }
+            if (initialCare) {
+              const idx = getCareServiceItems(p).findIndex((ci) => ci.label === initialCare);
+              if (idx !== -1) sel = { ...sel, careServiceIdx: idx };
+            }
+            if (initialColor) {
+              const idx = getColorItems(p).findIndex((ci) => ci.name === initialColor);
+              if (idx !== -1) sel = { ...sel, colorIdx: idx };
+            }
+            if (initialCardId) sel = { ...sel, cardId: initialCardId };
+            next[p.id] = sel;
           });
-        }
+          return next;
+        });
       }
     });
-  }, [initialIds, initialPeriod, initialCare]);
+  }, [initialIds, initialPeriod, initialCare, initialColor, initialCardId]);
 
-  const setSel = (productId: string, key: keyof ProductSelection, idx: number | null) => {
+  const setSel = <K extends keyof ProductSelection>(
+    productId: string,
+    key: K,
+    value: ProductSelection[K],
+    fallback: ProductSelection = DEFAULT_SEL
+  ) => {
     setProductSelections((prev) => ({
       ...prev,
-      [productId]: { ...(prev[productId] ?? DEFAULT_SEL), [key]: idx },
+      [productId]: { ...(prev[productId] ?? fallback), [key]: value },
     }));
   };
 
@@ -129,6 +146,7 @@ export default function ConsultForm() {
         setProductSelections((ps) => { const next = { ...ps }; delete next[product.id]; return next; });
         return prev.filter((p) => p.id !== product.id);
       }
+      setProductSelections((ps) => ({ ...ps, [product.id]: ps[product.id] ?? defaultSelection(product) }));
       return [...prev, product];
     });
   };
@@ -151,6 +169,7 @@ export default function ConsultForm() {
         const careItems = getCareServiceItems(p);
         const rawPeriod = sel.periodPriceIdx != null ? periodPrices[sel.periodPriceIdx] : undefined;
         const resolvedPrice = resolvePrice(careItems, rawPeriod, sel.careServiceIdx);
+        const productCard = sel.cardId ? cards.find((c) => c.id === sel.cardId) ?? null : null;
         return {
           id: p.id,
           name: p.name,
@@ -161,8 +180,8 @@ export default function ConsultForm() {
             : undefined,
           selectedCareService: sel.careServiceIdx != null ? careItems[sel.careServiceIdx] : undefined,
           selectedColor: sel.colorIdx != null ? colorItems[sel.colorIdx] : undefined,
-          selectedCard: selectedCard && initialIdSet.has(p.id)
-            ? { name: selectedCard.name, discount: selectedCard.discount, image: selectedCard.image_key }
+          selectedCard: productCard
+            ? { name: productCard.name, discount: productCard.discount, image: productCard.image_key }
             : undefined,
         };
       }),
@@ -221,7 +240,7 @@ export default function ConsultForm() {
                         : p.image;
 
                     return (
-                      <div key={p.id} className="rounded-xl border border-[#f0f0f0] overflow-hidden">
+                      <div key={p.id} className="overflow-visible rounded-xl border border-[#f0f0f0]">
                         {/* 제품 기본 정보 */}
                         <div className="flex items-center gap-3 p-3">
                           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f7f7f7] flex items-center justify-center">
@@ -233,8 +252,8 @@ export default function ConsultForm() {
                             />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="line-clamp-2 text-[12px] leading-normal text-[#333]">{p.name}</p>
-                            <p className="text-[11px] text-[#999]">{p.model}</p>
+                            <p className="line-clamp-2 wrap-break-word text-[12px] leading-normal text-[#333]">{p.name}</p>
+                            <p className="truncate text-[11px] text-[#999]">{p.model}</p>
                           </div>
                           <button type="button" onClick={() => toggleSelect(p)} className="shrink-0 p-1 text-[#bbb] hover:text-[#c90f45]">
                             <LuX size={16} />
@@ -242,7 +261,7 @@ export default function ConsultForm() {
                         </div>
 
                         {/* 옵션 선택 영역 */}
-                        {(colorItems.length > 0 || periodPrices.length > 0 || careItems.length > 0 || (selectedCard && initialIdSet.has(p.id))) && (
+                        {(colorItems.length > 0 || periodPrices.length > 0 || careItems.length > 0 || cards.length > 0) && (
                           <div className="border-t border-[#f5f5f5] px-3 pb-3 pt-2.5 space-y-3">
 
                             {/* 색상 */}
@@ -331,15 +350,51 @@ export default function ConsultForm() {
                               <p className="text-[10px] text-[#c90f45]">계약기간과 케어서비스를 모두 선택하면 정확한 구독료가 표시됩니다.</p>
                             )}
 
-                            {/* 제휴카드 (상품 상세페이지에서 선택한 값) */}
-                            {selectedCard && initialIdSet.has(p.id) && (
-                              <div>
-                                <p className="mb-1.5 text-[11px] font-semibold text-[#888]">제휴카드</p>
-                                <span className="inline-block rounded-full border border-[#c90f45] bg-[#fdf3f5] px-3 py-1 text-[11px] font-medium text-[#c90f45]">
-                                  {selectedCard.name} (-{selectedCard.discount.toLocaleString()}원)
-                                </span>
-                              </div>
-                            )}
+                            {/* 제휴카드 */}
+                            {cards.length > 0 && (() => {
+                              const productCard = sel.cardId ? cards.find((c) => c.id === sel.cardId) ?? null : null;
+                              const open = cardDropdownFor === p.id;
+                              return (
+                                <div>
+                                  <p className="mb-1.5 text-[11px] font-semibold text-[#888]">제휴카드</p>
+                                  <div className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => setCardDropdownFor(open ? null : p.id)}
+                                      className="flex h-9 w-full max-w-70 items-center justify-between rounded-lg border border-[#e0e0e0] bg-white px-3 text-[11px] text-[#333]"
+                                    >
+                                      <span className="truncate">
+                                        {productCard ? `${productCard.name} (-${productCard.discount.toLocaleString()}원)` : "선택안함"}
+                                      </span>
+                                      <LuChevronDown size={13} className={`ml-1 shrink-0 text-[#999] transition-transform ${open ? "rotate-180" : ""}`} />
+                                    </button>
+                                    {open && (
+                                      <div className="absolute z-10 mt-1 max-h-48 w-full max-w-70 overflow-y-auto rounded-lg border border-[#e0e0e0] bg-white shadow-md">
+                                        <button
+                                          type="button"
+                                          onClick={() => { setSel(p.id, "cardId", null, defaultSelection(p)); setCardDropdownFor(null); }}
+                                          className="block w-full px-3 py-2 text-left text-[11px] text-[#555] hover:bg-[#f5f5f5]"
+                                        >
+                                          선택안함
+                                        </button>
+                                        {cards.map((c) => (
+                                          <button
+                                            key={c.id}
+                                            type="button"
+                                            onClick={() => { setSel(p.id, "cardId", c.id, defaultSelection(p)); setCardDropdownFor(null); }}
+                                            className={`block w-full truncate px-3 py-2 text-left text-[11px] hover:bg-[#f5f5f5] ${
+                                              sel.cardId === c.id ? "font-semibold text-[#c90f45]" : "text-[#333]"
+                                            }`}
+                                          >
+                                            {c.name} (-{c.discount.toLocaleString()}원)
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                           </div>
                         )}
@@ -452,14 +507,14 @@ export default function ConsultForm() {
       {pickerOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
           <div className="absolute inset-0 bg-black/40" onClick={() => setPickerOpen(false)} />
-          <div className="relative z-10 flex max-h-[85vh] w-full max-w-150 flex-col rounded-t-2xl bg-white sm:rounded-2xl">
-            <div className="flex items-center justify-between border-b border-[#f1f1f1] px-5 py-4">
+          <div className="relative z-10 flex h-[85vh] w-full max-w-150 flex-col rounded-t-2xl bg-white sm:h-160 sm:max-h-[85vh] sm:rounded-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-[#f1f1f1] px-5 py-4">
               <h2 className="text-[16px] font-black tracking-tighter">제품 선택</h2>
               <button type="button" onClick={() => setPickerOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] text-[#888] hover:bg-[#f5f5f5]">
                 <LuX size={16} />
               </button>
             </div>
-            <div className="border-b border-[#f1f1f1] px-5 py-3">
+            <div className="shrink-0 border-b border-[#f1f1f1] px-5 py-3">
               <div className="flex h-10 items-center gap-2 rounded-lg bg-[#f5f5f5] px-3">
                 <LuSearch size={15} className="shrink-0 text-[#aaa]" />
                 <input
@@ -471,7 +526,7 @@ export default function ConsultForm() {
                 />
               </div>
             </div>
-            <div className="overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {filtered.map((p) => {
                   const isSelected = !!selected.find((s) => s.id === p.id);
@@ -488,22 +543,24 @@ export default function ConsultForm() {
                         </div>
                       )}
                       <div className="mb-2 aspect-square w-full overflow-hidden rounded-lg bg-[#f7f7f7] flex items-center justify-center">
-                        <img
-                          src={p.image}
-                          alt={p.name}
-                          className="h-full w-full object-contain p-2"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
+                        {p.image && (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="h-full w-full object-contain p-2"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        )}
                       </div>
-                      <p className="line-clamp-2 text-[11px] leading-[1.4] text-[#333]">{p.name}</p>
-                      <p className="mt-0.5 text-[10px] text-[#aaa]">{p.model}</p>
+                      <p className="line-clamp-2 wrap-break-word text-[11px] leading-[1.4] text-[#333]">{p.name}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-[#aaa]">{p.model}</p>
                     </button>
                   );
                 })}
               </div>
               {filtered.length === 0 && <div className="py-10 text-center text-[13px] text-[#aaa]">검색 결과가 없습니다</div>}
             </div>
-            <div className="border-t border-[#f1f1f1] px-5 py-4">
+            <div className="shrink-0 border-t border-[#f1f1f1] px-5 py-4">
               <button type="button" onClick={() => setPickerOpen(false)} className="flex h-11 w-full items-center justify-center rounded-full bg-[#c90f45] text-[14px] font-bold text-white">
                 선택 완료{selected.length > 0 && ` (${selected.length})`}
               </button>
