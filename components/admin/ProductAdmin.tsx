@@ -70,6 +70,18 @@ function legacyColorItems(p: ManagedProduct): ColorItem[] {
 // "케어서비스N_라벨" 컬럼 바로 다음 위치로 찾아야 한다 (careGroupHeaders 순서와 1:1로 맞춰야 함).
 const CARE_GROUP_PERIODS: string[] = ["72개월", "60개월", "48개월"];
 
+// 노출가격(monthlyPrice) 기준: 케어서비스 매트릭스 전체 최솟값이 아니라, 1번째 라벨·1번째 주기
+// 케어서비스 항목의 가격을 72개월 → 60개월 → 48개월 순서로 찾아 처음 값이 있는 개월수를 노출한다.
+// 그 항목에 아무 가격도 없을 때만 fallback을 쓴다.
+function monthlyPriceFromCareItems(careServiceItems: CareServiceItem[], fallback: number): number {
+  const prices = careServiceItems[0]?.prices ?? [];
+  for (const period of CARE_GROUP_PERIODS) {
+    const found = prices.find((p) => p.period === period);
+    if (found) return found.price;
+  }
+  return fallback;
+}
+
 function careGroupHeaders(count: number): string[] {
   const headers: string[] = [];
   for (let i = 1; i <= count; i++) {
@@ -83,6 +95,17 @@ function careGroupHeaders(count: number): string[] {
 function periodPriceFor(cs: CareServiceItem | undefined, keyword: string): number | "" {
   const found = (cs?.prices ?? []).find((pp) => pp.period.includes(keyword));
   return found ? found.price : "";
+}
+
+// 케어서비스 매트릭스가 없는(구버전 monthlyPrice/periodPrices만 있는) 상품은 legacyCareServiceItems가
+// 빈 배열을 반환해 엑셀 다운로드 시 가격 칸이 통째로 비어버린다. 그 상태로 재업로드하면 가격이 0원이
+// 되므로, 매트릭스가 없을 때는 periodPrices를 라벨 없는 케어서비스 그룹 하나로 변환해 내보낸다.
+function careItemsForExport(p: ManagedProduct): CareServiceItem[] {
+  const items = legacyCareServiceItems(p);
+  if (items.length > 0) return items;
+  const periods = legacyPeriodPrices(p);
+  if (periods.length === 0) return [];
+  return [{ label: "", cycle: "", prices: periods.map((pp) => ({ period: pp.label, price: pp.price })) }];
 }
 
 // 엑셀 업로드 시 "같은 제품"을 판정하는 기준: 같은 상위카테고리(section) 내에서
@@ -99,13 +122,13 @@ function isSameProduct(existing: ManagedProduct, incoming: Omit<ManagedProduct, 
 function ProductModal({
   initial,
   section,
-  categories,
+  sections,
   onSave,
   onClose,
 }: {
   initial: ManagedProduct | null;
   section: Section;
-  categories: ManagedCategory[];
+  sections: ManagedSection[];
   onSave: (p: Omit<ManagedProduct, "id" | "order">) => void | Promise<void>;
   onClose: () => void;
 }) {
@@ -122,8 +145,24 @@ function ProductModal({
           isBest: initial.isBest, careService: initial.careService ?? "",
           manageCycle: initial.manageCycle ?? "", color: initial.color ?? "",
         }
-      : { ...EMPTY_PRODUCT, section, category: categories[0]?.name ?? "" }
+      : { ...EMPTY_PRODUCT, section, category: "" }
   );
+  // 편집 대상 상품이 실제로 속한 상위카테고리(section) 기준으로 카테고리 목록을 따로 불러온다.
+  // 부모의 카테고리 목록은 현재 탭(section state) 기준이라, "전체" 탭 등에서 다른 섹션 상품을
+  // 수정할 때 엉뚱한 섹션의 카테고리 목록이 보이는 문제가 있었다.
+  const [categoriesBySection, setCategoriesBySection] = useState<Record<string, ManagedCategory[]>>({});
+  useEffect(() => {
+    Promise.all(sections.map((s) => productStore.categories.getBySection(s.id))).then((results) => {
+      const map: Record<string, ManagedCategory[]> = {};
+      sections.forEach((s, i) => { map[s.id] = [...results[i]].sort((a, b) => a.order - b.order); });
+      setCategoriesBySection(map);
+      if (!initial) {
+        setForm((f) => (f.category ? f : { ...f, category: map[f.section]?.[0]?.name ?? "" }));
+      }
+    });
+  }, [sections]);
+  const categories = categoriesBySection[form.section] ?? [];
+  const categoryMatched = categories.some((c) => c.name === form.category);
   const [colorFiles, setColorFiles] = useState<(File | null)[]>(
     initial ? (legacyColorItems(initial)).map(() => null) : []
   );
@@ -215,12 +254,10 @@ function ProductModal({
         })
       );
       const periodPrices = form.periodPrices ?? [];
-      const matrixPrices = (form.careServiceItems ?? [])
-        .flatMap((cs) => (cs.prices ?? []).map((p) => p.price))
-        .filter((p) => p > 0);
-      const monthlyPrice = matrixPrices.length > 0
-        ? Math.min(...matrixPrices)
-        : periodPrices[0]?.price ?? form.monthlyPrice;
+      const monthlyPrice = monthlyPriceFromCareItems(
+        form.careServiceItems ?? [],
+        periodPrices[0]?.price ?? form.monthlyPrice
+      );
       await onSave({ ...form, image, detailImage, colorItems: uploadedColorItems, monthlyPrice });
     } finally {
       setSaving(false);
@@ -297,15 +334,38 @@ function ProductModal({
         </div>
 
         <div className="max-h-[85vh] overflow-y-auto px-6 py-4 space-y-6">
+          {/* 상위카테고리 */}
+          <div>
+            <label className="mb-1 block text-[12px] font-semibold text-[#555]">상위카테고리</label>
+            <select
+              value={form.section}
+              onChange={(e) => {
+                const newSection = e.target.value;
+                const cats = categoriesBySection[newSection] ?? [];
+                setForm((f) => ({
+                  ...f,
+                  section: newSection,
+                  category: cats.some((c) => c.name === f.category) ? f.category : (cats[0]?.name ?? ""),
+                }));
+              }}
+              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+            >
+              {sections.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </div>
+
           {/* 카테고리 */}
           <div>
             <label className="mb-1 block text-[12px] font-semibold text-[#555]">카테고리</label>
             <select
               value={form.category}
               onChange={(e) => set("category", e.target.value)}
-              className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+              className={`h-10 w-full rounded-xl border bg-white px-3 text-[13px] outline-none focus:border-[#c90f45] ${categoryMatched ? "border-[#e8e8e8]" : "border-[#f0b0b0]"}`}
             >
               {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {!categoryMatched && (
+                <option value={form.category}>{form.category ? `${form.category} (미등록)` : "카테고리 선택"}</option>
+              )}
             </select>
           </div>
 
@@ -976,11 +1036,11 @@ async function downloadProductsExcel(products: ManagedProduct[], sections: Manag
     "상위카테고리", "카테고리", "상품명", "모델번호",
     "최대혜택가", "색상(콤마로 구분)", "베스트상품(Y/N)", "태그(라벨:타입,라벨2:타입2)",
   ];
-  const careGroupCount = Math.max(1, ...products.map((p) => legacyCareServiceItems(p).length));
+  const careGroupCount = Math.max(1, ...products.map((p) => careItemsForExport(p).length));
   const headers = [...baseHeaders, ...careGroupHeaders(careGroupCount)];
   const sectionLabel = (id: string) => sections.find((s) => s.id === id)?.label ?? id;
   const rows = products.map((p) => {
-    const careItems = legacyCareServiceItems(p);
+    const careItems = careItemsForExport(p);
     const colorNames = legacyColorItems(p).map((c) => c.name).filter(Boolean).join(",");
     const careCells = Array.from({ length: careGroupCount }, (_, i) => {
       const cs = careItems[i];
@@ -1144,8 +1204,7 @@ function ExcelUploadModal({
           .filter((period) => careServiceItems.some((cs) => cs.prices.some((pp) => pp.period === period)))
           .map((label) => ({ label, price: 0 }));
 
-        const matrixPrices = careServiceItems.flatMap((cs) => cs.prices.map((pp) => pp.price)).filter((v) => v > 0);
-        const monthlyPrice = matrixPrices.length > 0 ? Math.min(...matrixPrices) : 0;
+        const monthlyPrice = monthlyPriceFromCareItems(careServiceItems, 0);
 
         const colorNamesRaw = String(cell("색상(콤마로 구분)") ?? cell("색상") ?? "").trim();
         const colorItems = colorNamesRaw
@@ -1162,7 +1221,7 @@ function ExcelUploadModal({
           periodPrices,
           careServiceItems,
           colorItems,
-          benefitPrice: benefitPriceCell ? Number(benefitPriceCell) : null,
+          benefitPrice: benefitPriceCell !== undefined && benefitPriceCell !== "" ? Number(benefitPriceCell) : null,
           tags,
           image: "",
           detailImage: "",
@@ -1202,11 +1261,11 @@ function ExcelUploadModal({
           <div className="rounded-xl bg-[#fafafa] border border-[#f0f0f0] px-4 py-3 text-[12px] text-[#666] leading-[1.8]">
             <p className="font-semibold text-[#333] mb-1">안내사항</p>
             <p>· 같은 상위카테고리에 모델번호가 일치하는 상품이 이미 등록되어 있으면 자동으로 덮어씁니다 (모델번호가 없으면 카테고리+상품명으로 판단).</p>
-            <p>· 이미지는 엑셀로 등록 후 개별 상품 수정에서 직접 확인·추가해 주세요.</p>
+            <p>· 이미지는 엑셀로 등록할 수 없어 신규 상품은 개별 상품 수정에서 직접 추가해야 하며, 이미 등록된 상품을 덮어쓸 때는 기존 썸네일·상세이미지·색상별 이미지가 그대로 유지됩니다.</p>
             <p>· 상위카테고리를 비워두면 <strong className="text-[#c90f45]">{liveSections.find((s) => s.id === defaultSection)?.label ?? defaultSection}</strong> 에 등록됩니다.</p>
             <p>· 상위카테고리·카테고리명이 등록된 값과 다르면 원본 텍스트가 그대로 유지되고 빨간 테두리로 표시되니, 업로드 후 미리보기에서 드롭다운으로 직접 선택해 수정해 주세요.</p>
             <p>· 케어서비스별 구독료는 각 케어서비스 라벨·주기 바로 뒤 <strong className="text-[#c90f45]">72개월 / 60개월 / 48개월</strong> 칸에 순서대로 숫자만 입력하세요 (컬럼명은 케어서비스마다 동일하게 반복되지만 위치로 구분됩니다). 비워두면 상세페이지에 &quot;상담 문의 시 안내&quot;로 표시됩니다.</p>
-            <p>· 색상은 <strong className="text-[#c90f45]">콤마로 구분</strong>해 이름만 입력하세요 (색상별 이미지는 업로드 후 개별 상품 수정에서 추가).</p>
+            <p>· 색상은 <strong className="text-[#c90f45]">콤마로 구분</strong>해 이름만 입력하세요 (색상별 이미지는 업로드 후 개별 상품 수정에서 추가). 덮어쓰기 시 이 칸을 비워두면 기존 색상 목록이 그대로 유지됩니다.</p>
           </div>
 
           {/* 템플릿 다운로드 */}
@@ -1339,7 +1398,7 @@ function ExcelUploadModal({
 }
 
 /* ────── 상품 행 ────── */
-function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection, sectionLabel }: {
+function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection, sectionLabel, imgRetryKey, selected, onToggleSelect }: {
   product: ManagedProduct;
   onEdit: () => void;
   onDelete: () => void;
@@ -1351,8 +1410,14 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
   isDragging: boolean;
   showSection?: boolean;
   sectionLabel?: (id: string) => string;
+  imgRetryKey?: number;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const [imgError, setImgError] = useState(false);
+  // 이미지 URL이 바뀌었거나(새 이미지 등록) 새로고침 버튼으로 재시도를 요청했을 때
+  // 예전 로딩 실패 상태를 지우고 다시 시도한다. (전체 페이지 새로고침 없이도 복구되게)
+  useEffect(() => { setImgError(false); }, [product.image, imgRetryKey]);
 
   return (
     <div
@@ -1367,6 +1432,15 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
     >
       {/* 드래그 핸들 */}
       <span className="cursor-grab text-[16px] text-[#ccc] active:cursor-grabbing shrink-0">⠿</span>
+
+      {/* 선택 체크박스 */}
+      <input
+        type="checkbox"
+        checked={selected ?? false}
+        onChange={onToggleSelect}
+        onClick={(e) => e.stopPropagation()}
+        className="h-4 w-4 shrink-0 accent-[#c90f45]"
+      />
 
       {/* 이미지 */}
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#f5f5f5]">
@@ -1384,7 +1458,9 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
           {showSection && <span className="mr-1 rounded bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] font-semibold text-[#666]">{sectionLabel?.(product.section) ?? product.section}</span>}
           {product.model} · {product.category}
         </p>
-        <p className="text-[12px] font-bold text-[#c90f45]">월 {product.monthlyPrice.toLocaleString()}원</p>
+        <p className="text-[12px] font-bold text-[#c90f45]">
+          월 {monthlyPriceFromCareItems(legacyCareServiceItems(product), product.monthlyPrice).toLocaleString()}원
+        </p>
       </div>
 
       {/* 베스트 뱃지 */}
@@ -1413,11 +1489,16 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
   const [filterCat, setFilterCat] = useState<string>("전체");
   const [search, setSearch] = useState("");
   const [confirmProductId, setConfirmProductId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dragFromProductId, setDragFromProductId] = useState<string | null>(null);
   const [dragOverProductId, setDragOverProductId] = useState<string | null>(null);
   const dragProductId = useRef<string | null>(null);
   const [sections, setSections] = useState<ManagedSection[]>([]);
+  // 썸네일 로드가 실패했던 상품도 새로고침 버튼을 누르면 다시 시도하도록, 클릭할 때마다 값을 바꿔서
+  // ProductRow에 내려준다 (이미지 URL 자체는 안 바뀌어도 다시 시도해볼 필요가 있는 경우가 있음).
+  const [imgRetryKey, setImgRetryKey] = useState(0);
 
   useEffect(() => { productStore.sections.get().then(setSections); }, []);
 
@@ -1432,6 +1513,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
   };
 
   const reload = () => {
+    setImgRetryKey((k) => k + 1);
     if (sectionFilter === "all") {
       // "전체" 탭에서는 상품 추가 모달이 사용할 section 기준으로 카테고리를 로드해야
       // 카테고리 select가 비어있지 않다.
@@ -1455,6 +1537,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
   useEffect(() => {
     if (sectionFilter !== "all") setSection(sectionFilter);
     setLoading(true);
+    setSelectedIds(new Set());
     reload().then(() => { setFilterCat("전체"); setSearch(""); setLoading(false); });
   }, [sectionFilter, sections, section]);
 
@@ -1512,7 +1595,34 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     newProducts.forEach((p, i) => {
       const matchIdx = merged.findIndex((existing) => isSameProduct(existing, p));
       if (matchIdx >= 0) {
-        merged[matchIdx] = { ...p, id: merged[matchIdx].id, order: merged[matchIdx].order };
+        // 엑셀에는 이미지 정보가 없으므로(항상 image: "" 로 파싱됨) 덮어쓸 때 기존 썸네일/상세이미지/색상별
+        // 이미지를 그대로 유지한다. 안 그러면 재업로드할 때마다 등록해둔 이미지가 전부 사라진다.
+        const existing = merged[matchIdx];
+        merged[matchIdx] = {
+          ...p,
+          id: existing.id,
+          order: existing.order,
+          image: existing.image,
+          detailImage: existing.detailImage,
+          // 엑셀 양식엔 컬럼이 없어서 애초에 실어 나를 수 없는 구버전 필드들. 그대로 두면 매번
+          // undefined로 덮어써져서 이 필드에만 의존하던(아직 새 배열 필드로 안 옮겨진) 상품의
+          // 계약기간·케어서비스·색상 정보가 조용히 사라진다. 기존 값을 그대로 유지한다.
+          price60: existing.price60,
+          price48: existing.price48,
+          price36: existing.price36,
+          careService: existing.careService,
+          manageCycle: existing.manageCycle,
+          color: existing.color,
+          size: existing.size,
+          // 엑셀의 "색상" 칸이 비어있으면(색상은 안 건드리고 다른 값만 고치려던 경우 포함) 기존 색상
+          // 목록을 그대로 유지한다. 값이 있으면 이름이 같은 색상은 기존 이미지를 유지한 채 갱신한다.
+          colorItems: p.colorItems && p.colorItems.length > 0
+            ? p.colorItems.map((ci) => {
+                const matchedColor = (existing.colorItems ?? []).find((ec) => ec.name === ci.name);
+                return matchedColor ? { ...ci, image: matchedColor.image } : ci;
+              })
+            : (existing.colorItems ?? []),
+        };
       } else {
         const order = nextOrderBySection.get(p.section) ?? 0;
         nextOrderBySection.set(p.section, order + 1);
@@ -1569,9 +1679,40 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       return p.name.toLowerCase().includes(q) || p.model.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
     });
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const allVisibleSelected = filteredProducts.length > 0 && filteredProducts.every((p) => selectedIds.has(p.id));
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (filteredProducts.length > 0 && filteredProducts.every((p) => prev.has(p.id))) return new Set();
+      return new Set(filteredProducts.map((p) => p.id));
+    });
+  };
+
+  const doBulkDelete = () => {
+    const next = products.filter((p) => !selectedIds.has(p.id)).map((p, i) => ({ ...p, order: i }));
+    saveProducts(next);
+    setSelectedIds(new Set());
+    setConfirmBulkDelete(false);
+  };
+
   return (
     <div>
       {confirmProductId && <ConfirmDialog onConfirm={doDeleteProduct} onCancel={() => setConfirmProductId(null)} />}
+      {confirmBulkDelete && (
+        <ConfirmDialog
+          title="선택 상품 삭제"
+          message={`선택한 ${selectedIds.size}개 상품을 삭제하시겠습니까?`}
+          onConfirm={doBulkDelete}
+          onCancel={() => setConfirmBulkDelete(false)}
+        />
+      )}
 
       {/* 하위 탭 */}
       <div className="flex border-b border-[#e8e8e8]">
@@ -1593,6 +1734,14 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
 
       {/* 버튼 영역 — 상품카테고리관리 탭일 때 숨김 */}
       <div className={`mt-4 mb-4 flex justify-end gap-2 ${subTab === "category" ? "invisible h-8" : ""}`}>
+        <button
+          type="button"
+          onClick={() => reload()}
+          title="새로고침 (페이지 새로고침 없이 목록·썸네일을 다시 불러옵니다)"
+          className="h-8 rounded-full border border-[#e8e8e8] px-4 text-[12px] text-[#555] hover:border-[#555]"
+        >
+          ↻ 새로고침
+        </button>
         <button
           type="button"
           onClick={() => downloadProductsExcel(filteredProducts, sections)}
@@ -1700,7 +1849,37 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       {subTab === "products" && (
         <>
           {loading ? <AdminLoading /> : <>
-          <p className="mb-3 text-[12px] text-[#aaa]">총 {filteredProducts.length}개 상품</p>
+          <div className="mb-3 flex items-center justify-between">
+            <label className="flex items-center gap-1.5 text-[12px] text-[#aaa]">
+              <input
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={toggleSelectAll}
+                disabled={filteredProducts.length === 0}
+                className="h-3.5 w-3.5 accent-[#c90f45]"
+              />
+              총 {filteredProducts.length}개 상품
+              {selectedIds.size > 0 && <span className="text-[#c90f45] font-semibold">· {selectedIds.size}개 선택됨</span>}
+            </label>
+            {selectedIds.size > 0 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="h-7 rounded-full border border-[#e8e8e8] px-3 text-[11px] text-[#888] hover:border-[#555]"
+                >
+                  선택 해제
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmBulkDelete(true)}
+                  className="h-7 rounded-full border border-red-300 px-3 text-[11px] font-semibold text-red-500 hover:bg-red-50"
+                >
+                  선택 삭제
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="space-y-2">
             {filteredProducts.length > 0 ? (
@@ -1724,6 +1903,9 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
                     isDragging={dragFromProductId === product.id}
                     showSection={sectionFilter === "all"}
                     sectionLabel={sectionLabel}
+                    imgRetryKey={imgRetryKey}
+                    selected={selectedIds.has(product.id)}
+                    onToggleSelect={() => toggleSelect(product.id)}
                   />
                   {insertBelow && <div className="my-0.5 h-0.5 rounded-full bg-[#c90f45]" />}
                 </div>
@@ -1743,7 +1925,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
         <ProductModal
           initial={modal.editing}
           section={section}
-          categories={categories}
+          sections={sections}
           onSave={addOrEdit}
           onClose={() => setModal({ open: false, editing: null })}
         />

@@ -19,7 +19,7 @@ function ProductCard({ product, href }: { product: ManagedProduct; href: string 
   return (
     <Link href={`${href}/${product.id}`} className="group flex w-36 shrink-0 flex-col sm:w-44 md:w-48" draggable={false}>
       <div className="relative mb-2.5 aspect-square overflow-hidden rounded-xl bg-[#f7f7f7]">
-        {!imgError ? (
+        {product.image && !imgError ? (
           <Image
             src={product.image}
             alt={product.name}

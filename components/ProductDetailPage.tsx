@@ -82,10 +82,18 @@ const benefits = [
   { Icon: LuTruck, title: "무료 배송·설치", desc: "전문 설치 기사가 무료로 배송 및 설치를 진행합니다." },
 ];
 
+const CARE_GROUP_PERIODS = ["72개월", "60개월", "48개월"];
+
 export default function ProductDetailPage({ product, breadcrumb, section }: Props) {
   const [imgError, setImgError] = useState(false);
   const hasPeriodPrices = (product.periodPrices?.length ?? 0) > 0;
-  const defaultPeriod = hasPeriodPrices ? product.periodPrices![0].label : "72개월";
+  // 기본 계약기간은 "1번째 등록된 케어서비스 항목"이 실제로 값을 가진 개월수(72→60→48 순)로 맞춘다.
+  // periodPrices는 전체 케어서비스 항목을 통틀어 값이 있는 기간 목록이라, 1번째 항목엔 없는
+  // 기간이 기본 선택되면 basePrice가 null이 되어 있는데도 "상담 문의 시 안내"로 보이는 문제가 있었다.
+  const firstCarePrices = product.careServiceItems?.[0]?.prices ?? [];
+  const defaultPeriod = firstCarePrices.length > 0
+    ? (CARE_GROUP_PERIODS.find((period) => firstCarePrices.some((p) => p.period === period)) ?? firstCarePrices[0].period)
+    : hasPeriodPrices ? product.periodPrices![0].label : "72개월";
   const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
   const [selectedCareIdx, setSelectedCareIdx] = useState(0);
@@ -152,7 +160,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
           {/* 좌측: 메인 이미지 */}
           <div className="mx-auto w-full max-w-90 sm:max-w-105 md:w-[42%] md:max-w-100 md:shrink-0 lg:w-[45%] lg:max-w-120">
             <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#f7f7f7]">
-              {!imgError ? (
+              {displayImage && !imgError ? (
                 <Image
                   src={displayImage}
                   alt={product.name}

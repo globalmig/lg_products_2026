@@ -33,7 +33,7 @@ function ProductCard({ product }: { product: Product }) {
       className="group block w-36 shrink-0 sm:w-44 md:w-55"
     >
       <div className="relative mb-3 aspect-square overflow-hidden rounded-xl bg-[#f7f7f7]">
-        {!imgError ? (
+        {product.image && !imgError ? (
           <Image
             src={product.image}
             alt={product.name}

@@ -20,7 +20,7 @@ function ProductCard({ product, category }: { product: GridProduct; category: st
   return (
     <a href={`/products/${category}/${product.id}`} className="group block">
       <div className="relative mb-3 aspect-square overflow-hidden rounded-2xl bg-[#f7f7f7]">
-        {!imgError ? (
+        {product.image && !imgError ? (
           <Image
             src={product.image}
             alt={product.name}

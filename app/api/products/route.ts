@@ -11,6 +11,19 @@ type DBProduct = {
   period_prices: string; care_service_items: string; color_items: string;
 };
 
+const CARE_GROUP_PERIODS = ["72개월", "60개월", "48개월"];
+
+// 노출가격 기준: 1번째 등록된 케어서비스 항목의 가격을 72→60→48개월 순으로 찾아 사용한다.
+// (components/admin/ProductAdmin.tsx의 monthlyPriceFromCareItems와 동일 규칙)
+function monthlyPriceFromCareItems(careServiceItems: { prices?: { period: string; price: number }[] }[], fallback: number): number {
+  const prices = careServiceItems[0]?.prices ?? [];
+  for (const period of CARE_GROUP_PERIODS) {
+    const found = prices.find((p) => p.period === period);
+    if (found) return found.price;
+  }
+  return fallback;
+}
+
 function toImageUrl(key: string) {
   if (!key || key.startsWith("/") || key.startsWith("http") || key.trimStart().startsWith("<")) return key;
   return `/api/images/${key}`;
@@ -24,13 +37,14 @@ function toImageKey(url: string) {
 
 function deserialize(row: DBProduct) {
   const rawColorItems = JSON.parse(row.color_items || "[]") as { name: string; image: string }[];
+  const careServiceItems = JSON.parse(row.care_service_items || "[]") as { prices?: { period: string; price: number }[] }[];
   return {
     id: row.id, section: row.section, category: row.category,
     name: row.name, model: row.model,
-    monthlyPrice: row.monthly_price, benefitPrice: row.benefit_price,
+    monthlyPrice: monthlyPriceFromCareItems(careServiceItems, row.monthly_price), benefitPrice: row.benefit_price,
     price60: row.price_60 ?? null, price48: row.price_48 ?? null, price36: row.price_36 ?? null,
     periodPrices: JSON.parse(row.period_prices || "[]"),
-    careServiceItems: JSON.parse(row.care_service_items || "[]"),
+    careServiceItems,
     colorItems: rawColorItems.map((c) => ({ ...c, image: toImageUrl(c.image) })),
     tags: JSON.parse(row.tags || "[]"),
     image: toImageUrl(row.image), detailImage: toImageUrl(row.detail_image ?? ""),
@@ -67,7 +81,7 @@ export async function PUT(req: Request) {
           careService?: string; manageCycle?: string; color?: string; size?: string;
         };
         const periodPrices = typedItem.periodPrices ?? [];
-        const monthlyPrice = periodPrices[0]?.price ?? item.monthlyPrice;
+        const monthlyPrice = item.monthlyPrice;
         return stmt.bind(
           item.id, section, item.category, item.name, item.model,
           monthlyPrice, item.benefitPrice ?? null,

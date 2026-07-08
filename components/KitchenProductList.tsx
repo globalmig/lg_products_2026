@@ -14,7 +14,7 @@ function ProductCard({ product }: { product: ManagedProduct }) {
     <a href={`/products/kitchen/${product.id}`} className="group flex flex-col">
       {/* 이미지 영역 */}
       <div className="relative mb-3 overflow-hidden rounded-2xl bg-[#f7f7f7] aspect-square">
-        {!imgError ? (
+        {product.image && !imgError ? (
           <Image
             src={product.image}
             alt={product.name}
