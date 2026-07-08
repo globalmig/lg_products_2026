@@ -70,16 +70,15 @@ function legacyColorItems(p: ManagedProduct): ColorItem[] {
 // "케어서비스N_라벨" 컬럼 바로 다음 위치로 찾아야 한다 (careGroupHeaders 순서와 1:1로 맞춰야 함).
 const CARE_GROUP_PERIODS: string[] = ["72개월", "60개월", "48개월"];
 
-// 노출가격(monthlyPrice) 기준: 케어서비스 매트릭스 전체 최솟값이 아니라, 1번째 라벨·1번째 주기
-// 케어서비스 항목의 가격을 72개월 → 60개월 → 48개월 순서로 찾아 처음 값이 있는 개월수를 노출한다.
-// 그 항목에 아무 가격도 없을 때만 fallback을 쓴다.
+// 노출가격(monthlyPrice) 기준: 모든 케어서비스 항목(주기별) × 모든 계약기간(72/60/48개월)의
+// 가격을 통틀어 최솟값을 노출한다. 유효한 가격이 하나도 없을 때만 fallback을 쓴다.
 function monthlyPriceFromCareItems(careServiceItems: CareServiceItem[], fallback: number): number {
-  const prices = careServiceItems[0]?.prices ?? [];
-  for (const period of CARE_GROUP_PERIODS) {
-    const found = prices.find((p) => p.period === period);
-    if (found) return found.price;
-  }
-  return fallback;
+  const allPrices = careServiceItems
+    .flatMap((item) => item.prices ?? [])
+    .map((p) => p.price)
+    .filter((price) => Number.isFinite(price));
+  if (allPrices.length === 0) return fallback;
+  return Math.min(...allPrices);
 }
 
 function careGroupHeaders(count: number): string[] {

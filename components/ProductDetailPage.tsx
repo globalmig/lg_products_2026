@@ -87,16 +87,31 @@ const CARE_GROUP_PERIODS = ["72개월", "60개월", "48개월"];
 export default function ProductDetailPage({ product, breadcrumb, section }: Props) {
   const [imgError, setImgError] = useState(false);
   const hasPeriodPrices = (product.periodPrices?.length ?? 0) > 0;
+  // 케어서비스 주기가 입력되지 않은 항목(라벨/가격만 있고 주기 텍스트가 비어있는 경우)은
+  // 화면에 빈 버튼으로 노출되는 문제가 있어 아예 목록에서 제외한다.
+  const visibleCareServiceItems = (product.careServiceItems ?? []).filter(
+    (cs) => (cs.cycle ?? "").trim() !== ""
+  );
   // 기본 계약기간은 "1번째 등록된 케어서비스 항목"이 실제로 값을 가진 개월수(72→60→48 순)로 맞춘다.
   // periodPrices는 전체 케어서비스 항목을 통틀어 값이 있는 기간 목록이라, 1번째 항목엔 없는
   // 기간이 기본 선택되면 basePrice가 null이 되어 있는데도 "상담 문의 시 안내"로 보이는 문제가 있었다.
-  const firstCarePrices = product.careServiceItems?.[0]?.prices ?? [];
+  const firstCarePrices = visibleCareServiceItems[0]?.prices ?? [];
   const defaultPeriod = firstCarePrices.length > 0
     ? (CARE_GROUP_PERIODS.find((period) => firstCarePrices.some((p) => p.period === period)) ?? firstCarePrices[0].period)
     : hasPeriodPrices ? product.periodPrices![0].label : "72개월";
-  const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod);
+  // 리스트에 노출되는 가격은 모든 케어서비스 항목×기간 중 최솟값이므로, 상세페이지도 진입 시
+  // 그 최저가 조합(항목+기간)을 기본 선택해야 리스트가와 상세 첫 화면 가격이 일치한다.
+  const careCombos = visibleCareServiceItems.flatMap((item, idx) =>
+    (item.prices ?? [])
+      .filter((p) => Number.isFinite(p.price))
+      .map((p) => ({ idx, period: p.period, price: p.price }))
+  );
+  const cheapestCombo = careCombos.length > 0
+    ? careCombos.reduce((min, c) => (c.price < min.price ? c : min))
+    : null;
+  const [selectedPeriod, setSelectedPeriod] = useState(cheapestCombo?.period ?? defaultPeriod);
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
-  const [selectedCareIdx, setSelectedCareIdx] = useState(0);
+  const [selectedCareIdx, setSelectedCareIdx] = useState(cheapestCombo?.idx ?? 0);
   const [selectedCardIdx, setSelectedCardIdx] = useState<number | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [cards, setCards] = useState<CardDiscount[]>([]);
@@ -106,13 +121,15 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
   const selectedCard = selectedCardIdx !== null ? cards[selectedCardIdx] : null;
 
-  const hasCareItems = (product.careServiceItems?.length ?? 0) > 0;
-  const hasCareMatrix = hasCareItems && product.careServiceItems!.some((cs) => (cs.prices?.length ?? 0) > 0);
-  const selectedCareItem = hasCareItems ? product.careServiceItems![selectedCareIdx] : undefined;
+  const hasCareItems = visibleCareServiceItems.length > 0;
+  const hasCareMatrix = hasCareItems && visibleCareServiceItems.some((cs) => (cs.prices?.length ?? 0) > 0);
+  const selectedCareItem = hasCareItems ? visibleCareServiceItems[selectedCareIdx] : undefined;
 
   const legacyBasePrice = (() => {
     if (hasPeriodPrices) {
-      return product.periodPrices!.find((p) => p.label === selectedPeriod)?.price ?? product.monthlyPrice;
+      // 가격이 0으로 비어있는 레거시 periodPrices 항목(미입력 스텁)은 무시하고 monthlyPrice로 대체한다.
+      const found = product.periodPrices!.find((p) => p.label === selectedPeriod)?.price;
+      return found ? found : product.monthlyPrice;
     }
     const m = parseInt(selectedPeriod);
     if (m === 60 && product.price60 != null) return product.price60;
@@ -244,7 +261,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                     케어서비스 주기
                   </div>
                   <div className="flex flex-1 gap-2">
-                    {product.careServiceItems!.map((cs, i) => (
+                    {visibleCareServiceItems.map((cs, i) => (
                       <button
                         key={i}
                         type="button"

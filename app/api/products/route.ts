@@ -11,17 +11,15 @@ type DBProduct = {
   period_prices: string; care_service_items: string; color_items: string;
 };
 
-const CARE_GROUP_PERIODS = ["72개월", "60개월", "48개월"];
-
-// 노출가격 기준: 1번째 등록된 케어서비스 항목의 가격을 72→60→48개월 순으로 찾아 사용한다.
-// (components/admin/ProductAdmin.tsx의 monthlyPriceFromCareItems와 동일 규칙)
+// 노출가격 기준: 모든 케어서비스 항목(주기별) × 모든 계약기간(72/60/48개월)의 가격을 통틀어
+// 최솟값을 사용한다. (components/admin/ProductAdmin.tsx의 monthlyPriceFromCareItems와 동일 규칙)
 function monthlyPriceFromCareItems(careServiceItems: { prices?: { period: string; price: number }[] }[], fallback: number): number {
-  const prices = careServiceItems[0]?.prices ?? [];
-  for (const period of CARE_GROUP_PERIODS) {
-    const found = prices.find((p) => p.period === period);
-    if (found) return found.price;
-  }
-  return fallback;
+  const allPrices = careServiceItems
+    .flatMap((item) => item.prices ?? [])
+    .map((p) => p.price)
+    .filter((price) => Number.isFinite(price));
+  if (allPrices.length === 0) return fallback;
+  return Math.min(...allPrices);
 }
 
 function toImageUrl(key: string) {
