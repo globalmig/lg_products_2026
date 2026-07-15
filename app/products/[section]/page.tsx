@@ -12,7 +12,11 @@ async function getSectionLabel(section: string) {
 export async function generateMetadata({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
   const label = await getSectionLabel(section);
-  return { title: label ?? section };
+  return {
+    title: label ?? section,
+    description: `LG전자 베스트샵 용산점 ${label ?? section} 구독·렌탈 상품을 확인하세요.`,
+    alternates: { canonical: `/products/${section}` },
+  };
 }
 
 export default async function SectionProductsPage({ params }: { params: Promise<{ section: string }> }) {

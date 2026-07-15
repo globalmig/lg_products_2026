@@ -4,6 +4,7 @@ import LivingProductList from "@/components/LivingProductList";
 export const metadata = {
   title: "생활가전",
   description: "LG 세탁기·건조기·스타일러·청소기를 월 구독료로 이용하세요. 설치·AS 포함.",
+  alternates: { canonical: "/products/living" },
 };
 
 export default function LivingPage() {

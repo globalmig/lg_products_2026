@@ -1,32 +1,33 @@
-"use client";
-
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { productStore, type ManagedProduct } from "@/lib/productStore";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getProductById } from "@/lib/productsServer";
+import { buildProductMetadata, notFoundMetadata } from "@/lib/productMetadata";
 import ProductDetailPage from "@/components/ProductDetailPage";
+import ProductJsonLd from "@/components/ProductJsonLd";
 
-export default function LivingDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<ManagedProduct | null | undefined>(undefined);
+const SECTION = "living";
+const SECTION_LABEL = "생활가전";
 
-  useEffect(() => {
-    productStore.products.getBySection("living").then((products) => {
-      setProduct(products.find((p) => p.id === id) ?? null);
-    });
-  }, [id]);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProductById(SECTION, id);
+  if (!product) return notFoundMetadata();
+  return buildProductMetadata(product, SECTION);
+}
 
-  if (product === undefined) return <div className="min-h-screen bg-white" />;
-  if (product === null) return (
-    <div className="flex min-h-screen items-center justify-center text-[14px] text-[#999]">
-      상품을 찾을 수 없습니다.
-    </div>
-  );
+export default async function LivingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const product = await getProductById(SECTION, id);
+  if (!product) notFound();
 
   return (
-    <ProductDetailPage
-      product={product}
-      breadcrumb={[{ label: "생활가전", href: "/products/living" }]}
-    />
+    <>
+      <ProductJsonLd product={product} section={SECTION} />
+      <ProductDetailPage
+        product={product}
+        breadcrumb={[{ label: SECTION_LABEL, href: "/products/living" }]}
+        section={SECTION}
+      />
+    </>
   );
 }
