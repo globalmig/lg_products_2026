@@ -25,7 +25,7 @@ export default function BenefitNewsPage() {
         <div className="relative z-10 mx-auto flex min-h-40 max-w-[1180px] flex-col justify-end sm:min-h-50 lg:min-h-60">
           <p className="mb-4 text-[14px] font-bold tracking-[0.16em] text-white/75">BENEFIT & NEWS</p>
           <h1 className="max-w-[720px] text-[28px] font-black leading-[1.18] tracking-[-0.04em] text-white sm:text-[42px] lg:text-[56px]">혜택 & 이달의 소식</h1>
-          <p className="mt-5 max-w-[620px] break-keep text-[15px] leading-[1.8] text-white/82 sm:text-[17px] lg:text-[18px]">LG전자 베스트샵 용산점에서 진행 중인 프로모션, 이벤트, 매장 소식을 한눈에 확인하세요.</p>
+          <p className="mt-5 max-w-[620px] break-keep text-[15px] leading-[1.8] text-white/82 sm:text-[17px] lg:text-[18px]">LG전자 베스트샵에서 진행 중인 프로모션, 이벤트, 매장 소식을 한눈에 확인하세요.</p>
         </div>
       </section>
 

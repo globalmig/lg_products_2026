@@ -91,10 +91,18 @@ export default function GenericProductList({ section }: { section: string }) {
   const [label, setLabel] = useState(section);
   const [products, setProducts] = useState<ManagedProduct[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    productStore.products.getBySection(section).then(setProducts);
-    productStore.categories.getBySection(section).then((cats) => setCategories(cats.map((c) => c.name)));
+    setLoading(true);
+    Promise.all([
+      productStore.products.getBySection(section),
+      productStore.categories.getBySection(section),
+    ]).then(([prods, cats]) => {
+      setProducts(prods);
+      setCategories(cats.map((c) => c.name));
+      setLoading(false);
+    });
     productStore.sections.get().then((sections) => {
       const match = sections.find((s) => s.id === section);
       if (match) setLabel(match.label);
@@ -124,7 +132,9 @@ export default function GenericProductList({ section }: { section: string }) {
         {/* 필터 */}
         <CategoryFilterBar categories={["전체", ...categories]} active={activeCategory} onChange={setActiveCategory} />
 
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div className="py-24 text-center text-[14px] text-[#999]">불러오는 중...</div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10">
             {filtered.map((product) => (
               <ProductCard key={product.id} product={product} section={section} />

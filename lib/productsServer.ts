@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { ManagedProduct } from "./productStore";
+import { R2_PUBLIC_URL } from "./siteConfig";
 
 type DBProduct = {
   id: string; section: string; category: string; name: string; model: string;
@@ -24,11 +25,12 @@ export function monthlyPriceFromCareItems(careServiceItems: { prices?: { period:
 
 export function toImageUrl(key: string) {
   if (!key || key.startsWith("/") || key.startsWith("http") || key.trimStart().startsWith("<")) return key;
-  return `/api/images/${key}`;
+  return `${R2_PUBLIC_URL}/${key}`;
 }
 
 export function toImageKey(url: string) {
   if (!url) return url;
+  if (url.startsWith(`${R2_PUBLIC_URL}/`)) return url.slice(`${R2_PUBLIC_URL}/`.length);
   if (url.startsWith("/api/images/")) return url.slice("/api/images/".length);
   return url;
 }

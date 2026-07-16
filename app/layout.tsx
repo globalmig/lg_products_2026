@@ -8,8 +8,8 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    template: "%s | LG전자 베스트샵 용산점",
-    default: "LG전자 베스트샵 용산점 – 가전 구독·렌탈 전문",
+    template: "%s | LG전자 베스트샵",
+    default: "LG전자 베스트샵 – 가전 구독·렌탈 전문",
   },
   description: SITE_DESCRIPTION,
   keywords: ["LG전자 베스트샵", "가전 구독", "가전 렌탈", "정수기 렌탈", "공기청정기 렌탈", "에어컨 렌탈", "세탁기 렌탈", "냉장고 렌탈", "LG 렌탈 구독"],
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    title: "LG전자 베스트샵 용산점 – 가전 구독·렌탈 전문",
+    title: "LG전자 베스트샵 – 가전 구독·렌탈 전문",
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     siteName: SITE_NAME,
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "LG전자 베스트샵 용산점 – 가전 구독·렌탈 전문",
+    title: "LG전자 베스트샵 – 가전 구독·렌탈 전문",
     description: SITE_DESCRIPTION,
     images: ["/og-image.png"],
   },

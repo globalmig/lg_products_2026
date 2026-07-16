@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   try {
     const { env } = await getCloudflareContext();
     await env.lg_product_images.put(key, bytes, {
-      httpMetadata: { contentType },
+      httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable" },
     });
     const head = await env.lg_product_images.head(key);
     if (!head) {

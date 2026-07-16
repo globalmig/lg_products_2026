@@ -254,7 +254,7 @@ export default function AdminPage() {
           {/* 대시보드 */}
           {tab === "dashboard" && (
             <div>
-              <p className="mb-6 text-[13px] text-[#888]">안녕하세요, 관리자님. LG베스트샵 용산점 현황입니다.</p>
+              <p className="mb-6 text-[13px] text-[#888]">안녕하세요, 관리자님. LG베스트샵 현황입니다.</p>
 
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 {[
