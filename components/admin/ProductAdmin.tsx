@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { LuPencil, LuTrash2 } from "react-icons/lu";
+import { LuPencil, LuTrash2, LuExternalLink, LuEye, LuEyeOff } from "react-icons/lu";
 import AdminLoading from "./AdminLoading";
 import Image from "next/image";
 import {
@@ -1098,7 +1098,8 @@ function ExcelUploadModal({
         setCategoriesBySection(map);
       });
       // 덮어쓰기 판정(미리보기 배지·확인 문구용)을 위해 등록된 상품도 함께 받아온다.
-      Promise.all(secs.map((s) => productStore.products.getBySection(s.id))).then((results) => {
+      // (숨김 처리된 상품도 판정 대상에 포함해야 재업로드 시 중복 등록되지 않는다.)
+      Promise.all(secs.map((s) => productStore.products.getBySection(s.id, { includeHidden: true }))).then((results) => {
         setExistingProducts(results.flat());
       });
     });
@@ -1397,10 +1398,11 @@ function ExcelUploadModal({
 }
 
 /* ────── 상품 행 ────── */
-function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection, sectionLabel, imgRetryKey, selected, onToggleSelect }: {
+function ProductRow({ product, onEdit, onDelete, onToggleVisibility, onDragStart, onDragOver, onDrop, onDragEnd, isDragging, showSection, sectionLabel, imgRetryKey, selected, onToggleSelect }: {
   product: ManagedProduct;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleVisibility: () => void;
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
@@ -1417,6 +1419,7 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
   // 이미지 URL이 바뀌었거나(새 이미지 등록) 새로고침 버튼으로 재시도를 요청했을 때
   // 예전 로딩 실패 상태를 지우고 다시 시도한다. (전체 페이지 새로고침 없이도 복구되게)
   useEffect(() => { setImgError(false); }, [product.image, imgRetryKey]);
+  const isVisible = product.isVisible !== false;
 
   return (
     <div
@@ -1427,7 +1430,7 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
       onDragEnd={onDragEnd}
       className={`flex items-center gap-3 rounded-xl border border-[#f0f0f0] bg-white px-4 py-3 transition-all ${
         isDragging ? "opacity-40" : ""
-      }`}
+      } ${!isVisible ? "opacity-50" : ""}`}
     >
       {/* 드래그 핸들 */}
       <span className="cursor-grab text-[16px] text-[#ccc] active:cursor-grabbing shrink-0">⠿</span>
@@ -1467,8 +1470,31 @@ function ProductRow({ product, onEdit, onDelete, onDragStart, onDragOver, onDrop
         <span className="shrink-0 rounded-full bg-[#fff0f4] px-2 py-0.5 text-[10px] font-bold text-[#c90f45]">베스트</span>
       )}
 
+      {/* 노출 상태 뱃지 */}
+      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${isVisible ? "bg-[#f0f8f2] text-[#2f9e5c]" : "bg-[#f5f5f5] text-[#999]"}`}>
+        {isVisible ? "노출중" : "숨김"}
+      </span>
+
       {/* 액션 */}
       <div className="flex shrink-0 gap-2">
+        <a
+          href={`/products/${product.section}/${product.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]"
+          title="자사몰 상세페이지 바로가기"
+        >
+          <LuExternalLink size={14} />
+        </a>
+        <button
+          type="button"
+          onClick={onToggleVisibility}
+          className={`flex h-8 w-8 items-center justify-center rounded-lg border ${isVisible ? "border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" : "border-[#e8e8e8] text-[#bbb] hover:border-[#c90f45] hover:text-[#c90f45]"}`}
+          title={isVisible ? "노출 끄기" : "노출 켜기"}
+        >
+          {isVisible ? <LuEye size={14} /> : <LuEyeOff size={14} />}
+        </button>
         <button type="button" onClick={onEdit} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
         <button type="button" onClick={onDelete} className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e8e8e8] text-[#999] hover:border-[#c90f45] hover:text-[#c90f45]" title="삭제"><LuTrash2 size={14} /></button>
       </div>
@@ -1517,7 +1543,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       // "전체" 탭에서는 상품 추가 모달이 사용할 section 기준으로 카테고리를 로드해야
       // 카테고리 select가 비어있지 않다.
       return Promise.all([
-        Promise.all(sections.map((s) => productStore.products.getBySection(s.id))),
+        Promise.all(sections.map((s) => productStore.products.getBySection(s.id, { includeHidden: true }))),
         productStore.categories.getBySection(section),
       ]).then(([allProds, cats]) => {
         setProductsState(allProds.flat().sort((a, b) => a.order - b.order));
@@ -1525,7 +1551,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
       });
     }
     return Promise.all([
-      productStore.products.getBySection(sectionFilter),
+      productStore.products.getBySection(sectionFilter, { includeHidden: true }),
       productStore.categories.getBySection(sectionFilter),
     ]).then(([prods, cats]) => {
       setProductsState(prods);
@@ -1582,7 +1608,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     // 현재 화면에 로드된 products는 sectionFilter에 따라 일부 섹션만 포함할 수 있으므로,
     // 덮어쓰기 판정과 저장은 전체 섹션의 최신 데이터를 기준으로 한다.
     const allExisting = (
-      await Promise.all(sections.map((s) => productStore.products.getBySection(s.id)))
+      await Promise.all(sections.map((s) => productStore.products.getBySection(s.id, { includeHidden: true })))
     ).flat();
     const nextOrderBySection = new Map<Section, number>();
     sections.forEach((s) => {
@@ -1634,6 +1660,30 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
   };
 
   const deleteProduct = (id: string) => setConfirmProductId(id);
+
+  // 노출 on/off는 products 테이블을 건드리지 않고 별도로 저장되므로, 목록을 다시 불러오지 않고
+  // 화면 상태만 낙관적으로 갱신한다 (꺼도 상품 데이터는 그대로 남아 있음).
+  const toggleVisibility = async (product: ManagedProduct) => {
+    const nextVisible = !(product.isVisible !== false);
+    setProductsState((prev) => prev.map((p) => (p.id === product.id ? { ...p, isVisible: nextVisible } : p)));
+    try {
+      await productStore.products.setVisibility(product.id, nextVisible);
+    } catch {
+      setProductsState((prev) => prev.map((p) => (p.id === product.id ? { ...p, isVisible: !nextVisible } : p)));
+    }
+  };
+
+  // 선택한 상품들을 한 번에 노출 on/off. 실패한 항목만 롤백한다.
+  const bulkSetVisibility = async (ids: Set<string>, nextVisible: boolean) => {
+    const targetIds = products.filter((p) => ids.has(p.id) && (p.isVisible !== false) !== nextVisible).map((p) => p.id);
+    if (targetIds.length === 0) return;
+    setProductsState((prev) => prev.map((p) => (targetIds.includes(p.id) ? { ...p, isVisible: nextVisible } : p)));
+    const results = await Promise.allSettled(targetIds.map((id) => productStore.products.setVisibility(id, nextVisible)));
+    const failedIds = targetIds.filter((_, i) => results[i].status === "rejected");
+    if (failedIds.length > 0) {
+      setProductsState((prev) => prev.map((p) => (failedIds.includes(p.id) ? { ...p, isVisible: !nextVisible } : p)));
+    }
+  };
 
   const handleProductDrop = (targetId: string) => {
     const fromId = dragProductId.current;
@@ -1871,6 +1921,20 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
                 </button>
                 <button
                   type="button"
+                  onClick={() => bulkSetVisibility(selectedIds, true)}
+                  className="h-7 rounded-full border border-[#e8e8e8] px-3 text-[11px] font-semibold text-[#2f9e5c] hover:border-[#2f9e5c]"
+                >
+                  선택 노출 켜기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => bulkSetVisibility(selectedIds, false)}
+                  className="h-7 rounded-full border border-[#e8e8e8] px-3 text-[11px] font-semibold text-[#888] hover:border-[#555]"
+                >
+                  선택 노출 끄기
+                </button>
+                <button
+                  type="button"
                   onClick={() => setConfirmBulkDelete(true)}
                   className="h-7 rounded-full border border-red-300 px-3 text-[11px] font-semibold text-red-500 hover:bg-red-50"
                 >
@@ -1894,6 +1958,7 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
                     product={product}
                     onEdit={() => setModal({ open: true, editing: product })}
                     onDelete={() => deleteProduct(product.id)}
+                    onToggleVisibility={() => toggleVisibility(product)}
                     onDragStart={() => { dragProductId.current = product.id; setDragFromProductId(product.id); }}
                     onDragOver={(e) => { e.preventDefault(); setDragOverProductId(product.id); }}
                     onDrop={() => handleProductDrop(product.id)}

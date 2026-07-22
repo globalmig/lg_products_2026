@@ -50,6 +50,8 @@ export interface ManagedProduct {
   manageCycle?: string;
   color?: string;
   size?: string;
+  // 자사몰 노출 여부. false면 상품 데이터는 그대로 유지된 채 스토어 화면에서만 숨겨진다.
+  isVisible?: boolean;
 }
 
 export interface ManagedCategory {
@@ -126,9 +128,13 @@ export const productStore = {
       }),
   },
   products: {
-    get: async (section?: Section): Promise<ManagedProduct[]> => {
+    get: async (section?: Section, opts?: { includeHidden?: boolean }): Promise<ManagedProduct[]> => {
       try {
-        const url = section ? `/api/products?section=${section}` : `/api/products`;
+        const params = new URLSearchParams();
+        if (section) params.set("section", section);
+        if (opts?.includeHidden) params.set("includeHidden", "1");
+        const qs = params.toString();
+        const url = `/api/products${qs ? `?${qs}` : ""}`;
         const data = await apiFetch<ManagedProduct[]>(url);
         if (data.length === 0) {
           const defaults = buildDefaultProducts();
@@ -140,12 +146,18 @@ export const productStore = {
         return section ? defaults.filter((p) => p.section === section).sort((a, b) => a.order - b.order) : defaults;
       }
     },
-    getBySection: (section: Section) => productStore.products.get(section),
+    getBySection: (section: Section, opts?: { includeHidden?: boolean }) => productStore.products.get(section, opts),
     setForSection: (section: Section, items: ManagedProduct[]) =>
       apiFetch(`/api/products`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section, items }),
+      }),
+    setVisibility: (id: string, isVisible: boolean) =>
+      apiFetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isVisible }),
       }),
     delete: (id: string) => apiFetch(`/api/products/${id}`, { method: "DELETE" }),
     reset: () =>

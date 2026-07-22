@@ -161,10 +161,14 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
   // 원본 상세 HTML은 크기가 매우 클 수 있어, 계약기간/케어서비스/카드 선택 등
   // 다른 상태가 바뀔 때마다 재렌더링되며 정규식 변환이 다시 도는 것을 막기 위해 메모이즈한다.
+  // iframe(전체 문서) 쪽은 스크롤이 막힌 컨테이너라 내부 이미지에 loading="lazy"를 걸면
+  // 뷰포트 판정이 꼬여 일부 이미지가 영영 로드되지 않는 문제가 있어 적용하지 않는다.
+  // (iframe 자체의 loading="lazy"만으로도 지연 로드 효과는 대부분 확보된다.)
   const processedDetailHtml = useMemo(() => {
     if (!product.detailImage) return "";
-    const withLazy = withLazyImages(product.detailImage);
-    return detailHtmlIsDoc ? withResponsiveOverride(dedupeMapNames(withLazy)) : withLazy;
+    return detailHtmlIsDoc
+      ? withResponsiveOverride(dedupeMapNames(product.detailImage))
+      : withLazyImages(product.detailImage);
   }, [product.detailImage, detailHtmlIsDoc]);
 
   return (

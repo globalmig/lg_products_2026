@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { search, type SearchResult } from "@/data/searchIndex";
+import { buildSearchIndex, search, type SearchResult } from "@/data/searchIndex";
 import { adminStore } from "@/lib/adminStore";
 import { productStore, type ManagedCategory, type ManagedSection } from "@/lib/productStore";
 
@@ -52,6 +52,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [searchIndex, setSearchIndex] = useState<Awaited<ReturnType<typeof buildSearchIndex>>>([]);
   const [storeName, setStoreName] = useState("");
   const [storeNameMobile, setStoreNameMobile] = useState("");
   const [navItems, setNavItems] = useState<NavItem[]>(buildNavItems([], DEFAULT_SECTIONS));
@@ -68,11 +69,14 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    setResults(search(query));
-  }, [query]);
+    setResults(search(query, searchIndex));
+  }, [query, searchIndex]);
 
   useEffect(() => {
     if (searchOpen) {
+      // 검색창을 열 때마다 최신 상품·소식 목록을 다시 받아와, 관리자 화면에서 방금
+      // 등록·수정한 내용도 바로 검색되게 한다.
+      buildSearchIndex().then(setSearchIndex);
       setTimeout(() => inputRef.current?.focus(), 50);
       document.body.style.overflow = "hidden";
     } else {

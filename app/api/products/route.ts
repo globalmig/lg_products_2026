@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import { deserializeProduct, getAllProducts, getProductsBySection, toImageKey } from "@/lib/productsServer";
 
 export async function GET(req: Request) {
-  const section = new URL(req.url).searchParams.get("section");
-  const products = section ? await getProductsBySection(section) : await getAllProducts();
+  const { searchParams } = new URL(req.url);
+  const section = searchParams.get("section");
+  const includeHidden = searchParams.get("includeHidden") === "1";
+  const products = section ? await getProductsBySection(section, includeHidden) : await getAllProducts(includeHidden);
   return NextResponse.json(products);
 }
 
