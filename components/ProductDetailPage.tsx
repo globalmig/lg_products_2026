@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { adminStore, imageUrl, type CardDiscount } from "@/lib/adminStore";
 import {
   LuChevronRight,
@@ -54,6 +54,12 @@ function dedupeMapNames(html: string): string {
       pairIndex += 1;
       return `<map${mapPrefix}usp_map_${pairIndex}${mapSuffix}`;
     }
+  );
+}
+
+function withLazyImages(html: string): string {
+  return html.replace(/<img\b[^>]*>/gi, (tag) =>
+    /\sloading=/i.test(tag) ? tag : tag.replace(/<img\b/i, '<img loading="lazy" decoding="async"')
   );
 }
 
@@ -150,6 +156,16 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
     : product.image;
 
   const cardPrice = selectedCard && basePrice !== null ? Math.max(0, basePrice - selectedCard.discount) : null;
+
+  const detailHtmlIsDoc = !!product.detailImage && /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage);
+
+  // 원본 상세 HTML은 크기가 매우 클 수 있어, 계약기간/케어서비스/카드 선택 등
+  // 다른 상태가 바뀔 때마다 재렌더링되며 정규식 변환이 다시 도는 것을 막기 위해 메모이즈한다.
+  const processedDetailHtml = useMemo(() => {
+    if (!product.detailImage) return "";
+    const withLazy = withLazyImages(product.detailImage);
+    return detailHtmlIsDoc ? withResponsiveOverride(dedupeMapNames(withLazy)) : withLazy;
+  }, [product.detailImage, detailHtmlIsDoc]);
 
   return (
     <main className="min-h-screen bg-white text-[#1a1a1a]">
@@ -450,9 +466,10 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="flex flex-col gap-2">
               {product.detailImage && (
                 product.detailImage.trimStart().startsWith("<") ? (
-                  /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage) ? (
+                  detailHtmlIsDoc ? (
                     <iframe
-                      srcDoc={withResponsiveOverride(dedupeMapNames(product.detailImage))}
+                      srcDoc={processedDetailHtml}
+                      loading="lazy"
                       className="w-full border-none block"
                       style={{ minHeight: 400, overflow: "hidden" }}
                       scrolling="no"
@@ -473,7 +490,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                   ) : (
                   <div
                     className="w-full detail-html-content"
-                    dangerouslySetInnerHTML={{ __html: product.detailImage }}
+                    dangerouslySetInnerHTML={{ __html: processedDetailHtml }}
                   />
                   )
                 ) : (
