@@ -482,7 +482,13 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                           if (doc?.body) doc.body.style.overflow = "hidden";
                           if (el) {
                             el.style.overflow = "hidden";
-                            frame.style.height = el.scrollHeight + "px";
+                            const updateHeight = () => { frame.style.height = el.scrollHeight + "px"; };
+                            updateHeight();
+                            // 내부 이미지가 loading="lazy"라 문서 load 시점엔 아직 로드 전인 경우가 많아,
+                            // 이미지가 로드되며 레이아웃이 늘어날 때마다 높이를 다시 맞춰준다.
+                            if (typeof ResizeObserver !== "undefined") {
+                              new ResizeObserver(updateHeight).observe(el);
+                            }
                           }
                         } catch {}
                       }}
