@@ -1673,15 +1673,17 @@ export default function ProductAdmin({ defaultSubTab = "products" }: { defaultSu
     }
   };
 
-  // 선택한 상품들을 한 번에 노출 on/off. 실패한 항목만 롤백한다.
+  // 선택한 상품들을 한 번에 노출 on/off. 개별 setVisibility를 병렬로 여러 번 호출하면
+  // 서버에서 같은 설정 행을 각자 읽고 덮어써 마지막 요청만 반영되는 문제가 있었어서,
+  // 반드시 setVisibilityBulk로 한 번에 묶어 보낸다. 실패 시 전체 롤백한다.
   const bulkSetVisibility = async (ids: Set<string>, nextVisible: boolean) => {
     const targetIds = products.filter((p) => ids.has(p.id) && (p.isVisible !== false) !== nextVisible).map((p) => p.id);
     if (targetIds.length === 0) return;
     setProductsState((prev) => prev.map((p) => (targetIds.includes(p.id) ? { ...p, isVisible: nextVisible } : p)));
-    const results = await Promise.allSettled(targetIds.map((id) => productStore.products.setVisibility(id, nextVisible)));
-    const failedIds = targetIds.filter((_, i) => results[i].status === "rejected");
-    if (failedIds.length > 0) {
-      setProductsState((prev) => prev.map((p) => (failedIds.includes(p.id) ? { ...p, isVisible: !nextVisible } : p)));
+    try {
+      await productStore.products.setVisibilityBulk(targetIds, nextVisible);
+    } catch {
+      setProductsState((prev) => prev.map((p) => (targetIds.includes(p.id) ? { ...p, isVisible: !nextVisible } : p)));
     }
   };
 

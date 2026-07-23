@@ -159,6 +159,15 @@ export const productStore = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isVisible }),
       }),
+    // 여러 상품을 동시에 토글할 땐 개별 setVisibility를 병렬로 여러 번 호출하면 안 된다
+    // (같은 site_settings 행을 각자 읽고 덮어써서 마지막 요청만 반영되는 race가 있음).
+    // 반드시 이 엔드포인트로 한 번에 묶어 보낸다.
+    setVisibilityBulk: (ids: string[], isVisible: boolean) =>
+      apiFetch(`/api/products`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, isVisible }),
+      }),
     delete: (id: string) => apiFetch(`/api/products/${id}`, { method: "DELETE" }),
     reset: () =>
       Promise.all(

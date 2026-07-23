@@ -1,6 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
-import { deserializeProduct, getAllProducts, getProductsBySection, toImageKey } from "@/lib/productsServer";
+import { deserializeProduct, getAllProducts, getHiddenProductIds, getProductsBySection, toImageKey, HIDDEN_PRODUCT_IDS_KEY } from "@/lib/productsServer";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -49,5 +49,27 @@ export async function PUT(req: Request) {
       })
     );
   }
+  return NextResponse.json({ ok: true });
+}
+
+// 여러 상품의 노출 on/off를 한 번의 읽기-수정-쓰기로 처리한다. 상품별로 PATCH를
+// 동시에 여러 번 날리면 각 요청이 같은 site_settings 행을 따로 읽고 덮어써서
+// 마지막에 끝난 요청만 반영되는 문제(lost update)가 있어, 반드시 이 엔드포인트로
+// 한 번에 묶어 처리해야 한다.
+export async function PATCH(req: Request) {
+  const { env } = await getCloudflareContext();
+  const { ids, isVisible } = (await req.json()) as { ids: string[]; isVisible: boolean };
+
+  const hidden = await getHiddenProductIds(env);
+  for (const id of ids) {
+    if (isVisible) hidden.delete(id);
+    else hidden.add(id);
+  }
+
+  await env.lg_product_db
+    .prepare("INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+    .bind(HIDDEN_PRODUCT_IDS_KEY, JSON.stringify([...hidden]))
+    .run();
+
   return NextResponse.json({ ok: true });
 }
