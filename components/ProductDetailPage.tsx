@@ -63,22 +63,13 @@ function withLazyImages(html: string): string {
   );
 }
 
-function withResponsiveOverride(html: string): string {
-  const style =
-    "<style>img{max-width:100% !important;height:auto !important}" +
-    '*[style*="860px"]{width:100% !important;max-width:860px !important}' +
-    "html,body{max-width:100%;overflow-x:hidden}</style>";
-  const headMatch = html.match(/<head[^>]*>/i);
-  if (headMatch) {
-    const idx = html.indexOf(headMatch[0]) + headMatch[0].length;
-    return html.slice(0, idx) + style + html.slice(idx);
-  }
-  const bodyMatch = html.match(/<body[^>]*>/i);
-  if (bodyMatch) {
-    const idx = html.indexOf(bodyMatch[0]) + bodyMatch[0].length;
-    return html.slice(0, idx) + style + html.slice(idx);
-  }
-  return style + html;
+// 전체 HTML 문서(<html><head><body>...)로 등록된 상세설명은 iframe 없이 body 안쪽
+// 내용만 페이지 DOM에 직접 삽입한다. head(및 그 안의 <style>)는 버린다 — 그대로 두면
+// <style> 태그가 스코프 없이 사이트 전체에 영향을 줄 수 있기 때문이다. 반응형 처리는
+// globals.css의 .detail-html-content 규칙이 담당한다.
+function extractBodyContent(html: string): string {
+  const match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  return match ? match[1] : html;
 }
 
 const benefits = [
@@ -157,19 +148,14 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
   const cardPrice = selectedCard && basePrice !== null ? Math.max(0, basePrice - selectedCard.discount) : null;
 
-  const detailHtmlIsDoc = !!product.detailImage && /(<head[\s>]|<body[\s>]|<!doctype)/i.test(product.detailImage);
-
   // 원본 상세 HTML은 크기가 매우 클 수 있어, 계약기간/케어서비스/카드 선택 등
   // 다른 상태가 바뀔 때마다 재렌더링되며 정규식 변환이 다시 도는 것을 막기 위해 메모이즈한다.
-  // iframe(전체 문서) 쪽 내부 이미지는 지연 로딩을 시도했으나(loading="lazy", 이후
-  // IntersectionObserver) 스크롤이 막힌 iframe 특성상 두 방식 모두 이미지가 아예 로드되지
-  // 않는 문제가 있어 즉시 로드로 되돌린다. iframe 자체의 loading="lazy"만으로 지연 효과를 얻는다.
+  // 전체 문서/프래그먼트 구분 없이 body 내용만 페이지 DOM에 직접 삽입하고, 네이티브
+  // loading="lazy"로 지연 로드한다(실제 페이지 스크롤 안이라 정상 동작한다).
   const processedDetailHtml = useMemo(() => {
     if (!product.detailImage) return "";
-    return detailHtmlIsDoc
-      ? withResponsiveOverride(dedupeMapNames(product.detailImage))
-      : withLazyImages(product.detailImage);
-  }, [product.detailImage, detailHtmlIsDoc]);
+    return withLazyImages(dedupeMapNames(extractBodyContent(product.detailImage)));
+  }, [product.detailImage]);
 
   return (
     <main className="min-h-screen bg-white text-[#1a1a1a]">
@@ -470,38 +456,10 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="flex flex-col gap-2">
               {product.detailImage && (
                 product.detailImage.trimStart().startsWith("<") ? (
-                  detailHtmlIsDoc ? (
-                    <iframe
-                      srcDoc={processedDetailHtml}
-                      loading="lazy"
-                      className="w-full border-none block"
-                      style={{ minHeight: 400, overflow: "hidden" }}
-                      scrolling="no"
-                      sandbox="allow-popups allow-popups-to-escape-sandbox allow-forms allow-same-origin"
-                      onLoad={(e) => {
-                        try {
-                          const frame = e.currentTarget;
-                          const doc = frame.contentDocument;
-                          const el = doc?.documentElement;
-                          if (doc?.body) doc.body.style.overflow = "hidden";
-                          if (el) {
-                            el.style.overflow = "hidden";
-                            const updateHeight = () => { frame.style.height = el.scrollHeight + "px"; };
-                            updateHeight();
-                            // 이미지가 순차적으로 로드되며 레이아웃이 늘어날 때마다 높이를 다시 맞춰준다.
-                            if (typeof ResizeObserver !== "undefined") {
-                              new ResizeObserver(updateHeight).observe(el);
-                            }
-                          }
-                        } catch {}
-                      }}
-                    />
-                  ) : (
                   <div
                     className="w-full detail-html-content"
                     dangerouslySetInnerHTML={{ __html: processedDetailHtml }}
                   />
-                  )
                 ) : (
                   <div className="relative w-full overflow-hidden rounded-xl">
                     <Image src={product.detailImage} alt={`${product.name} 상세이미지`} width={1080} height={600} className="w-full object-cover" unoptimized />
