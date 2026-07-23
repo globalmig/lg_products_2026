@@ -35,10 +35,22 @@ body {
   display: none;
 }
 
+.detail-html-content {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .detail-html-content img {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+/* 원본 HTML을 그대로 붙여넣는 게시글 특성상 860px 등 고정폭 컨테이너(div/table)가
+   자주 포함되는데, 화면폭이 그보다 좁으면 내용이 넘치므로 화면에 맞게 축소한다. */
+.detail-html-content [style*="860px"] {
+  width: 100% !important;
+  max-width: 860px !important;
 }
 
 .detail-html-content p {
