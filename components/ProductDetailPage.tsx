@@ -63,16 +63,6 @@ function withLazyImages(html: string): string {
   );
 }
 
-// 네이티브 loading="lazy"는 스크롤이 막힌 iframe 내부에서는 뷰포트 판정이 안 돼 이미지가
-// 영영 로드되지 않을 수 있다. 대신 src를 data-defer-src로 바꿔 즉시 요청을 막아두고,
-// iframe onLoad 시 부모(바깥 페이지) 컨텍스트의 IntersectionObserver로 직접 로드를 트리거한다.
-function withDeferredImages(html: string): string {
-  return html.replace(/<img\b([^>]*)>/gi, (tag, attrs) => {
-    if (!/\bsrc\s*=/i.test(attrs)) return tag;
-    return `<img${attrs.replace(/\bsrc(\s*=)/i, "data-defer-src$1")}>`;
-  });
-}
-
 function withResponsiveOverride(html: string): string {
   const style =
     "<style>img{max-width:100% !important;height:auto !important}" +
@@ -171,12 +161,13 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
 
   // 원본 상세 HTML은 크기가 매우 클 수 있어, 계약기간/케어서비스/카드 선택 등
   // 다른 상태가 바뀔 때마다 재렌더링되며 정규식 변환이 다시 도는 것을 막기 위해 메모이즈한다.
-  // iframe(전체 문서) 쪽은 네이티브 loading="lazy" 대신 withDeferredImages + 아래 onLoad의
-  // IntersectionObserver로 부모 페이지 스크롤 기준 지연 로드를 처리한다.
+  // iframe(전체 문서) 쪽 내부 이미지는 지연 로딩을 시도했으나(loading="lazy", 이후
+  // IntersectionObserver) 스크롤이 막힌 iframe 특성상 두 방식 모두 이미지가 아예 로드되지
+  // 않는 문제가 있어 즉시 로드로 되돌린다. iframe 자체의 loading="lazy"만으로 지연 효과를 얻는다.
   const processedDetailHtml = useMemo(() => {
     if (!product.detailImage) return "";
     return detailHtmlIsDoc
-      ? withResponsiveOverride(dedupeMapNames(withDeferredImages(product.detailImage)))
+      ? withResponsiveOverride(dedupeMapNames(product.detailImage))
       : withLazyImages(product.detailImage);
   }, [product.detailImage, detailHtmlIsDoc]);
 
@@ -486,7 +477,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                       className="w-full border-none block"
                       style={{ minHeight: 400, overflow: "hidden" }}
                       scrolling="no"
-                      sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin"
+                      sandbox="allow-popups allow-popups-to-escape-sandbox allow-forms allow-same-origin"
                       onLoad={(e) => {
                         try {
                           const frame = e.currentTarget;
@@ -501,26 +492,6 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                             if (typeof ResizeObserver !== "undefined") {
                               new ResizeObserver(updateHeight).observe(el);
                             }
-                          }
-                          // iframe 내부는 자체 스크롤이 막혀 있어 네이티브 loading="lazy"가 제대로
-                          // 동작하지 않는다. 대신 바깥(부모) 페이지 컨텍스트의 IntersectionObserver로
-                          // 실제 스크롤 위치 기준 지연 로드를 직접 구현한다.
-                          if (doc && typeof IntersectionObserver !== "undefined") {
-                            const deferredImgs = doc.querySelectorAll<HTMLImageElement>("img[data-defer-src]");
-                            const io = new IntersectionObserver(
-                              (entries) => {
-                                entries.forEach((entry) => {
-                                  if (!entry.isIntersecting) return;
-                                  const img = entry.target as HTMLImageElement;
-                                  const src = img.getAttribute("data-defer-src");
-                                  if (src) img.src = src;
-                                  img.removeAttribute("data-defer-src");
-                                  io.unobserve(img);
-                                });
-                              },
-                              { rootMargin: "600px 0px" }
-                            );
-                            deferredImgs.forEach((img) => io.observe(img));
                           }
                         } catch {}
                       }}
