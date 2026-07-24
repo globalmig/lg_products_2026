@@ -86,8 +86,10 @@ export const getProductsBySection = cache(async (section: string, includeHidden 
   return includeHidden ? products : products.filter((p) => p.isVisible);
 });
 
+// 노출을 꺼도 상세페이지 경로 자체는 그대로 접근 가능해야 하므로(목록·메인화면에서만 숨김),
+// id로 직접 조회할 때는 숨김 여부와 상관없이 찾는다.
 export async function getProductById(section: string, id: string): Promise<ManagedProduct | null> {
-  const products = await getProductsBySection(section);
+  const products = await getProductsBySection(section, true);
   return products.find((p) => p.id === id) ?? null;
 }
 
