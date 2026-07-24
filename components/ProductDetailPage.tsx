@@ -339,13 +339,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
                 {basePrice !== null ? (
-                  <div className="flex flex-wrap items-baseline gap-x-1.5 md:flex-col md:items-start md:gap-x-0 md:gap-y-1">
-                    <span className="text-[14px] text-[#555] wrap-break-word">
-                      <span className="text-[20px] font-black text-[#1a1a1a]">
-                        월 {basePrice.toLocaleString()}
-                      </span>
-                      원
-                    </span>
+                  <div className="flex flex-col gap-y-1">
                     {cardPrice !== null && (
                       cardPrice > 0 ? (
                         <span className="text-[13px] font-semibold text-[#c90f45]">
@@ -357,6 +351,12 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                         </span>
                       )
                     )}
+                    <span className="text-[14px] text-[#555] wrap-break-word">
+                      <span className="text-[20px] font-black text-[#1a1a1a]">
+                        월 {basePrice.toLocaleString()}
+                      </span>
+                      원
+                    </span>
                   </div>
                 ) : (
                   <span className="text-[14px] font-semibold text-[#c90f45]">상담 문의 시 안내드립니다</span>
@@ -368,9 +368,6 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="mb-6 rounded-xl border border-[#e8e8e8] bg-[#fafafa] px-3.5 py-3.5 sm:px-4 sm:py-4">
               <div className="mb-3 flex flex-col gap-1">
                 <span className="text-[13px] font-semibold text-[#555]">제휴카드 할인</span>
-                <span className="text-[13px] text-[#888]">
-                  월 최대 -{(cards[0]?.discount ?? 0).toLocaleString()}원
-                </span>
               </div>
 
               {/* 드롭다운 트리거 */}
