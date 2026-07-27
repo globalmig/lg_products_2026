@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductById } from "@/lib/productsServer";
+import { getProductById, getBundlesForProduct } from "@/lib/productsServer";
 import { buildProductMetadata, notFoundMetadata } from "@/lib/productMetadata";
 import ProductDetailPage from "@/components/ProductDetailPage";
 import ProductJsonLd from "@/components/ProductJsonLd";
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function KitchenDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await getProductById(SECTION, id);
+  const [product, bundles] = await Promise.all([getProductById(SECTION, id), getBundlesForProduct(SECTION, id)]);
   if (!product) notFound();
 
   return (
@@ -27,6 +27,7 @@ export default async function KitchenDetailPage({ params }: { params: Promise<{ 
         product={product}
         breadcrumb={[{ label: SECTION_LABEL, href: "/products/kitchen" }]}
         section={SECTION}
+        bundles={bundles}
       />
     </>
   );

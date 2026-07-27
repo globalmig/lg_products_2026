@@ -3,49 +3,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {
-  productStore,
-  type ManagedProduct,
-  type PeriodPrice,
-  type CareServiceItem,
-  type ColorItem,
-} from "@/lib/productStore";
+import { productStore, type ManagedProduct } from "@/lib/productStore";
 import { adminStore, type CardDiscount } from "@/lib/adminStore";
+import { getPeriodPrices, getCareServiceItems, getColorItems, hasCareMatrix, resolvePrice } from "@/lib/productPricing";
 import { LuSearch, LuX, LuPlus, LuCheck, LuChevronDown } from "react-icons/lu";
-
-function getPeriodPrices(p: ManagedProduct): PeriodPrice[] {
-  if (p.periodPrices && p.periodPrices.length > 0) return p.periodPrices;
-  const pp: PeriodPrice[] = [];
-  if (p.monthlyPrice) pp.push({ label: "72개월", price: p.monthlyPrice });
-  if (p.price60 != null) pp.push({ label: "60개월", price: p.price60 });
-  if (p.price48 != null) pp.push({ label: "48개월", price: p.price48 });
-  if (p.price36 != null) pp.push({ label: "36개월", price: p.price36 });
-  return pp;
-}
-
-function getCareServiceItems(p: ManagedProduct): CareServiceItem[] {
-  if (p.careServiceItems && p.careServiceItems.length > 0) return p.careServiceItems;
-  if (p.careService || p.manageCycle) return [{ label: p.careService ?? "", cycle: p.manageCycle ?? "" }];
-  return [];
-}
-
-function getColorItems(p: ManagedProduct): ColorItem[] {
-  if (p.colorItems && p.colorItems.length > 0) return p.colorItems;
-  if (p.color) return [{ name: p.color, image: p.image ?? "" }];
-  return [];
-}
-
-// 케어서비스별 계약기간 매트릭스가 있으면 (계약기간 × 케어서비스) 조합의 가격을 사용하고,
-// 없으면 계약기간 자체에 매겨진 가격을 그대로 사용한다.
-function hasCareMatrix(careItems: CareServiceItem[]): boolean {
-  return careItems.some((ci) => (ci.prices?.length ?? 0) > 0);
-}
-function resolvePrice(careItems: CareServiceItem[], period?: PeriodPrice, careIdx?: number | null): number | undefined {
-  if (!period) return undefined;
-  if (!hasCareMatrix(careItems)) return period.price;
-  if (careIdx == null) return undefined;
-  return careItems[careIdx]?.prices?.find((pr) => pr.period === period.label)?.price;
-}
 
 type ProductSelection = {
   periodPriceIdx: number | null;
@@ -73,6 +34,10 @@ export default function ConsultForm() {
   const initialCare = searchParams.get("care") ?? "";
   const initialColor = searchParams.get("color") ?? "";
   const initialCardId = searchParams.get("cardId") ?? "";
+  // 상품 상세페이지의 구독 패키지(번들)에서 넘어올 때, 상품별로 서로 다른 케어서비스/색상을
+  // 골랐을 수 있어 JSON으로 개별 선택값을 전달받는다. note는 패키지명/할인율 안내 문구.
+  const initialSel = searchParams.get("sel") ?? "";
+  const initialNote = searchParams.get("note") ?? "";
   const [submitted, setSubmitted] = useState(false);
   const [allProducts, setAllProducts] = useState<ManagedProduct[]>([]);
   const [selected, setSelected] = useState<ManagedProduct[]>([]);
@@ -103,6 +68,15 @@ export default function ConsultForm() {
         const ids = initialIds.split(",").map((s) => s.trim()).filter(Boolean);
         const pre = ids.map((id) => all.find((p) => p.id === id)).filter(Boolean) as ManagedProduct[];
         setSelected(pre);
+        let perProduct: Record<string, { care?: string; color?: string }> = {};
+        if (initialSel) {
+          try {
+            const parsed = JSON.parse(initialSel) as { id: string; care?: string; color?: string }[];
+            perProduct = Object.fromEntries(parsed.map((s) => [s.id, s]));
+          } catch {
+            // 파싱 실패 시 무시하고 단일 상품용 initialCare/initialColor로 폴백한다.
+          }
+        }
         setProductSelections((prev) => {
           const next = { ...prev };
           pre.forEach((p) => {
@@ -111,12 +85,14 @@ export default function ConsultForm() {
               const idx = getPeriodPrices(p).findIndex((pp) => pp.label === initialPeriod);
               if (idx !== -1) sel = { ...sel, periodPriceIdx: idx };
             }
-            if (initialCare) {
-              const idx = getCareServiceItems(p).findIndex((ci) => ci.label === initialCare);
+            const care = perProduct[p.id]?.care ?? initialCare;
+            if (care) {
+              const idx = getCareServiceItems(p).findIndex((ci) => ci.label === care);
               if (idx !== -1) sel = { ...sel, careServiceIdx: idx };
             }
-            if (initialColor) {
-              const idx = getColorItems(p).findIndex((ci) => ci.name === initialColor);
+            const color = perProduct[p.id]?.color ?? initialColor;
+            if (color) {
+              const idx = getColorItems(p).findIndex((ci) => ci.name === color);
               if (idx !== -1) sel = { ...sel, colorIdx: idx };
             }
             if (initialCardId) sel = { ...sel, cardId: initialCardId };
@@ -125,8 +101,9 @@ export default function ConsultForm() {
           return next;
         });
       }
+      if (initialNote) setExtra((prev) => prev || initialNote);
     });
-  }, [initialIds, initialPeriod, initialCare, initialColor, initialCardId]);
+  }, [initialIds, initialPeriod, initialCare, initialColor, initialCardId, initialSel, initialNote]);
 
   const setSel = <K extends keyof ProductSelection>(
     productId: string,

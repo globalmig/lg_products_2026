@@ -5,6 +5,7 @@ import Image from "next/image";
 import HeroAdmin from "@/components/admin/HeroAdmin";
 import ConsultAdmin from "@/components/admin/ConsultAdmin";
 import ProductAdmin from "@/components/admin/ProductAdmin";
+import BundleAdmin from "@/components/admin/BundleAdmin";
 import FeatureBannerAdmin from "@/components/admin/FeatureBannerAdmin";
 import MainCategoryAdmin from "@/components/admin/MainCategoryAdmin";
 import EventPostAdmin from "@/components/admin/EventPostAdmin";
@@ -23,6 +24,7 @@ import {
   MdCreditCard,
   MdStar,
   MdAssignment,
+  MdViewModule,
   MdSettings,
   MdOpenInNew,
   MdLogout,
@@ -34,6 +36,7 @@ import type { IconType } from "react-icons";
 const NAV: { id: string; label: string; Icon: IconType }[] = [
   { id: "dashboard", label: "대시보드", Icon: MdDashboard },
   { id: "products", label: "상품 관리", Icon: MdInventory2 },
+  { id: "bundles", label: "묶음 상품 관리", Icon: MdViewModule },
   { id: "hero", label: "히어로 슬라이드", Icon: MdImage },
   { id: "featureBanner", label: "피처 배너", Icon: MdLocalOffer },
   { id: "mainCategory", label: "메인 카테고리", Icon: MdCategory },
@@ -44,7 +47,7 @@ const NAV: { id: string; label: string; Icon: IconType }[] = [
   { id: "siteSettings", label: "사이트 설정", Icon: MdSettings },
 ];
 
-type TabId = "dashboard" | "products" | "hero" | "featureBanner" | "mainCategory" | "benefitPosts" | "cardDiscounts" | "reviews" | "consult" | "siteSettings";
+type TabId = "dashboard" | "products" | "bundles" | "hero" | "featureBanner" | "mainCategory" | "benefitPosts" | "cardDiscounts" | "reviews" | "consult" | "siteSettings";
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -310,6 +313,7 @@ export default function AdminPage() {
           )}
 
           {tab === "products" && <ProductAdmin key={productsSubTab} defaultSubTab={productsSubTab} />}
+          {tab === "bundles" && <BundleAdmin />}
           {tab === "hero" && <HeroAdmin />}
           {tab === "featureBanner" && <FeatureBannerAdmin />}
           {tab === "mainCategory" && <MainCategoryAdmin />}

@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { adminStore, imageUrl, type CardDiscount } from "@/lib/adminStore";
+import type { ProductBundle } from "@/lib/productBundles";
+import { getPeriodPrices, getCareServiceItems, getColorItems, resolvePrice, intersectPeriodLabels } from "@/lib/productPricing";
 import {
   LuChevronRight,
   LuWrench,
@@ -39,10 +41,13 @@ export type DetailProduct = {
   size?: string;
 };
 
+export type BundleWithProducts = { bundle: ProductBundle; products: DetailProduct[] };
+
 type Props = {
   product: DetailProduct;
   breadcrumb: { label: string; href: string }[];
   section?: string;
+  bundles?: BundleWithProducts[];
 };
 
 function dedupeMapNames(html: string): string {
@@ -81,8 +86,13 @@ const benefits = [
 
 const CARE_GROUP_PERIODS = ["72개월", "60개월", "48개월"];
 
-export default function ProductDetailPage({ product, breadcrumb, section }: Props) {
+export default function ProductDetailPage({ product, breadcrumb, section, bundles }: Props) {
   const [imgError, setImgError] = useState(false);
+  const hasBundles = (bundles?.length ?? 0) > 0;
+  const [selectedBundleIdx, setSelectedBundleIdx] = useState<number | null>(null);
+  const activeBundle = selectedBundleIdx != null ? bundles?.[selectedBundleIdx] : undefined;
+  // 번들(패키지) 선택 시 상품별로 독립적으로 고르는 케어서비스/색상 인덱스. key는 상품 id.
+  const [bundleSel, setBundleSel] = useState<Record<string, { careIdx: number; colorIdx: number }>>({});
   const hasPeriodPrices = (product.periodPrices?.length ?? 0) > 0;
   // 케어서비스 주기가 입력되지 않은 항목(라벨/가격만 있고 주기 텍스트가 비어있는 경우)은
   // 화면에 빈 버튼으로 노출되는 문제가 있어 아예 목록에서 제외한다.
@@ -116,6 +126,25 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
   useEffect(() => { adminStore.cardDiscounts.get().then(setCards); }, []);
   useEffect(() => { setImgError(false); }, [selectedColorIdx]);
 
+  // 패키지(번들) 선택 시: 계약기간을 번들 내 모든 상품이 공통으로 가진 기간으로 맞추고,
+  // 아직 선택값이 없는 상품에는 기본(첫 번째) 케어서비스/색상을 지정한다.
+  useEffect(() => {
+    if (!activeBundle) return;
+    const sharedPeriods = intersectPeriodLabels(activeBundle.products);
+    if (sharedPeriods.length > 0 && !sharedPeriods.includes(selectedPeriod)) {
+      setSelectedPeriod(sharedPeriods[0]);
+    }
+    setBundleSel((prev) => {
+      const next = { ...prev };
+      activeBundle.products.forEach((p) => {
+        const key = String(p.id);
+        if (!next[key]) next[key] = { careIdx: 0, colorIdx: 0 };
+      });
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBundleIdx]);
+
   const selectedCard = selectedCardIdx !== null ? cards[selectedCardIdx] : null;
 
   const hasCareItems = visibleCareServiceItems.length > 0;
@@ -147,6 +176,31 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
     : product.image;
 
   const cardPrice = selectedCard && basePrice !== null ? Math.max(0, basePrice - selectedCard.discount) : null;
+
+  // 패키지(번들) 선택 시 합산가: 상품별로 선택한 케어서비스 기준, 공통 계약기간의 가격을 모두 더한다.
+  // 상품 중 하나라도 해당 조합의 가격이 비어있으면 전체를 null로 처리해 "상담 문의"로 안내한다.
+  const bundleBasePrice = activeBundle
+    ? (() => {
+        let total = 0;
+        for (const prod of activeBundle.products) {
+          const sel = bundleSel[String(prod.id)] ?? { careIdx: 0, colorIdx: 0 };
+          const careItems = getCareServiceItems(prod);
+          const periodObj = getPeriodPrices(prod).find((pp) => pp.label === selectedPeriod) ?? { label: selectedPeriod, price: 0 };
+          const price = resolvePrice(careItems, periodObj, sel.careIdx);
+          if (price == null) return null;
+          total += price;
+        }
+        return total;
+      })()
+    : null;
+  const bundleDiscountedPrice = activeBundle && bundleBasePrice != null
+    ? Math.round(bundleBasePrice * (1 - activeBundle.bundle.discountPercent / 100))
+    : null;
+  const bundleCardPrice = selectedCard && bundleDiscountedPrice !== null ? Math.max(0, bundleDiscountedPrice - selectedCard.discount) : null;
+
+  // 이용요금 섹션에 실제로 표시할 값: 번들 모드면 번들 합산/할인가를, 아니면 기존 단일 상품 가격을 사용한다.
+  const displayBasePrice = activeBundle ? bundleDiscountedPrice : basePrice;
+  const displayCardPrice = activeBundle ? bundleCardPrice : cardPrice;
 
   // 원본 상세 HTML은 크기가 매우 클 수 있어, 계약기간/케어서비스/카드 선택 등
   // 다른 상태가 바뀔 때마다 재렌더링되며 정규식 변환이 다시 도는 것을 막기 위해 메모이즈한다.
@@ -228,6 +282,40 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             </h1>
             <p className="mb-6 text-[14px] text-[#aaa]">{product.model}</p>
 
+            {/* 구독 패키지(번들) 구성 선택 */}
+            {hasBundles && (
+              <div className="mb-5">
+                <p className="mb-1.5 text-[13px] font-semibold text-[#333]">구성 선택</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBundleIdx(null)}
+                    className={`rounded-lg border px-3.5 py-2 text-[13px] font-semibold transition-colors sm:px-4 sm:py-2.5 sm:text-[14px] ${
+                      selectedBundleIdx === null
+                        ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                        : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
+                    }`}
+                  >
+                    단독 구매
+                  </button>
+                  {bundles!.map((bw, i) => (
+                    <button
+                      key={bw.bundle.id}
+                      type="button"
+                      onClick={() => setSelectedBundleIdx(i)}
+                      className={`rounded-lg border px-3.5 py-2 text-[13px] font-semibold transition-colors sm:px-4 sm:py-2.5 sm:text-[14px] ${
+                        selectedBundleIdx === i
+                          ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                          : "border-[#e0e0e0] bg-white text-[#555] hover:border-[#999]"
+                      }`}
+                    >
+                      {bw.bundle.name} · {bw.bundle.discountPercent}%↓
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 계약기간 / 케어서비스 주기 */}
             <div className="mb-5 divide-y divide-[#e5e5e5] border-y border-[#e5e5e5]">
               {/* 계약기간 */}
@@ -236,7 +324,9 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                   계약기간
                 </div>
                 <div className="flex flex-1 gap-2">
-                  {(hasPeriodPrices
+                  {(activeBundle
+                    ? intersectPeriodLabels(activeBundle.products).map((label) => ({ label }))
+                    : hasPeriodPrices
                     ? product.periodPrices!
                     : [72, 60, 48, 36].map((m) => ({ label: `${m}개월`, price: m === 72 ? product.monthlyPrice : m === 60 ? (product.price60 ?? product.monthlyPrice) : m === 48 ? (product.price48 ?? product.monthlyPrice) : (product.price36 ?? product.monthlyPrice) }))
                   ).map((period) => (
@@ -260,8 +350,8 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                 </div>
               </div>
 
-              {/* 케어서비스 주기 */}
-              {hasCareItems ? (
+              {/* 케어서비스 주기 (단독 구매일 때만 표시. 번들 선택 시엔 아래 상품별 섹션에서 개별 표시) */}
+              {!activeBundle && hasCareItems ? (
                 <div className="flex items-stretch gap-2 py-2.5 sm:py-3">
                   <div className="flex w-[64px] shrink-0 items-center text-[12px] font-semibold leading-tight text-[#333] sm:w-[104px] sm:text-[14px]">
                     케어서비스 주기
@@ -292,7 +382,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                     ))}
                   </div>
                 </div>
-              ) : (product.careService || product.manageCycle) ? (
+              ) : !activeBundle && (product.careService || product.manageCycle) ? (
                 <div className="flex items-stretch gap-2 py-2.5 sm:py-3">
                   <div className="flex w-[64px] shrink-0 items-center text-[12px] font-semibold leading-tight text-[#333] sm:w-[104px] sm:text-[14px]">
                     케어서비스 주기
@@ -304,8 +394,68 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
               ) : null}
             </div>
 
-            {/* 색상 */}
-            {hasColorItems ? (
+            {/* 번들(패키지) 구성 상품별 케어서비스/색상 선택 */}
+            {activeBundle && (
+              <div className="mb-4 space-y-3">
+                {activeBundle.products.map((prod) => {
+                  const key = String(prod.id);
+                  const sel = bundleSel[key] ?? { careIdx: 0, colorIdx: 0 };
+                  const careItems = getCareServiceItems(prod);
+                  const colorItems = getColorItems(prod);
+                  const periodObj = getPeriodPrices(prod).find((pp) => pp.label === selectedPeriod) ?? { label: selectedPeriod, price: 0 };
+                  const itemPrice = resolvePrice(careItems, periodObj, sel.careIdx);
+                  return (
+                    <div key={key} className="rounded-xl border border-[#e8e8e8] p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="text-[13px] font-semibold text-[#1a1a1a]">{prod.name}</p>
+                        <span className="text-[12px] text-[#888]">
+                          {itemPrice != null ? `월 ${itemPrice.toLocaleString()}원` : "상담 문의"}
+                        </span>
+                      </div>
+                      {careItems.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-1.5">
+                          {careItems.map((ci, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setBundleSel((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { careIdx: 0, colorIdx: 0 }), careIdx: i } }))}
+                              className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                                sel.careIdx === i
+                                  ? "border-[#c90f45] bg-[#fdf3f5] text-[#c90f45]"
+                                  : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
+                              }`}
+                            >
+                              {[ci.label, ci.cycle].filter(Boolean).join(" / ")}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {colorItems.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {colorItems.map((ci, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setBundleSel((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { careIdx: 0, colorIdx: 0 }), colorIdx: i } }))}
+                              className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                                sel.colorIdx === i
+                                  ? "border-[#c90f45] bg-[#fdf3f5] text-[#c90f45]"
+                                  : "border-[#e0e0e0] text-[#555] hover:border-[#bbb]"
+                              }`}
+                            >
+                              {ci.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 색상 (단독 구매일 때만. 번들 선택 시엔 위 상품별 섹션에서 개별 표시) */}
+            {!activeBundle && hasColorItems ? (
               <div className="mb-3">
                 <p className="mb-1.5 text-[13px] font-semibold text-[#333]">색상</p>
                 <div className="flex flex-wrap gap-2">
@@ -325,7 +475,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                   ))}
                 </div>
               </div>
-            ) : product.color ? (
+            ) : !activeBundle && product.color ? (
               <div className="mb-3">
                 <p className="mb-1.5 text-[13px] font-semibold text-[#333]">색상</p>
                 <div className="flex items-center justify-center rounded-lg border border-[#e0e0e0] bg-white px-4 py-3 text-[14px] text-[#555]">
@@ -338,12 +488,22 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <div className="mb-4 mt-6">
               <div className="flex flex-col gap-1">
                 <span className="text-[16px] font-black text-[#1a1a1a]">이용요금</span>
-                {basePrice !== null ? (
+                {activeBundle && bundleBasePrice !== null && (
+                  <span className="text-[12px] text-[#aaa] line-through">
+                    월 {bundleBasePrice.toLocaleString()}원
+                  </span>
+                )}
+                {activeBundle && (
+                  <span className="text-[12px] font-semibold text-[#c90f45]">
+                    패키지 할인 {activeBundle.bundle.discountPercent}% 적용
+                  </span>
+                )}
+                {displayBasePrice !== null ? (
                   <div className="flex flex-col gap-y-1">
-                    {cardPrice !== null && (
-                      cardPrice > 0 ? (
+                    {displayCardPrice !== null && (
+                      displayCardPrice > 0 ? (
                         <span className="text-[13px] font-semibold text-[#c90f45]">
-                          (제휴카드 이용시 월 {cardPrice.toLocaleString()}원)
+                          (제휴카드 이용시 월 {displayCardPrice.toLocaleString()}원)
                         </span>
                       ) : (
                         <span className="text-[13px] font-semibold text-[#c90f45]">
@@ -353,7 +513,7 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
                     )}
                     <span className="text-[14px] text-[#555] wrap-break-word">
                       <span className="text-[20px] font-black text-[#1a1a1a]">
-                        월 {basePrice.toLocaleString()}
+                        월 {displayBasePrice.toLocaleString()}
                       </span>
                       원
                     </span>
@@ -425,11 +585,29 @@ export default function ProductDetailPage({ product, breadcrumb, section }: Prop
             <Link
               href={(() => {
                 const params = new URLSearchParams();
-                params.set("ids", String(product.id));
-                params.set("period", selectedPeriod);
-                if (selectedCareItem) params.set("care", selectedCareItem.label);
-                if (selectedCard) params.set("cardId", String(selectedCard.id));
-                if (hasColorItems) params.set("color", product.colorItems![selectedColorIdx].name);
+                if (activeBundle) {
+                  params.set("ids", activeBundle.products.map((p) => String(p.id)).join(","));
+                  params.set("period", selectedPeriod);
+                  const selPayload = activeBundle.products.map((prod) => {
+                    const sel = bundleSel[String(prod.id)] ?? { careIdx: 0, colorIdx: 0 };
+                    const careItems = getCareServiceItems(prod);
+                    const colorItems = getColorItems(prod);
+                    return {
+                      id: String(prod.id),
+                      care: careItems[sel.careIdx]?.label,
+                      color: colorItems[sel.colorIdx]?.name,
+                    };
+                  });
+                  params.set("sel", JSON.stringify(selPayload));
+                  if (selectedCard) params.set("cardId", String(selectedCard.id));
+                  params.set("note", `[${activeBundle.bundle.name} 패키지 할인 ${activeBundle.bundle.discountPercent}% 적용 요청]`);
+                } else {
+                  params.set("ids", String(product.id));
+                  params.set("period", selectedPeriod);
+                  if (selectedCareItem) params.set("care", selectedCareItem.label);
+                  if (selectedCard) params.set("cardId", String(selectedCard.id));
+                  if (hasColorItems) params.set("color", product.colorItems![selectedColorIdx].name);
+                }
                 const qs = params.toString();
                 return qs ? `/consult?${qs}` : "/consult";
               })()}

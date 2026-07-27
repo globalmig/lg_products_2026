@@ -2,6 +2,7 @@ import { cache } from "react";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { ManagedProduct } from "./productStore";
 import { R2_PUBLIC_URL } from "./siteConfig";
+import { PRODUCT_BUNDLES_KEY, type ProductBundle } from "./productBundles";
 
 type DBProduct = {
   id: string; section: string; category: string; name: string; model: string;
@@ -104,6 +105,30 @@ export async function getAllProducts(includeHidden = false): Promise<ManagedProd
   const products = attachVisibility((results as DBProduct[]).map(deserializeProduct), hidden);
   return includeHidden ? products : products.filter((p) => p.isVisible);
 }
+
+// 상품이 속한 구독 패키지(묶음)들을 찾아, 패키지에 포함된 모든 상품 데이터를 함께 반환한다.
+// site_settings 테이블의 PRODUCT_BUNDLES_KEY 하나만 사용하므로 새 테이블/스키마 변경이 없다.
+export const getBundlesForProduct = cache(async (section: string, productId: string): Promise<{ bundle: ProductBundle; products: ManagedProduct[] }[]> => {
+  const { env } = await getCloudflareContext();
+  const row = await env.lg_product_db
+    .prepare("SELECT value FROM site_settings WHERE key=?")
+    .bind(PRODUCT_BUNDLES_KEY)
+    .first<{ value: string }>();
+  const allBundles: ProductBundle[] = row?.value ? JSON.parse(row.value) : [];
+  const matched = allBundles.filter((b) => b.items.some((it) => it.section === section && it.productId === productId));
+  if (matched.length === 0) return [];
+
+  const results = await Promise.all(
+    matched.map(async (bundle) => {
+      const products = (
+        await Promise.all(bundle.items.map((it) => getProductById(it.section, it.productId)))
+      ).filter((p): p is ManagedProduct => p !== null);
+      return { bundle, products };
+    })
+  );
+  // 번들 구성 상품 중 하나라도 조회되지 않으면(삭제된 상품 등) 해당 번들은 노출하지 않는다.
+  return results.filter((r) => r.products.length === r.bundle.items.length);
+});
 
 export const getSectionLabel = cache(async (section: string): Promise<string | null> => {
   const { env } = await getCloudflareContext();
