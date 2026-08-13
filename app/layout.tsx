@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    title: "LG전자 베스트샵 – 가전 구독·렌탈 전문",
+    title: "LG전자 가전 구독 우주상담센터",
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     siteName: SITE_NAME,
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "LG전자 베스트샵 – 가전 구독·렌탈 전문",
+    title: "LG전자 가전 구독 우주상담센터",
     description: SITE_DESCRIPTION,
     images: ["/og-image.png"],
   },
