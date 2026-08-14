@@ -37,6 +37,7 @@ function buildNavItems(categories: ManagedCategory[], sections: ManagedSection[]
     ...productNavItems,
     { label: "제휴카드", href: "/subscription?tab=card" },
     { label: "리뷰 이벤트", href: "/news" },
+    { label: "기획전", href: "/event" },
   ];
 }
 

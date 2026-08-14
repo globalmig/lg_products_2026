@@ -106,28 +106,38 @@ export async function getAllProducts(includeHidden = false): Promise<ManagedProd
   return includeHidden ? products : products.filter((p) => p.isVisible);
 }
 
-// 상품이 속한 구독 패키지(묶음)들을 찾아, 패키지에 포함된 모든 상품 데이터를 함께 반환한다.
-// site_settings 테이블의 PRODUCT_BUNDLES_KEY 하나만 사용하므로 새 테이블/스키마 변경이 없다.
-export const getBundlesForProduct = cache(async (section: string, productId: string): Promise<{ bundle: ProductBundle; products: ManagedProduct[] }[]> => {
-  const { env } = await getCloudflareContext();
+// 기획전(패키지 상품) 목록/상세 페이지용: site_settings의 PRODUCT_BUNDLES_KEY 하나만
+// 사용하므로 새 테이블/스키마 변경이 없다. 번들 구성 상품 중 하나라도 조회되지 않으면
+// (삭제된 상품 등) 해당 번들은 목록/상세 모두에서 제외한다.
+async function readProductBundles(env: CloudflareEnv): Promise<ProductBundle[]> {
   const row = await env.lg_product_db
     .prepare("SELECT value FROM site_settings WHERE key=?")
     .bind(PRODUCT_BUNDLES_KEY)
     .first<{ value: string }>();
-  const allBundles: ProductBundle[] = row?.value ? JSON.parse(row.value) : [];
-  const matched = allBundles.filter((b) => b.items.some((it) => it.section === section && it.productId === productId));
-  if (matched.length === 0) return [];
+  return row?.value ? JSON.parse(row.value) : [];
+}
 
-  const results = await Promise.all(
-    matched.map(async (bundle) => {
-      const products = (
-        await Promise.all(bundle.items.map((it) => getProductById(it.section, it.productId)))
-      ).filter((p): p is ManagedProduct => p !== null);
-      return { bundle, products };
-    })
-  );
-  // 번들 구성 상품 중 하나라도 조회되지 않으면(삭제된 상품 등) 해당 번들은 노출하지 않는다.
-  return results.filter((r) => r.products.length === r.bundle.items.length);
+async function resolveBundleProducts(bundle: ProductBundle): Promise<{ bundle: ProductBundle; products: ManagedProduct[] } | null> {
+  const products = (
+    await Promise.all(bundle.items.map((it) => getProductById(it.section, it.productId)))
+  ).filter((p): p is ManagedProduct => p !== null);
+  if (products.length !== bundle.items.length) return null;
+  return { bundle, products };
+}
+
+export const getAllBundlesWithProducts = cache(async (): Promise<{ bundle: ProductBundle; products: ManagedProduct[] }[]> => {
+  const { env } = await getCloudflareContext();
+  const bundles = await readProductBundles(env);
+  const resolved = await Promise.all(bundles.map(resolveBundleProducts));
+  return resolved.filter((r): r is { bundle: ProductBundle; products: ManagedProduct[] } => r !== null);
+});
+
+export const getBundleWithProducts = cache(async (id: string): Promise<{ bundle: ProductBundle; products: ManagedProduct[] } | null> => {
+  const { env } = await getCloudflareContext();
+  const bundles = await readProductBundles(env);
+  const bundle = bundles.find((b) => b.id === id);
+  if (!bundle) return null;
+  return resolveBundleProducts(bundle);
 });
 
 export const getSectionLabel = cache(async (section: string): Promise<string | null> => {

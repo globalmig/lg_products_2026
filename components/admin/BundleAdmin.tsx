@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { LuPencil, LuTrash2, LuX, LuPlus } from "react-icons/lu";
 import { bundleStore, type ProductBundle, type ProductBundleItem } from "@/lib/productBundles";
 import { productStore, type ManagedProduct } from "@/lib/productStore";
+import { imageUrl, uploadImage } from "@/lib/adminStore";
 
 const EMPTY: Omit<ProductBundle, "id"> = { name: "", items: [], discountPercent: 5, sortOrder: 0 };
 
@@ -21,10 +23,20 @@ function BundleModal({
   onClose: () => void;
 }) {
   const [name, setName] = useState(initial?.name ?? EMPTY.name);
+  const [headline, setHeadline] = useState(initial?.headline ?? "");
   const [discountPercent, setDiscountPercent] = useState(initial?.discountPercent ?? EMPTY.discountPercent);
   const [items, setItems] = useState<ProductBundleItem[]>(initial?.items ?? []);
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [thumbnailKey, setThumbnailKey] = useState(initial?.thumbnailKey ?? "");
+  const [preview, setPreview] = useState(initial?.thumbnailKey ? imageUrl(initial.thumbnailKey) : "");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const isSelected = (p: ManagedProduct) => items.some((it) => it.section === p.section && it.productId === p.id);
 
@@ -50,12 +62,18 @@ function BundleModal({
     if (!canSave) return;
     setSaving(true);
     try {
+      let key = thumbnailKey;
+      if (fileRef.current?.files?.[0]) {
+        key = await uploadImage(fileRef.current.files[0], "bundles");
+      }
       const bundle: ProductBundle = {
         id: initial?.id ?? `bundle_${Date.now()}`,
         name: name.trim(),
+        headline: headline.trim() || undefined,
         items,
         discountPercent,
         sortOrder: initial?.sortOrder ?? maxOrder,
+        thumbnailKey: key || undefined,
       };
       onSave(bundle);
     } finally {
@@ -78,6 +96,50 @@ function BundleModal({
           <div>
             <label className={labelCls}>패키지명</label>
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="예: 정수기+인덕션" />
+          </div>
+
+          <div>
+            <label className={labelCls}>썸네일 이미지 <span className="font-normal text-[#aaa]">(선택, 비우면 첫 번째 구성 상품 이미지 사용)</span></label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
+            <div
+              onClick={() => fileRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+              className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border-2 border-dashed border-[#e8e8e8] py-4 hover:border-[#c90f45] hover:bg-[#fff8fa] transition-colors"
+            >
+              {preview ? (
+                <div className="relative h-16 w-16">
+                  <Image src={preview} alt="썸네일 미리보기" fill className="object-cover rounded-lg" unoptimized />
+                </div>
+              ) : (
+                <span className="text-[12px] text-[#aaa]">클릭하거나 드래그하여 첨부</span>
+              )}
+            </div>
+            {preview && (
+              <button
+                type="button"
+                onClick={() => { setPreview(""); setThumbnailKey(""); if (fileRef.current) fileRef.current.value = ""; }}
+                className="mt-1.5 text-[11px] text-[#bbb] hover:text-[#c90f45]"
+              >
+                이미지 삭제
+              </button>
+            )}
+          </div>
+
+          <div>
+            <label className={labelCls}>기획전 페이지 타이틀 <span className="font-normal text-[#aaa]">(선택, 비우면 자동 생성)</span></label>
+            <input
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              className={inputCls}
+              placeholder={`예: 3종합 여름 할인 패키지 상품 ${discountPercent}%절약 특가`}
+            />
           </div>
 
           <div>
@@ -175,6 +237,11 @@ export default function BundleAdmin() {
   const closeModal = () => { setShowModal(false); setModal(null); };
 
   const productName = (it: ProductBundleItem) => allProducts.find((p) => p.section === it.section && p.id === it.productId)?.name ?? it.productId;
+  const thumbnailUrl = (b: ProductBundle) => {
+    if (b.thumbnailKey) return imageUrl(b.thumbnailKey);
+    const first = b.items[0];
+    return first ? allProducts.find((p) => p.section === first.section && p.id === first.productId)?.image ?? "" : "";
+  };
 
   const handleSave = async (bundle: ProductBundle) => {
     const next = modal
@@ -207,6 +274,7 @@ export default function BundleAdmin() {
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-[#f0f0f0] bg-[#fafafa] text-[#888]">
+              <th className="px-4 py-3 text-left font-semibold">썸네일</th>
               <th className="px-4 py-3 text-left font-semibold">패키지명</th>
               <th className="px-4 py-3 text-left font-semibold">구성 상품</th>
               <th className="px-4 py-3 text-right font-semibold">할인율</th>
@@ -216,6 +284,15 @@ export default function BundleAdmin() {
           <tbody>
             {bundles.map((b) => (
               <tr key={b.id} className="border-b border-[#f8f8f8] hover:bg-[#fafafa]">
+                <td className="px-4 py-3">
+                  {thumbnailUrl(b) ? (
+                    <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-[#f7f7f7]">
+                      <Image src={thumbnailUrl(b)} alt={b.name} fill className="object-cover" unoptimized />
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-[#ccc]">없음</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 font-medium text-[#1a1a1a]">{b.name}</td>
                 <td className="px-4 py-3 text-[#555]">{b.items.map(productName).join(" + ")}</td>
                 <td className="px-4 py-3 text-right font-bold text-[#c90f45]">{b.discountPercent}%</td>
@@ -229,7 +306,7 @@ export default function BundleAdmin() {
             ))}
             {bundles.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-12 text-center text-[13px] text-[#bbb]">등록된 패키지가 없습니다.</td>
+                <td colSpan={5} className="py-12 text-center text-[13px] text-[#bbb]">등록된 패키지가 없습니다.</td>
               </tr>
             )}
           </tbody>

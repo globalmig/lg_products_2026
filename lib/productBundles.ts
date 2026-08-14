@@ -13,6 +13,14 @@ export interface ProductBundle {
   items: ProductBundleItem[];
   discountPercent: number;
   sortOrder: number;
+  // 기획전 상세페이지 타이틀. 비우면 `${name} · ${discountPercent}% 할인`으로 자동 생성한다.
+  headline?: string;
+  // 기획전/관리자 목록에 쓰는 대표 썸네일 이미지 키. 비우면 첫 번째 구성 상품 이미지를 사용한다.
+  thumbnailKey?: string;
+}
+
+export function bundleHeadline(bundle: Pick<ProductBundle, "name" | "discountPercent" | "headline">): string {
+  return bundle.headline?.trim() || `${bundle.name} · ${bundle.discountPercent}% 할인`;
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductById, getBundlesForProduct } from "@/lib/productsServer";
+import { getProductById } from "@/lib/productsServer";
 import { buildProductMetadata, notFoundMetadata } from "@/lib/productMetadata";
 import ProductDetailPage from "@/components/ProductDetailPage";
 import ProductJsonLd from "@/components/ProductJsonLd";
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function AirDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [product, bundles] = await Promise.all([getProductById(SECTION, id), getBundlesForProduct(SECTION, id)]);
+  const product = await getProductById(SECTION, id);
   if (!product) notFound();
 
   return (
@@ -27,7 +27,6 @@ export default async function AirDetailPage({ params }: { params: Promise<{ id: 
         product={product}
         breadcrumb={[{ label: SECTION_LABEL, href: "/products/air" }]}
         section={SECTION}
-        bundles={bundles}
       />
     </>
   );

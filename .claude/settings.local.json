@@ -114,7 +114,23 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/consult)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3001/consult?ids=test&period=72개월\")",
       "Bash(find . -iname \"*hero*\" -not -path \"*/node_modules/*\" -not -path \"*/.next/*\")",
-      "Bash(find . -iname \"*banner*\" -not -path \"*/node_modules/*\" -not -path \"*/.next/*\")"
+      "Bash(find . -iname \"*banner*\" -not -path \"*/node_modules/*\" -not -path \"*/.next/*\")",
+      "Bash(mkdir -p \"d:/file_hyebinkim/development/lg_product26/app/event/[id]\")",
+      "Bash(curl -s -o /tmp/event_list.html -w \"%{http_code}\\\\n\" http://localhost:3003/event)",
+      "Bash(curl -s -o /tmp/event_detail.html -w \"%{http_code}\\\\n\" http://localhost:3003/event/bundle_test2)",
+      "Bash(curl -s http://localhost:3003/products/kitchen/kitchen_2)",
+      "Bash(curl -s -H \"Cache-Control: no-cache\" \"http://localhost:3003/products/kitchen/kitchen_2?nocache=$\\(date +%s\\)\" -o /tmp/kitchen2_fresh.html -w \"%{http_code}\\\\n\")",
+      "Bash(curl -s http://localhost:3003/products/kitchen/kitchen_2 -o /tmp/kitchen2_retry.html -w \"%{http_code}\\\\n\")",
+      "Bash(curl -s \"http://localhost:3003/api/products?section=kitchen\")",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const p=JSON.parse\\(d\\).find\\(x=>x.id==='kitchen_2'\\);console.log\\(JSON.stringify\\({careServiceItems:p.careServiceItems,careService:p.careService,manageCycle:p.manageCycle,colorItems:p.colorItems},null,0\\)\\)}\\)\")",
+      "Bash(curl -s http://localhost:3003/event/bundle_test2 -o /tmp/event_detail2.html -w \"%{http_code}\\\\n\")",
+      "Bash(curl -s http://localhost:3003/event -o /tmp/event_list2.html -w \"%{http_code}\\\\n\")",
+      "Bash(grep -o \"패키지 상품.\\\\{0,20\\\\}\" /tmp/event_detail2.html)",
+      "Bash(curl -s -X PUT http://localhost:3003/api/product-bundles -H \"Content-Type: application/json\" -d '{\"items\":[]}')",
+      "Bash(curl -s http://localhost:3003/api/product-bundles)"
+    ],
+    "additionalDirectories": [
+      "d:\\file_hyebinkim\\development\\lg_product26\\app\\event"
     ]
   }
 }
