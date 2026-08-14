@@ -1,6 +1,9 @@
 import { getAllBundlesWithProducts } from "@/lib/productsServer";
 import PackageList from "@/components/PackageList";
 
+// D1 바인딩은 빌드 타임이 아닌 요청 시점에만 접근 가능하므로 정적 생성을 막는다.
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "기획전",
   description: "LG전자 베스트샵 기획전 - 여러 상품을 함께 구독하면 할인되는 패키지 상품을 확인하세요.",
