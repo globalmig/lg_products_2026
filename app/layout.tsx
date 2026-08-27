@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -68,6 +69,18 @@ export default function RootLayout({
         {children}
         <ConditionalLayout />
         <Footer />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18411139299"
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18411139299');
+          `}
+        </Script>
       </body>
     </html>
   );
