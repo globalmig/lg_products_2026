@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import { LuPencil, LuTrash2 } from "react-icons/lu";
 import Image from "next/image";
 import AdminLoading from "./AdminLoading";
-import { adminStore, uploadImage, type Post } from "@/lib/adminStore";
+import { adminStore, uploadImage, imageUrl, type Post } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
 import { renderPostContent } from "@/lib/renderPostContent";
 
@@ -89,7 +89,10 @@ const PostContentEditor = forwardRef<ContentEditorHandle, { initialValue: string
   useImperativeHandle(ref, () => ({
     resolve: async () => {
       if (mode === "upload") {
-        if (pendingFile) return await uploadImage(pendingFile, "posts");
+        // uploadImage는 R2 오브젝트 key(예: "posts/xxx.jpg")만 반환하므로, 그대로 저장하면
+        // renderPostContent/detectMode가 이미지 URL로 인식하지 못해 본문에 텍스트로만 노출된다.
+        // 반드시 imageUrl()로 완전한 URL로 변환한 뒤 저장해야 한다.
+        if (pendingFile) return imageUrl(await uploadImage(pendingFile, "posts"));
         return preview.trim();
       }
       if (mode === "url") return url.trim();
