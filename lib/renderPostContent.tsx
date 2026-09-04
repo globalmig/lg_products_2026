@@ -53,12 +53,48 @@ function renderMarkdownLite(content: string): ReactNode[] {
   return elements;
 }
 
-/** 목록 카드용 짧은 미리보기 텍스트를 만든다. */
+// DB 스키마 변경 없이 subtitle을 저장하기 위해 content 맨 앞에 숨김 마커로 함께 저장한다.
+const SUBTITLE_PREFIX = "<!--subtitle:";
+const SUBTITLE_SUFFIX = "-->";
+
+/** content에서 숨김 서브타이틀 마커를 분리해 { subtitle, body }로 반환한다. */
+export function parsePostContent(content: string): { subtitle: string; body: string } {
+  const raw = content ?? "";
+  if (raw.startsWith(SUBTITLE_PREFIX)) {
+    const end = raw.indexOf(SUBTITLE_SUFFIX);
+    if (end !== -1) {
+      const encoded = raw.slice(SUBTITLE_PREFIX.length, end);
+      const body = raw.slice(end + SUBTITLE_SUFFIX.length).replace(/^\n/, "");
+      try {
+        return { subtitle: decodeURIComponent(encoded), body };
+      } catch {
+        return { subtitle: "", body };
+      }
+    }
+  }
+  return { subtitle: "", body: raw };
+}
+
+/** subtitle과 본문을 다시 하나의 content 문자열로 합친다. */
+export function buildPostContent(subtitle: string, body: string): string {
+  const trimmedSubtitle = subtitle.trim();
+  if (!trimmedSubtitle) return body;
+  return `${SUBTITLE_PREFIX}${encodeURIComponent(trimmedSubtitle)}${SUBTITLE_SUFFIX}\n${body}`;
+}
+
+/** 목록 카드용 짧은 미리보기 텍스트를 만든다. 서브타이틀이 있으면 그것을 우선 사용한다. */
 export function postPreviewText(content: string, maxLength = 120): string {
-  const trimmed = content.trim();
+  const { subtitle, body } = parsePostContent(content);
+  if (subtitle) return subtitle.slice(0, maxLength);
+  const trimmed = body.trim();
   if (!trimmed) return "";
   if (trimmed.startsWith("<")) {
-    return trimmed.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, maxLength);
+    return trimmed
+      .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, maxLength);
   }
   if (/^(https?:\/\/|\/)\S+$/.test(trimmed) && !trimmed.includes("\n")) return "";
   return trimmed.replace(/[#*>\-|]/g, "").trim().slice(0, maxLength);
@@ -69,13 +105,14 @@ export function postPreviewText(content: string, maxLength = 120): string {
  * HTML(<로 시작) → 그대로 삽입, 단일 이미지 URL → <img>, 그 외 → 마크다운 라이트 파서.
  */
 export function renderPostContent(content: string): ReactNode {
-  const trimmed = content.trim();
+  const { body } = parsePostContent(content);
+  const trimmed = body.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith("<")) {
-    return <div className="detail-html-content" dangerouslySetInnerHTML={{ __html: content }} />;
+    return <div className="detail-html-content" dangerouslySetInnerHTML={{ __html: body }} />;
   }
   if (/^(https?:\/\/|\/)\S+$/.test(trimmed) && !trimmed.includes("\n")) {
     return <img src={trimmed} alt="" style={{ maxWidth: "100%", height: "auto", display: "block" }} />;
   }
-  return <>{renderMarkdownLite(content)}</>;
+  return <>{renderMarkdownLite(body)}</>;
 }

@@ -6,7 +6,7 @@ import Image from "next/image";
 import AdminLoading from "./AdminLoading";
 import { adminStore, uploadImage, imageUrl, type Post } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
-import { renderPostContent } from "@/lib/renderPostContent";
+import { renderPostContent, parsePostContent, buildPostContent, postPreviewText } from "@/lib/renderPostContent";
 
 interface Props {
   storeKey: "benefit" | "smallbiz";
@@ -243,8 +243,10 @@ const PostContentEditor = forwardRef<ContentEditorHandle, { initialValue: string
 export default function PostAdmin({ storeKey, title }: Props) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [editing, setEditing] = useState<Post | null>(null);
+  const [editSubtitle, setEditSubtitle] = useState("");
   const [adding, setAdding] = useState(false);
   const [addTitle, setAddTitle] = useState("");
+  const [addSubtitle, setAddSubtitle] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const editContentRef = useRef<ContentEditorHandle>(null);
@@ -255,9 +257,16 @@ export default function PostAdmin({ storeKey, title }: Props) {
     adminStore.posts.get(storeKey).then((data) => { setPosts(data); setLoading(false); });
   }, [storeKey]);
 
+  const startEdit = (post: Post) => {
+    const { subtitle, body } = parsePostContent(post.content);
+    setEditing({ ...post, content: body });
+    setEditSubtitle(subtitle);
+  };
+
   const handleSaveEdit = async () => {
     if (!editing) return;
-    const content = await editContentRef.current!.resolve();
+    const body = await editContentRef.current!.resolve();
+    const content = buildPostContent(editSubtitle, body);
     await adminStore.posts.update(editing.id, { title: editing.title, content });
     setPosts((prev) => prev.map((p) => (p.id === editing.id ? { ...p, title: editing.title, content } : p)));
     setEditing(null);
@@ -265,11 +274,13 @@ export default function PostAdmin({ storeKey, title }: Props) {
 
   const handleAdd = async () => {
     if (!addTitle.trim()) return;
-    const content = await addContentRef.current!.resolve();
+    const body = await addContentRef.current!.resolve();
+    const content = buildPostContent(addSubtitle, body);
     await adminStore.posts.add(storeKey, { title: addTitle, content });
     const updated = await adminStore.posts.get(storeKey);
     setPosts(updated);
     setAddTitle("");
+    setAddSubtitle("");
     setAdding(false);
   };
 
@@ -304,7 +315,14 @@ export default function PostAdmin({ storeKey, title }: Props) {
                 <div className="space-y-3">
                   <input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                     placeholder="제목" className="h-10 w-full rounded-lg border border-[#e8e8e8] px-3 text-[14px] font-semibold outline-none focus:border-[#c90f45]" />
-                  <PostContentEditor key={post.id} ref={editContentRef} initialValue={post.content} />
+                  <div>
+                    <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">
+                      서브타이틀 <span className="font-normal text-[#aaa]">(목록에서 제목 아래에 표시, 선택사항)</span>
+                    </label>
+                    <input value={editSubtitle} onChange={(e) => setEditSubtitle(e.target.value)}
+                      placeholder="목록 카드에 표시될 부제목" className="h-10 w-full rounded-lg border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" />
+                  </div>
+                  <PostContentEditor key={post.id} ref={editContentRef} initialValue={editing.content} />
                   <div className="flex gap-2">
                     <button onClick={handleSaveEdit} className="flex h-9 items-center rounded-full bg-[#c90f45] px-5 text-[13px] font-bold text-white">저장</button>
                     <button onClick={() => setEditing(null)} className="flex h-9 items-center rounded-full border border-[#e8e8e8] px-5 text-[13px] text-[#666]">취소</button>
@@ -314,11 +332,11 @@ export default function PostAdmin({ storeKey, title }: Props) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <p className="font-bold text-[#1a1a1a]">{post.title}</p>
-                    <p className="mt-1 line-clamp-2 text-[13px] text-[#888]">{post.content}</p>
+                    <p className="mt-1 line-clamp-2 text-[13px] text-[#888]">{postPreviewText(post.content)}</p>
                     <p className="mt-1 text-[11px] text-[#bbb]">{new Date(post.created_at).toLocaleDateString("ko-KR")}</p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <button onClick={() => setEditing({ ...post })} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
+                    <button onClick={() => startEdit(post)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-[#c90f45] hover:text-[#c90f45]" title="수정"><LuPencil size={14} /></button>
                     <button onClick={() => handleDelete(post.id)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e8e8e8] text-[#555] hover:border-red-400 hover:text-red-500" title="삭제"><LuTrash2 size={14} /></button>
                   </div>
                 </div>
@@ -336,11 +354,18 @@ export default function PostAdmin({ storeKey, title }: Props) {
             <div className="space-y-3">
               <input value={addTitle} onChange={(e) => setAddTitle(e.target.value)}
                 placeholder="제목" className="h-10 w-full rounded-lg border border-[#e8e8e8] px-3 text-[14px] font-semibold outline-none focus:border-[#c90f45]" />
+              <div>
+                <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">
+                  서브타이틀 <span className="font-normal text-[#aaa]">(목록에서 제목 아래에 표시, 선택사항)</span>
+                </label>
+                <input value={addSubtitle} onChange={(e) => setAddSubtitle(e.target.value)}
+                  placeholder="목록 카드에 표시될 부제목" className="h-10 w-full rounded-lg border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]" />
+              </div>
               <PostContentEditor ref={addContentRef} initialValue="" />
             </div>
             <div className="mt-4 flex gap-2">
               <button onClick={handleAdd} disabled={!addTitle.trim()} className="flex h-10 flex-1 items-center justify-center rounded-full bg-[#c90f45] text-[14px] font-bold text-white disabled:opacity-40">추가</button>
-              <button onClick={() => setAdding(false)} className="flex h-10 flex-1 items-center justify-center rounded-full border border-[#e8e8e8] text-[14px] text-[#666]">취소</button>
+              <button onClick={() => { setAdding(false); setAddSubtitle(""); }} className="flex h-10 flex-1 items-center justify-center rounded-full border border-[#e8e8e8] text-[14px] text-[#666]">취소</button>
             </div>
           </div>
         </div>
