@@ -169,7 +169,7 @@ export default function SiteSettingsAdmin() {
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value.slice(0, 20))}
                 maxLength={20}
-                placeholder="예: 용산전자상가점"
+                placeholder="예: 우주전자 엠케이전자"
                 className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
               />
               <p className={`mt-1 text-right text-[11px] ${storeName.length > 15 ? "text-[#c90f45]" : "text-[#bbb]"}`}>{storeName.length}/20자</p>
@@ -182,7 +182,7 @@ export default function SiteSettingsAdmin() {
                 value={storeNameMobile}
                 onChange={(e) => setStoreNameMobile(e.target.value.slice(0, 20))}
                 maxLength={20}
-                placeholder="예: 용산점 (비워두면 PC용과 동일)"
+                placeholder="예: 엠케이전자 (비워두면 PC용과 동일)"
                 className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
               />
               <p className={`mt-1 text-right text-[11px] ${storeNameMobile.length > 15 ? "text-[#c90f45]" : "text-[#bbb]"}`}>{storeNameMobile.length}/20자</p>

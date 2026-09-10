@@ -14,7 +14,6 @@ export default function ProductJsonLd({ product, section }: { product: ManagedPr
     ...(product.image ? { image: [absoluteUrl(product.image)] } : {}),
     description: `${product.name} 월 구독료 ${product.monthlyPrice.toLocaleString()}원부터`,
     sku: product.model,
-    brand: { "@type": "Brand", name: "LG전자" },
     offers: {
       "@type": "Offer",
       url,

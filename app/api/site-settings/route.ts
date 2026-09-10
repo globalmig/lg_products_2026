@@ -106,14 +106,14 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
   badge: "2026년 6월 리뷰 이벤트",
   titleLine1: "후기 남기고",
   titleLine2: "경품 받아가세요",
-  description: "LG전자 베스트샵에서 구독·구매 후 네이버 지도 리뷰를 작성하시면 추첨을 통해 경품을 드립니다.",
+  description: "구독·구매 후 네이버 지도 리뷰를 작성하시면 추첨을 통해 경품을 드립니다.",
   period: "2026.06.01 – 06.30",
   target: "구독·구매 완료 고객",
   heroImageKey: "",
   heroImageKeyMobile: "",
   steps: [
     { title: "구독 or 구매 상담", desc: "매장 방문 또는 온라인으로 상담 후 제품을 구독·구매하세요." },
-    { title: "네이버 지도 리뷰 작성", desc: "LG전자 베스트샵 네이버 지도 페이지에 별점 5점 + 50자 이상 후기를 남겨주세요." },
+    { title: "네이버 지도 리뷰 작성", desc: "매장 네이버 지도 페이지에 별점 5점 + 50자 이상 후기를 남겨주세요." },
     { title: "리뷰 캡처 제출", desc: "작성한 리뷰 화면을 캡처하여 카카오톡 채널 또는 상담 신청 폼으로 전송해주세요." },
     { title: "경품 수령", desc: "확인 후 영업일 3일 이내 문자로 경품 발송 안내드립니다." },
   ],
@@ -126,9 +126,9 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
 };
 
 const DEFAULTS: SiteSettings = {
-  storeName: "용산전자상가점",
+  storeName: "우주전자 엠케이전자",
   storeNameMobile: "",
-  copyright: "© 2026 LG Electronics Inc. All rights reserved.",
+  copyright: "© 2026 All rights reserved.",
   privacyContent: "",
   termsContent: "",
   footerInfo: [],

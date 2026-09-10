@@ -11,9 +11,9 @@ type ModalType = "privacy" | "terms" | null;
 export default function Footer() {
   const pathname = usePathname();
   const [modal, setModal] = useState<ModalType>(null);
-  const [storeName, setStoreName] = useState("용산전자상가점");
+  const [storeName, setStoreName] = useState("우주전자 엠케이전자");
   const [storeNameMobile, setStoreNameMobile] = useState("");
-  const [copyright, setCopyright] = useState("© 2025 LG Electronics Inc. All rights reserved.");
+  const [copyright, setCopyright] = useState("© 2025 All rights reserved.");
   const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
   const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
   const [footerInfo, setFooterInfo] = useState<{ id: string; label: string; value: string }[]>([]);

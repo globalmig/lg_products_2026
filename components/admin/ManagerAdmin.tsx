@@ -6,7 +6,7 @@ import { LuPencil, LuTrash2 } from "react-icons/lu";
 import { adminStore, uploadImage, imageUrl, type Manager } from "@/lib/adminStore";
 import ConfirmDialog from "./ConfirmDialog";
 
-const EMPTY: Omit<Manager, "id"> = { img_key: "", name: "", store: "용산전자상가점", tags: [], desc: "", href: "#" };
+const EMPTY: Omit<Manager, "id"> = { img_key: "", name: "", store: "우주전자 엠케이전자", tags: [], desc: "", href: "#" };
 
 export default function ManagerAdmin() {
   const [managers, setManagers] = useState<Manager[]>([]);

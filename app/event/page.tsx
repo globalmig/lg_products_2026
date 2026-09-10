@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "기획전",
-  description: "LG전자 베스트샵 기획전 - 여러 상품을 함께 구독하면 할인되는 패키지 상품을 확인하세요.",
+  description: "가전 구독 기획전 - 여러 상품을 함께 구독하면 할인되는 패키지 상품을 확인하세요.",
   alternates: { canonical: "/event" },
 };
 

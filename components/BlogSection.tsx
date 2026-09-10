@@ -16,7 +16,7 @@ export default function BlogSection({ posts, moreHref = "#" }: Props) {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-[1440px] px-5">
         <div className="mb-10 text-center">
-          <p className="mb-3 text-[13px] font-medium text-[#c90f45]">용산전자상가점 blog</p>
+          <p className="mb-3 text-[13px] font-medium text-[#c90f45]">우주전자 엠케이전자 blog</p>
           <h2 className="mb-2 text-[34px] font-black tracking-[-0.05em] text-[#1a1a1a]">
             가전 케어 및 관리 방법과 <br />
             다양한 가전 정보를 확인해보세요

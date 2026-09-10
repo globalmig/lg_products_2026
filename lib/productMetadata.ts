@@ -9,7 +9,7 @@ function absoluteUrl(path: string) {
 export function buildProductMetadata(product: ManagedProduct, section: string): Metadata {
   const price = product.monthlyPrice.toLocaleString();
   const title = `${product.name} 월 ${price}원 렌탈·구독`;
-  const description = `${product.name}(${product.model})을 월 ${price}원부터 구독하세요. LG전자 베스트샵에서 설치·정기관리·AS까지 한번에 제공합니다.`;
+  const description = `${product.name}(${product.model})을 월 ${price}원부터 구독하세요. 설치·정기관리·AS까지 한번에 제공합니다.`;
   const url = `/products/${section}/${product.id}`;
   const images = product.image ? [{ url: absoluteUrl(product.image), alt: product.name }] : undefined;
 

@@ -28,7 +28,7 @@ export default function SmePage() {
             소상공인 전용 안내
           </h1>
           <p className="mt-5 max-w-[640px] break-keep text-[15px] leading-[1.8] text-white/82 sm:text-[17px] lg:text-[18px]">
-            사업장 규모와 업종에 맞는 가전 구성, 구독, 설치 상담을 LG전자 베스트샵에서 도와드립니다.
+            사업장 규모와 업종에 맞는 가전 구성, 구독, 설치 상담을 도와드립니다.
           </p>
         </div>
       </section>
