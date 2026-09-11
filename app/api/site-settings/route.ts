@@ -58,6 +58,18 @@ export interface NewsEventContent {
   prizeNote: string;
 }
 
+export interface BenefitItem {
+  icon: string;
+  text: string;
+}
+
+export interface BenefitContent {
+  label: string;
+  titleLine1: string;
+  titleLine2: string;
+  items: BenefitItem[];
+}
+
 export interface ReviewVisibility {
   home: boolean;
   newsEvent: boolean;
@@ -77,6 +89,7 @@ export interface SiteSettings {
   eventBanner: EventBanner;
   heroMobileImages: Record<string, string>;
   reviewVisibility: ReviewVisibilityMap;
+  benefit: BenefitContent;
 }
 
 const DEFAULT_CONSULT_BANNER: ConsultBanner = {
@@ -125,6 +138,20 @@ const DEFAULT_NEWS_EVENT: NewsEventContent = {
   prizeNote: "※ 당첨자 발표는 매월 초 개별 문자 발송 / 경품은 변경될 수 있습니다.",
 };
 
+const DEFAULT_BENEFIT: BenefitContent = {
+  label: "가전 구독하면 무엇이 좋은가요?",
+  titleLine1: "일시불과 차이없는 가격!",
+  titleLine2: "부담은 지우고 전문가의 빈틈없는 케어를 남겨드립니다.",
+  items: [
+    { icon: "/images/icon/3D/house.png", text: "전문가의\n방문관리" },
+    { icon: "/images/icon/3D/calendar.png", text: "구독 기간내\n무상 A/S" },
+    { icon: "/images/icon/3D/box.png", text: "LG 정품\n소모품 정기\n무상 교체" },
+    { icon: "/images/icon/3D/Wallet.png", text: "전문가의\n방문관리" },
+    { icon: "/images/icon/3D/gift.png", text: "일시불과\n차이없는\n가격!" },
+    { icon: "/images/icon/3D/truck.png", text: "이사 & 위치 변경\n무상 재설치" },
+  ],
+};
+
 const DEFAULTS: SiteSettings = {
   storeName: "우주전자 엠케이전자",
   storeNameMobile: "",
@@ -138,9 +165,10 @@ const DEFAULTS: SiteSettings = {
   eventBanner: DEFAULT_EVENT_BANNER,
   heroMobileImages: {},
   reviewVisibility: {},
+  benefit: DEFAULT_BENEFIT,
 };
 
-const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner" | "heroMobileImages" | "reviewVisibility">, string> = {
+const KEY_MAP: Record<keyof Omit<SiteSettings, "footerInfo" | "consultBanner" | "channelIcons" | "newsEvent" | "eventBanner" | "heroMobileImages" | "reviewVisibility" | "benefit">, string> = {
   storeName: "store_name",
   storeNameMobile: "store_name_mobile",
   copyright: "copyright",
@@ -166,6 +194,7 @@ export async function GET() {
       eventBanner: map["event_banner"] ? JSON.parse(map["event_banner"]) : DEFAULTS.eventBanner,
       heroMobileImages: map["hero_mobile_images"] ? JSON.parse(map["hero_mobile_images"]) : DEFAULTS.heroMobileImages,
       reviewVisibility: map["review_visibility"] ? JSON.parse(map["review_visibility"]) : DEFAULTS.reviewVisibility,
+      benefit: map["benefit"] ? JSON.parse(map["benefit"]) : DEFAULTS.benefit,
     });
   } catch {
     return NextResponse.json(DEFAULTS);
@@ -187,6 +216,7 @@ export async function PUT(req: Request) {
   if (body.eventBanner !== undefined) updates.push(["event_banner", JSON.stringify(body.eventBanner)]);
   if (body.heroMobileImages !== undefined) updates.push(["hero_mobile_images", JSON.stringify(body.heroMobileImages)]);
   if (body.reviewVisibility !== undefined) updates.push(["review_visibility", JSON.stringify(body.reviewVisibility)]);
+  if (body.benefit !== undefined) updates.push(["benefit", JSON.stringify(body.benefit)]);
 
   if (updates.length === 0) return NextResponse.json({ ok: true });
 

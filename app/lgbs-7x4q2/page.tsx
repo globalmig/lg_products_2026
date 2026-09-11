@@ -8,6 +8,7 @@ import ProductAdmin from "@/components/admin/ProductAdmin";
 import BundleAdmin from "@/components/admin/BundleAdmin";
 import FeatureBannerAdmin from "@/components/admin/FeatureBannerAdmin";
 import MainCategoryAdmin from "@/components/admin/MainCategoryAdmin";
+import BenefitAdmin from "@/components/admin/BenefitAdmin";
 import EventPostAdmin from "@/components/admin/EventPostAdmin";
 import PostAdmin from "@/components/admin/PostAdmin";
 import CardDiscountAdmin from "@/components/admin/CardDiscountAdmin";
@@ -22,6 +23,7 @@ import {
   MdCategory,
   MdArticle,
   MdCreditCard,
+  MdCardGiftcard,
   MdStar,
   MdAssignment,
   MdViewModule,
@@ -40,6 +42,7 @@ const NAV: { id: string; label: string; Icon: IconType }[] = [
   { id: "hero", label: "히어로 슬라이드", Icon: MdImage },
   { id: "featureBanner", label: "피처 배너", Icon: MdLocalOffer },
   { id: "mainCategory", label: "메인 카테고리", Icon: MdCategory },
+  { id: "benefit", label: "구독 혜택", Icon: MdCardGiftcard },
   { id: "benefitPosts", label: "혜택 & 소식", Icon: MdArticle },
   { id: "cardDiscounts", label: "제휴카드", Icon: MdCreditCard },
   { id: "reviews", label: "리뷰 관리", Icon: MdStar },
@@ -47,7 +50,7 @@ const NAV: { id: string; label: string; Icon: IconType }[] = [
   { id: "siteSettings", label: "사이트 설정", Icon: MdSettings },
 ];
 
-type TabId = "dashboard" | "products" | "bundles" | "hero" | "featureBanner" | "mainCategory" | "benefitPosts" | "cardDiscounts" | "reviews" | "consult" | "siteSettings";
+type TabId = "dashboard" | "products" | "bundles" | "hero" | "featureBanner" | "mainCategory" | "benefit" | "benefitPosts" | "cardDiscounts" | "reviews" | "consult" | "siteSettings";
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -317,6 +320,7 @@ export default function AdminPage() {
           {tab === "hero" && <HeroAdmin />}
           {tab === "featureBanner" && <FeatureBannerAdmin />}
           {tab === "mainCategory" && <MainCategoryAdmin />}
+          {tab === "benefit" && <BenefitAdmin />}
           {tab === "eventProducts" && <EventPostAdmin />}
           {tab === "benefitPosts" && <PostAdmin storeKey="benefit" title="혜택 & 소식" />}
           {tab === "cardDiscounts" && <CardDiscountAdmin />}

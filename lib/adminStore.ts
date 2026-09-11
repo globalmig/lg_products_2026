@@ -157,6 +157,32 @@ export interface NewsEventContent {
   prizeNote: string;
 }
 
+export interface BenefitItem {
+  icon: string;
+  text: string;
+}
+
+export interface BenefitContent {
+  label: string;
+  titleLine1: string;
+  titleLine2: string;
+  items: BenefitItem[];
+}
+
+const DEFAULT_BENEFIT: BenefitContent = {
+  label: "가전 구독하면 무엇이 좋은가요?",
+  titleLine1: "일시불과 차이없는 가격!",
+  titleLine2: "부담은 지우고 전문가의 빈틈없는 케어를 남겨드립니다.",
+  items: [
+    { icon: "/images/icon/3D/house.png", text: "전문가의\n방문관리" },
+    { icon: "/images/icon/3D/calendar.png", text: "구독 기간내\n무상 A/S" },
+    { icon: "/images/icon/3D/box.png", text: "LG 정품\n소모품 정기\n무상 교체" },
+    { icon: "/images/icon/3D/Wallet.png", text: "전문가의\n방문관리" },
+    { icon: "/images/icon/3D/gift.png", text: "일시불과\n차이없는\n가격!" },
+    { icon: "/images/icon/3D/truck.png", text: "이사 & 위치 변경\n무상 재설치" },
+  ],
+};
+
 const DEFAULT_REVIEWS: Review[] = [
   { id: "r1", stars: 5, image_key: "", content: "\"상담부터 설치까지 꼼꼼하게 챙겨주셔서 정말 만족스러웠어요. 제품도 생각보다 훨씬 조용하고 공간 활용이 좋네요. 매니저님이 색상 조합까지 같이 고민해줘서 인테리어에도 딱 맞게 선택했습니다.\"", name: "김*현", product: "LG 디오스 오브제컬렉션 냉장고", date: "2026.05.18", sort_order: 0 },
   { id: "r2", stars: 5, image_key: "", content: "\"구독 서비스가 이렇게 편할 줄 몰랐어요. 설치도 빠르고 관리까지 해준다니 너무 좋아요. 매니저분이 실제 사용 팁도 알려주셔서 처음 사용하는 데 전혀 어렵지 않았습니다.\"", name: "박*은", product: "LG 워시타워 렌탈 가전 구독", date: "2026.05.12", sort_order: 1 },
@@ -377,6 +403,7 @@ export const adminStore = {
       eventBanner: EventBanner;
       heroMobileImages: Record<string, string>;
       reviewVisibility: ReviewVisibilityMap;
+      benefit: BenefitContent;
     }>("/api/site-settings").catch(() => ({
       storeName: "우주전자 엠케이전자",
       storeNameMobile: "",
@@ -390,8 +417,9 @@ export const adminStore = {
       eventBanner: DEFAULT_EVENT_BANNER,
       heroMobileImages: {},
       reviewVisibility: {} as ReviewVisibilityMap,
+      benefit: DEFAULT_BENEFIT,
     })),
-    set: (data: { storeName?: string; storeNameMobile?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[]; newsEvent?: NewsEventContent; eventBanner?: EventBanner; heroMobileImages?: Record<string, string>; reviewVisibility?: ReviewVisibilityMap }) =>
+    set: (data: { storeName?: string; storeNameMobile?: string; copyright?: string; privacyContent?: string; termsContent?: string; footerInfo?: { id: string; label: string; value: string }[]; consultBanner?: { badge: string; title: string; desc: string; buttonText: string; buttonHref: string }; channelIcons?: ChannelIcon[]; newsEvent?: NewsEventContent; eventBanner?: EventBanner; heroMobileImages?: Record<string, string>; reviewVisibility?: ReviewVisibilityMap; benefit?: BenefitContent }) =>
       apiFetch("/api/site-settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }),
   },
 };
