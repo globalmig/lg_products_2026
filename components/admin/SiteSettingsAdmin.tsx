@@ -21,6 +21,7 @@ export default function SiteSettingsAdmin() {
   const [activeSection, setActiveSection] = useState<Section>("basic");
   const [storeName, setStoreName] = useState("");
   const [storeNameMobile, setStoreNameMobile] = useState("");
+  const [copyright, setCopyright] = useState("");
 
   const [privacyContent, setPrivacyContent] = useState(DEFAULT_PRIVACY);
   const [termsContent, setTermsContent] = useState(DEFAULT_TERMS);
@@ -52,6 +53,7 @@ export default function SiteSettingsAdmin() {
     adminStore.siteSettings.get().then((s) => {
       setStoreName(s.storeName);
       setStoreNameMobile(s.storeNameMobile ?? "");
+      setCopyright(s.copyright ?? "");
       if (s.privacyContent) setPrivacyContent(s.privacyContent);
       if (s.termsContent) setTermsContent(s.termsContent);
       setFooterInfo(s.footerInfo ?? []);
@@ -64,7 +66,7 @@ export default function SiteSettingsAdmin() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await adminStore.siteSettings.set({ storeName, storeNameMobile, privacyContent, termsContent, footerInfo, consultBanner, channelIcons });
+      await adminStore.siteSettings.set({ storeName, storeNameMobile, copyright, privacyContent, termsContent, footerInfo, consultBanner, channelIcons });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
@@ -186,6 +188,17 @@ export default function SiteSettingsAdmin() {
                 className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
               />
               <p className={`mt-1 text-right text-[11px] ${storeNameMobile.length > 15 ? "text-[#c90f45]" : "text-[#bbb]"}`}>{storeNameMobile.length}/20자</p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#555]">저작권 표시</label>
+              <p className="mb-2 text-[11px] text-[#bbb]">푸터 하단에 표시되는 저작권 문구입니다.</p>
+              <input
+                value={copyright}
+                onChange={(e) => setCopyright(e.target.value)}
+                placeholder="예: © 2025 All rights reserved."
+                className="h-10 w-full rounded-xl border border-[#e8e8e8] px-3 text-[13px] outline-none focus:border-[#c90f45]"
+              />
             </div>
 
             <div className="border-t border-[#f0f0f0] pt-4">
